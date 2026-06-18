@@ -1,0 +1,441 @@
+
+> hyoc-boteco@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 3000
+
+   ▲ Next.js 15.5.19
+   - Local:        http://127.0.0.1:3000
+   - Network:      http://127.0.0.1:3000
+
+ ✓ Starting...
+ ✓ Ready in 2.4s
+ ○ Compiling /app/login ...
+ ✓ Compiled /app/login in 4.7s (743 modules)
+ GET /app/login 200 in 5284ms
+ ○ Compiling /app/dashboard ...
+ ✓ Compiled /app/dashboard in 878ms (809 modules)
+ GET /app/dashboard 200 in 1062ms
+ GET /app/dashboard 200 in 42ms
+ GET /app/dashboard 200 in 31ms
+ GET /app/dashboard 200 in 276ms
+ ○ Compiling /app/products ...
+ ✓ Compiled /app/products in 638ms (808 modules)
+ GET /app/products 200 in 1005ms
+ ○ Compiling /r/[restaurantSlug]/mesa/[tableId] ...
+ ✓ Compiled /r/[restaurantSlug]/mesa/[tableId] in 560ms (831 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 1582ms
+ GET /app/login 200 in 133ms
+ GET /app/dashboard 200 in 83ms
+ GET /app/dashboard 200 in 66ms
+ GET /app/dashboard 200 in 136ms
+ ○ Compiling / ...
+ ✓ Compiled / in 843ms (844 modules)
+ GET / 307 in 1384ms
+ GET /app/login 200 in 137ms
+ GET /app/dashboard 200 in 72ms
+ GET /app/login 200 in 48ms
+ GET /app/login 200 in 41ms
+ GET /app/dashboard 200 in 54ms
+ GET /app/dashboard 200 in 62ms
+ ○ Compiling /app/tables ...
+ ✓ Compiled /app/tables in 806ms (863 modules)
+ GET /app/tables 200 in 982ms
+ ○ Compiling /app/kitchen ...
+ ✓ Compiled /app/kitchen in 1595ms (884 modules)
+ GET /app/kitchen 200 in 1799ms
+ GET /app/kitchen 200 in 110ms
+ ○ Compiling /app/bar ...
+ ✓ Compiled /app/bar in 823ms (893 modules)
+ GET /app/bar 200 in 971ms
+ GET /app/products 200 in 69ms
+ ○ Compiling /app/finance ...
+ ✓ Compiled /app/finance in 1112ms (892 modules)
+ GET /app/finance 200 in 1415ms
+ GET /app/finance 200 in 47ms
+ ○ Compiling /app/cash ...
+ ✓ Compiled /app/cash in 1243ms (899 modules)
+ GET /app/cash 200 in 1450ms
+ GET /app/cash 200 in 55ms
+ ○ Compiling /app/settings ...
+ ✓ Compiled /app/settings in 837ms (904 modules)
+ GET /app/settings 200 in 979ms
+ ✓ Compiled /app/login in 483ms (531 modules)
+ GET /app/login 200 in 645ms
+ GET /app/login 200 in 45ms
+ ○ Compiling /app/tables ...
+ ✓ Compiled /app/tables in 569ms (542 modules)
+ GET /app/tables 200 in 742ms
+ GET /app/tables 200 in 44ms
+ GET /app/login 200 in 60ms
+ GET /app/login 200 in 46ms
+ GET /app/kitchen 200 in 63ms
+ GET /app/kitchen 200 in 46ms
+ GET /app/login 200 in 48ms
+ GET /app/login 200 in 47ms
+ GET /app/bar 200 in 61ms
+ GET /app/bar 200 in 43ms
+ ✓ Compiled in 953ms (384 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 244ms
+ GET /app/bar 200 in 262ms
+ ✓ Compiled in 1514ms (886 modules)
+ GET /app/bar 200 in 1972ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 2008ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 3134ms
+ GET /app/bar 200 in 3607ms
+ ✓ Compiled in 6.6s (886 modules)
+ ✓ Compiled in 1279ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 803ms
+ GET /app/bar 200 in 823ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 781ms
+ GET /app/bar 200 in 645ms
+ ✓ Compiled in 925ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 304ms
+ GET /app/bar 200 in 536ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 609ms
+ GET /app/bar 200 in 474ms
+ ✓ Compiled in 824ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 284ms
+ GET /app/bar 200 in 289ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 639ms
+ GET /app/bar 200 in 463ms
+ ✓ Compiled in 861ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 315ms
+ GET /app/bar 200 in 371ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 709ms
+ GET /app/bar 200 in 523ms
+ ✓ Compiled in 5.2s (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 3579ms
+ ✓ Compiled in 2.5s (886 modules)
+ ✓ Compiled in 1543ms (886 modules)
+ ✓ Compiled in 771ms (886 modules)
+ ✓ Compiled in 815ms (886 modules)
+ ✓ Compiled in 904ms (886 modules)
+ ✓ Compiled in 643ms (886 modules)
+ ✓ Compiled in 681ms (886 modules)
+ ✓ Compiled in 672ms (886 modules)
+ ✓ Compiled in 391ms (384 modules)
+ ✓ Compiled in 332ms (384 modules)
+ ✓ Compiled in 447ms (384 modules)
+ ✓ Compiled in 1032ms (886 modules)
+ ✓ Compiled in 695ms (886 modules)
+ ✓ Compiled in 259ms (384 modules)
+ ✓ Compiled in 301ms (384 modules)
+ ✓ Compiled in 578ms (384 modules)
+ ✓ Compiled in 261ms (384 modules)
+ ✓ Compiled in 284ms (384 modules)
+ ✓ Compiled in 331ms (384 modules)
+ ✓ Compiled in 276ms (384 modules)
+ ✓ Compiled in 254ms (384 modules)
+ ✓ Compiled in 374ms (384 modules)
+ ✓ Compiled in 394ms (384 modules)
+ ✓ Compiled in 767ms (886 modules)
+ ✓ Compiled in 280ms (384 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 433ms
+ ✓ Compiled in 312ms (384 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 110ms
+ ✓ Compiled in 289ms (384 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 73ms
+ ✓ Compiled in 350ms (384 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 93ms
+ ✓ Compiled in 933ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 247ms
+ ✓ Compiled in 703ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 149ms
+ ✓ Compiled in 774ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 158ms
+ ✓ Compiled in 818ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 167ms
+ ✓ Compiled in 980ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 159ms
+ ✓ Compiled in 1035ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 249ms
+ ✓ Compiled in 565ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 129ms
+ ✓ Compiled in 602ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 116ms
+ ✓ Compiled in 792ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 145ms
+ ✓ Compiled in 287ms (384 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 67ms
+ ✓ Compiled in 230ms (384 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 65ms
+ ✓ Compiled in 259ms (384 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 68ms
+ ✓ Compiled in 292ms (384 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 69ms
+ ✓ Compiled in 508ms (384 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 93ms
+ ✓ Compiled in 323ms (384 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 80ms
+ ✓ Compiled in 983ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 248ms
+ ✓ Compiled in 746ms (886 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 157ms
+ ✓ Compiled in 294ms (384 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 81ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 2.4s (1233 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 1525ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 45ms
+ GET /app/bar 500 in 3453ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 233ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1117ms (1222 modules)
+ GET /app 404 in 1480ms
+ ✓ Compiled / in 326ms (709 modules)
+ GET / 307 in 778ms
+ ○ Compiling /app/login ...
+ ✓ Compiled /app/login in 537ms (717 modules)
+ GET /app/login 200 in 1022ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 500 in 1664ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 500 in 794ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 500 in 762ms
+ GET /app/login 200 in 83ms
+ GET /app/login 404 in 20ms
+ GET /app/login 404 in 34ms
+ GET /app/login 404 in 18ms
+ GET /app/login 404 in 18ms
+ GET /app/login 404 in 18ms
+ GET /app/login 404 in 21ms
+ GET /app/login 404 in 19ms
+ GET /app/login 404 in 23ms
+ GET /app/login 404 in 21ms
+ GET /app/login 404 in 23ms
+ GET /app/login 404 in 23ms
+ GET /app/login 404 in 21ms
+ GET /app/login 404 in 18ms
+ GET /app/login 404 in 17ms
+ GET /app/login 404 in 17ms
+ GET /app/login 404 in 20ms
+ GET /app/login 404 in 17ms
+ GET /app/login 404 in 18ms
+ GET /app/login 404 in 20ms
+ GET /app/login 404 in 20ms
+ GET /app/login 404 in 18ms
+ GET /app/login 404 in 20ms
+ GET /app/login 404 in 23ms
+ GET /app/login 404 in 18ms
+ GET / 404 in 23ms
+ GET / 404 in 22ms
+ GET / 404 in 16ms
+ GET / 404 in 17ms
+ GET / 404 in 16ms
+ GET / 404 in 21ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 18ms
+ GET / 404 in 21ms
+ GET / 404 in 20ms
+ GET / 404 in 17ms
+ GET / 404 in 18ms
+ GET / 404 in 16ms
+ GET / 404 in 17ms
+ GET / 404 in 19ms
+ GET / 404 in 23ms
+ GET / 404 in 18ms
+ GET / 404 in 22ms
+ GET / 404 in 17ms
+ GET / 404 in 27ms
+ GET / 404 in 16ms
+ GET / 404 in 16ms
+ GET / 404 in 23ms
+ GET / 404 in 18ms
+ GET / 404 in 17ms
+ GET / 404 in 19ms
+ GET / 404 in 22ms
+ GET / 404 in 18ms
+ GET / 404 in 17ms
+ GET / 404 in 23ms
+ GET / 404 in 20ms
+ GET / 404 in 16ms
+ GET / 404 in 18ms
+ GET / 404 in 19ms
+ GET / 404 in 18ms
+ GET / 404 in 17ms
+ GET / 404 in 16ms
+ GET / 404 in 16ms
+ GET / 404 in 16ms
+ GET / 404 in 21ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 16ms
+ GET / 404 in 19ms
+ GET / 404 in 18ms
+ GET / 404 in 17ms
+ GET / 404 in 19ms
+ GET / 404 in 17ms
+ GET / 404 in 15ms
+ GET / 500 in 2985ms
+ GET / 500 in 93ms
+ GET / 500 in 460ms
+ GET / 500 in 47ms
+ GET / 404 in 17ms
+ GET / 404 in 20ms
+ GET / 404 in 21ms
+ GET / 404 in 18ms
+ GET / 404 in 24ms
+ GET / 404 in 18ms
+ GET / 404 in 24ms
+ GET / 404 in 17ms
+ GET / 404 in 24ms
+ GET / 404 in 17ms
+ GET / 404 in 24ms
+ GET / 404 in 17ms
+ GET / 404 in 18ms
+ GET / 404 in 16ms
+ GET / 404 in 25ms
+ GET / 404 in 18ms
+ GET / 404 in 20ms
+ GET / 404 in 21ms
+ GET / 404 in 18ms
+ GET / 500 in 165ms
+ GET / 500 in 53ms
+ GET / 500 in 120ms
+ GET / 500 in 45ms
+ GET / 500 in 146ms
+ GET / 500 in 62ms
+ GET / 500 in 125ms
+ GET / 500 in 41ms
+ GET / 404 in 19ms
+ GET / 404 in 17ms
+ GET / 404 in 16ms
+ GET / 404 in 16ms
+ GET / 404 in 16ms
+ GET / 404 in 16ms
+ GET / 404 in 17ms
+ GET / 404 in 15ms
+ GET / 404 in 18ms
+ GET / 404 in 17ms
+ GET / 404 in 20ms
+ GET / 404 in 15ms
+ GET / 404 in 27ms
+ GET / 404 in 21ms
+ GET / 404 in 18ms
+ GET / 404 in 17ms
+ GET / 404 in 16ms
+ GET / 404 in 18ms
+ GET / 404 in 18ms
+ GET / 404 in 19ms
+ GET / 404 in 16ms
+ GET / 404 in 18ms
+ GET / 404 in 16ms
+ GET / 404 in 15ms
+ GET / 404 in 16ms
+ GET / 404 in 16ms
+ GET / 404 in 17ms
+ GET / 404 in 16ms
+ GET / 404 in 15ms
+ GET / 404 in 19ms
+ GET / 404 in 19ms
+ GET / 404 in 21ms
+ GET / 404 in 19ms
+ GET / 404 in 18ms
+ GET / 404 in 34ms
+ GET / 404 in 26ms
+ GET / 404 in 20ms
+ GET / 404 in 17ms
+ GET / 404 in 37ms
+ GET / 500 in 119ms
+ GET / 500 in 43ms
+ GET / 500 in 126ms
+ GET / 500 in 42ms
+ GET / 500 in 117ms
+ GET / 500 in 42ms
+ GET / 500 in 202ms
+ GET / 500 in 79ms
+ GET / 500 in 106ms
+ GET / 500 in 39ms
+ GET / 500 in 124ms
+ GET / 500 in 46ms
+ GET / 500 in 127ms
+ GET / 500 in 56ms
+ GET / 500 in 106ms
+ GET / 500 in 40ms
+ GET / 500 in 107ms
+ GET / 500 in 39ms
+ GET / 500 in 120ms
+ GET / 500 in 45ms
+ GET / 500 in 117ms
+ GET / 500 in 38ms
+ GET / 500 in 122ms
+ GET / 500 in 49ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 19ms
+ GET / 404 in 18ms
+ GET / 404 in 18ms
+ GET / 404 in 22ms
+ GET / 404 in 18ms
+ GET / 404 in 23ms
+ GET / 404 in 21ms
+ GET / 404 in 27ms
+ GET / 404 in 22ms
+ GET / 404 in 28ms
+ GET / 404 in 23ms
+ GET / 404 in 22ms
+ GET / 404 in 18ms
+ GET / 404 in 19ms
+ GET / 404 in 17ms
+ GET / 404 in 42ms
+ GET / 404 in 16ms
+ GET / 404 in 17ms
+ GET / 404 in 22ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 18ms
+ GET / 404 in 18ms
+ GET / 404 in 21ms
+ GET / 404 in 16ms
+ GET / 404 in 23ms
+ GET / 404 in 22ms
+ GET / 404 in 18ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 29ms
+ GET / 404 in 19ms
+ GET / 404 in 19ms
+ GET / 404 in 18ms
+ GET / 404 in 18ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 16ms
+ GET / 404 in 17ms
+ GET / 404 in 18ms
+ GET / 404 in 16ms
+ GET / 404 in 17ms
+ GET / 404 in 16ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 17ms
+ GET / 404 in 34ms
+ GET / 404 in 18ms
+ GET / 404 in 17ms
+ GET / 404 in 23ms
+ GET / 404 in 27ms
+ GET / 404 in 17ms
+ GET / 404 in 20ms
+ GET / 404 in 18ms
+ GET / 404 in 19ms
+ GET / 404 in 20ms
+ GET / 404 in 19ms
+ GET / 404 in 21ms
+ ✓ Compiled in 1629ms (1233 modules)
+ ✓ Compiled in 477ms (537 modules)
+ ✓ Compiled in 609ms (537 modules)
+ ✓ Compiled in 481ms (538 modules)
+ ✓ Compiled in 447ms (538 modules)
+ ✓ Compiled in 426ms (538 modules)
+ ✓ Compiled in 211ms (538 modules)
+ ✓ Compiled in 950ms (1234 modules)
+ ✓ Compiled in 835ms (1234 modules)
+ ✓ Compiled in 722ms (1234 modules)
+ ✓ Compiled in 1027ms (1234 modules)
+ ✓ Compiled in 963ms (1234 modules)
+ ✓ Compiled in 1028ms (1234 modules)
+ ✓ Compiled in 910ms (1234 modules)
+ ○ Compiling /app/login ...

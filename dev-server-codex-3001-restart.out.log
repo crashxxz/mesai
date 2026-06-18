@@ -1,0 +1,23 @@
+
+> hyoc-boteco@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 3001
+
+   ▲ Next.js 15.5.19
+   - Local:        http://127.0.0.1:3001
+   - Network:      http://127.0.0.1:3001
+
+ ✓ Starting...
+ ✓ Ready in 2.4s
+ ○ Compiling /app/login ...
+ ✓ Compiled /app/login in 2.3s (782 modules)
+ GET /r/boteco-da-maricota/mesa/table_2 200 in 886ms
+ GET /app/login 200 in 2458ms
+ GET /r/boteco-da-maricota/mesa/table_2 200 in 1277ms
+ GET /r/boteco-da-maricota/mesa/table_2 200 in 119ms
+ ○ Compiling /app/dashboard ...
+ ✓ Compiled /app/dashboard in 918ms (846 modules)
+ GET /app/dashboard 200 in 1319ms
+ GET /r/boteco-da-maricota/mesa/table_2 200 in 128ms
+ ✓ Compiled in 154ms (343 modules)
+ ✓ Compiled in 108ms (343 modules)
+[?25h

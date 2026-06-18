@@ -1,0 +1,77 @@
+
+> hyoc-boteco@0.1.0 dev:3001
+> next dev --hostname 127.0.0.1 --port 3001
+
+   ▲ Next.js 15.5.19
+   - Local:        http://127.0.0.1:3001
+   - Network:      http://127.0.0.1:3001
+
+ ✓ Starting...
+ ✓ Ready in 2.4s
+ ○ Compiling /app/login ...
+ ✓ Compiled /app/login in 1670ms (731 modules)
+ GET /app/login 200 in 2518ms
+ ○ Compiling /app/dashboard ...
+ ✓ Compiled /app/dashboard in 748ms (803 modules)
+ GET /app/dashboard 200 in 939ms
+ GET /app/dashboard 200 in 44ms
+ GET /app/dashboard 200 in 321ms
+ ○ Compiling /app/tables ...
+ ✓ Compiled /app/tables in 685ms (828 modules)
+ GET /app/tables 200 in 1060ms
+ GET /app/tables 200 in 64ms
+ ✓ Compiled in 1698ms (842 modules)
+ GET /app/tables 200 in 97ms
+ ○ Compiling /app/kitchen ...
+ ✓ Compiled /app/kitchen in 836ms (857 modules)
+ GET /app/kitchen 200 in 1317ms
+ ○ Compiling /app/orders/[id] ...
+ ✓ Compiled /app/orders/[id] in 1277ms (890 modules)
+ GET /app/orders/order_open_2 200 in 2661ms
+ ○ Compiling /r/[restaurantSlug]/mesa/[tableId] ...
+ ✓ Compiled /r/[restaurantSlug]/mesa/[tableId] in 853ms (901 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 11923ms
+ GET /app/kitchen 200 in 101ms
+ GET /app/orders/order_open_2 200 in 89ms
+ ✓ Compiled in 834ms (906 modules)
+ GET /app/orders/order_open_2 200 in 175ms
+ ✓ Compiled in 551ms (906 modules)
+ GET /app/orders/order_open_2 200 in 134ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 255ms
+ GET /app/tables 200 in 109ms
+ ○ Compiling /app/products ...
+ ✓ Compiled /app/products in 827ms (909 modules)
+ GET /app/products 200 in 1125ms
+ ✓ Compiled /app/finance in 479ms (922 modules)
+ GET /app/finance 200 in 687ms
+ ○ Compiling /app/cash ...
+ ✓ Compiled /app/cash in 589ms (937 modules)
+ GET /app/cash 200 in 809ms
+ GET /app/products 200 in 69ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 140ms
+ ✓ Compiled in 994ms (945 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 109ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 159ms
+ ✓ Compiled in 697ms (921 modules)
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 766ms (911 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 404 in 929ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 205ms
+ ✓ Compiled in 923ms (925 modules)
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 110ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 161ms
+ ○ Compiling / ...
+ ✓ Compiled / in 772ms (920 modules)
+ GET / 307 in 1209ms
+ ✓ Compiled /app/login in 406ms (543 modules)
+ GET /app/login 200 in 703ms
+ GET /app/login 200 in 85ms
+ GET /app/login? 200 in 67ms
+ GET /app/login? 200 in 68ms
+ ✓ Compiled /_not-found in 379ms (534 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 1486ms (1281 modules)
+ GET /app 500 in 2797ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 1542ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 42ms
+ GET /r/hyoc-boteco-demo/mesa/table_2 200 in 43ms

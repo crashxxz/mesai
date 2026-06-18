@@ -1,0 +1,25 @@
+{
+  "name": "Mesaí",
+  "short_name": "Mesaí",
+  "description": "Pedido, mesa e caixa no jeito.",
+  "start_url": "/app/login",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FFF7ED",
+  "theme_color": "#F59E0B",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

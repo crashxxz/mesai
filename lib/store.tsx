@@ -1,0 +1,1242 @@
+"use client";
+
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode
+} from "react";
+import { createMaricotaCatalog, createSeedState } from "@/lib/seed";
+import { emitDemoRealtime } from "@/lib/realtime";
+import { createLocalStorageAdapter } from "@/lib/storage-adapter";
+import {
+  calculateOrderTotals,
+  createAuditLog,
+  getOpenOrderForTable,
+  getPaidTotal
+} from "@/lib/services";
+import type {
+  AppState,
+  Category,
+  OrderItem,
+  OrderItemAddon,
+  OrderItemStatus,
+  OrderSource,
+  PaymentMethod,
+  Product,
+  Profile,
+  Restaurant,
+  RestaurantSettings,
+  RestaurantTable,
+  TableAlertType,
+  UUID
+} from "@/lib/types";
+import { uid } from "@/lib/utils";
+
+const storageKey = "mesai-demo-v2";
+const storageAdapter = createLocalStorageAdapter<AppState>(storageKey);
+
+interface AddOrderItemInput {
+  quantity: number;
+  notes?: string;
+  variationId?: UUID;
+  addonIds?: UUID[];
+}
+
+interface RegisterPaymentInput {
+  method: PaymentMethod;
+  amount: number;
+  cardBrand?: string;
+  changeAmount?: number;
+}
+
+interface CartItemInput extends AddOrderItemInput {
+  productId: UUID;
+}
+
+interface CreateExpenseInput {
+  description: string;
+  amount: number;
+  category: string;
+  date: string;
+  paymentMethod?: PaymentMethod;
+  notes?: string;
+}
+
+interface StoreContextValue {
+  state: AppState;
+  hydrated: boolean;
+  profile?: Profile;
+  restaurant?: Restaurant;
+  settings?: RestaurantSettings;
+  login: (email: string, password: string) => boolean;
+  logout: () => void;
+  resetDemo: () => void;
+  reloadMaricotaCatalog: () => void;
+  createOrder: (tableId?: UUID, source?: OrderSource, customerName?: string, notes?: string) => UUID;
+  createQrOrder: (tableId: UUID, customerName: string | undefined, items: CartItemInput[]) => UUID | undefined;
+  ensureOpenOrderForTable: (tableId: UUID) => UUID;
+  addOrderItem: (orderId: UUID, productId: UUID, input: AddOrderItemInput) => UUID | undefined;
+  sendItemsToPreparation: (orderId: UUID) => void;
+  updateOrderItemStatus: (itemId: UUID, status: OrderItemStatus) => void;
+  cancelOrderItem: (itemId: UUID, reason: string) => void;
+  updateOrderDiscount: (orderId: UUID, discount: number) => void;
+  transferOrderTable: (orderId: UUID, newTableId: UUID) => void;
+  mergeOrders: (sourceOrderId: UUID, targetOrderId: UUID) => void;
+  closeOrder: (orderId: UUID) => void;
+  reopenOrder: (orderId: UUID, reason: string) => void;
+  registerPayment: (orderId: UUID, input: RegisterPaymentInput) => void;
+  createExpense: (input: CreateExpenseInput) => void;
+  createCategory: (name: string) => void;
+  createProduct: (input: Partial<Product> & Pick<Product, "name" | "categoryId" | "price" | "preparationSector">) => void;
+  updateProduct: (productId: UUID, patch: Partial<Product>) => void;
+  recordStockMovement: (productId: UUID, type: "entry" | "exit", quantity: number, reason: string) => void;
+  updateTable: (tableId: UUID, patch: Partial<RestaurantTable>) => void;
+  requestTableService: (tableId: UUID, type: TableAlertType) => void;
+  resolveTableAlerts: (tableId: UUID, type?: TableAlertType) => void;
+  createTable: () => void;
+  updateRestaurant: (patch: Partial<Restaurant>) => void;
+  updateSettings: (patch: Partial<RestaurantSettings>) => void;
+  createProfile: (name: string, email: string, role: Profile["role"]) => void;
+  openCashSession: (openingAmount: number) => UUID;
+  addCashMovement: (type: "withdrawal" | "supply" | "adjustment", amount: number, description: string) => void;
+  closeCashSession: (countedAmount: number) => void;
+  updateProfile: (profileId: UUID, patch: Partial<Profile>) => void;
+}
+
+const StoreContext = createContext<StoreContextValue | undefined>(undefined);
+
+export function StoreProvider({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<AppState>(() => createSeedState());
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setState(loadState());
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && hydrated) {
+      storageAdapter.save(state);
+    }
+  }, [hydrated, state]);
+
+  const profile = state.profiles.find((item) => item.id === state.currentProfileId);
+  const restaurant = state.restaurants.find((item) => item.id === profile?.restaurantId) ?? state.restaurants[0];
+  const settings = state.settings.find((item) => item.restaurantId === restaurant?.id);
+
+  const value = useMemo<StoreContextValue>(() => {
+    function commit(next: AppState, topic = "state") {
+      setState(next);
+      emitDemoRealtime(topic);
+    }
+
+    function withTotals(next: AppState, orderId: UUID) {
+      const order = next.orders.find((item) => item.id === orderId);
+      if (!order) return next;
+      const totals = calculateOrderTotals(next, order);
+      return {
+        ...next,
+        orders: next.orders.map((item) =>
+          item.id === orderId
+            ? {
+                ...item,
+                subtotal: totals.subtotal,
+                serviceFee: totals.serviceFee,
+                total: totals.total,
+                updatedAt: new Date().toISOString()
+              }
+            : item
+        )
+      };
+    }
+
+    function currentProfile(next = state) {
+      return next.profiles.find((item) => item.id === next.currentProfileId) ?? next.profiles[0];
+    }
+
+    function createOrderAction(tableId?: UUID, source: OrderSource = "waiter", customerName?: string, notes?: string) {
+      const now = new Date().toISOString();
+      const activeProfile = source === "qr_code" ? undefined : currentProfile();
+      const orderId = uid("order");
+      const tabId = uid("tab");
+      const table = state.tables.find((item) => item.id === tableId);
+      const restaurantId = table?.restaurantId ?? activeProfile?.restaurantId ?? restaurant?.id ?? state.restaurants[0].id;
+      let next: AppState = {
+        ...state,
+        tabs: [
+          ...state.tabs,
+          {
+            id: tabId,
+            restaurantId,
+            tableId,
+            customerName,
+            status: "open",
+            openedBy: activeProfile?.id ?? "public_qr",
+            openedAt: now
+          }
+        ],
+        orders: [
+          ...state.orders,
+          {
+            id: orderId,
+            restaurantId,
+            tableId,
+            tabId,
+            customerName,
+            source,
+            status: "open",
+            createdBy: activeProfile?.id,
+            subtotal: 0,
+            discount: 0,
+            serviceFee: 0,
+            deliveryFee: 0,
+            total: 0,
+            notes,
+            createdAt: now,
+            updatedAt: now
+          }
+        ],
+        tables: state.tables.map((table) =>
+          table.id === tableId ? { ...table, status: "occupied", updatedAt: now } : table
+        )
+      };
+      next = {
+        ...next,
+        auditLogs: [...next.auditLogs, createAuditLog(next, "order_created", "orders", orderId)]
+      };
+      commit(next, "order");
+      return orderId;
+    }
+
+    return {
+      state,
+      hydrated,
+      profile,
+      restaurant,
+      settings,
+      login(email, password) {
+        const normalized = email.trim().toLowerCase();
+        const credential = state.credentials.find(
+          (item) => item.email === normalized && item.password === password
+        );
+        const nextProfile = state.profiles.find((item) => item.id === credential?.profileId && item.active);
+        if (!credential || !nextProfile) return false;
+        commit({ ...state, currentProfileId: credential.profileId }, "auth");
+        return true;
+      },
+      logout() {
+        commit({ ...state, currentProfileId: undefined }, "auth");
+      },
+      resetDemo() {
+        commit(createSeedState(), "reset");
+      },
+      reloadMaricotaCatalog() {
+        commit({ ...state, ...createMaricotaCatalog() }, "catalog");
+      },
+      createOrder: createOrderAction,
+      createQrOrder(tableId, customerName, items) {
+        if (!items.length) return undefined;
+        const now = new Date().toISOString();
+        const orderId = uid("order");
+        const tabId = uid("tab");
+        const table = state.tables.find((item) => item.id === tableId);
+        const restaurantId = table?.restaurantId ?? restaurant?.id ?? state.restaurants[0].id;
+        const qrNeedApproval =
+          state.settings.find((setting) => setting.restaurantId === restaurantId)?.qrOrdersNeedApproval ?? false;
+        const orderItems: OrderItem[] = [];
+        const orderAddons: OrderItemAddon[] = [];
+
+        for (const cartItem of items) {
+          const product = state.products.find((item) => item.id === cartItem.productId && item.active && item.available);
+          if (!product) continue;
+          const itemId = uid("item");
+          const variation = state.productVariations.find((item) => item.id === cartItem.variationId);
+          orderItems.push({
+            id: itemId,
+            orderId,
+            restaurantId,
+            productId: product.id,
+            productNameSnapshot: product.name,
+            unitPriceSnapshot: product.price,
+            quantity: Math.max(1, cartItem.quantity),
+            variationName: variation?.name,
+            variationPriceDelta: variation?.priceDelta,
+            notes: cartItem.notes,
+            preparationSector: product.preparationSector,
+            status: qrNeedApproval ? "pending" : product.preparationSector === "none" ? "delivered" : "sent",
+            createdAt: now,
+            updatedAt: now,
+            sentAt: qrNeedApproval ? undefined : now,
+            deliveredAt: !qrNeedApproval && product.preparationSector === "none" ? now : undefined
+          });
+          for (const addonId of cartItem.addonIds ?? []) {
+            const addon = state.productAddons.find((item) => item.id === addonId && item.active);
+            if (!addon) continue;
+            orderAddons.push({
+              id: uid("item_addon"),
+              orderItemId: itemId,
+              addonNameSnapshot: addon.name,
+              addonPriceSnapshot: addon.price,
+              quantity: 1
+            });
+          }
+        }
+
+        if (!orderItems.length) return undefined;
+
+        let next: AppState = {
+          ...state,
+          tabs: [
+            ...state.tabs,
+            {
+              id: tabId,
+              restaurantId,
+              tableId,
+              customerName,
+              status: "open",
+              openedBy: "public_qr",
+              openedAt: now
+            }
+          ],
+          orders: [
+            ...state.orders,
+            {
+              id: orderId,
+              restaurantId,
+              tableId,
+              tabId,
+              customerName,
+              source: "qr_code",
+              status: qrNeedApproval ? "open" : "sent",
+              subtotal: 0,
+              discount: 0,
+              serviceFee: 0,
+              deliveryFee: 0,
+              total: 0,
+              createdAt: now,
+              updatedAt: now
+            }
+          ],
+          orderItems: [...state.orderItems, ...orderItems],
+          orderItemAddons: [...state.orderItemAddons, ...orderAddons],
+          tables: state.tables.map((table) =>
+            table.id === tableId ? { ...table, status: "occupied", updatedAt: now } : table
+          )
+        };
+        next = withTotals(next, orderId);
+        next = {
+          ...next,
+          auditLogs: [...next.auditLogs, createAuditLog(next, "qr_order_created", "orders", orderId)]
+        };
+        commit(next, "preparation");
+        return orderId;
+      },
+      ensureOpenOrderForTable(tableId) {
+        const existing = getOpenOrderForTable(state, tableId);
+        if (existing) return existing.id;
+        return createOrderAction(tableId, "waiter");
+      },
+      addOrderItem(orderId, productId, input) {
+        const product = state.products.find((item) => item.id === productId && item.active && item.available);
+        const order = state.orders.find((item) => item.id === orderId);
+        if (!product || !order) return undefined;
+
+        const now = new Date().toISOString();
+        const variation = state.productVariations.find((item) => item.id === input.variationId);
+        const itemId = uid("item");
+        const addons = (input.addonIds ?? [])
+          .map((addonId): OrderItemAddon | undefined => {
+            const addon = state.productAddons.find((item) => item.id === addonId && item.active);
+            if (!addon) return undefined;
+            return {
+              id: uid("item_addon"),
+              orderItemId: itemId,
+              addonNameSnapshot: addon.name,
+              addonPriceSnapshot: addon.price,
+              quantity: 1
+            };
+          })
+          .filter(Boolean) as OrderItemAddon[];
+
+        const item: OrderItem = {
+          id: itemId,
+          orderId,
+          restaurantId: order.restaurantId,
+          productId: product.id,
+          productNameSnapshot: product.name,
+          unitPriceSnapshot: product.price,
+          quantity: Math.max(1, input.quantity),
+          variationName: variation?.name,
+          variationPriceDelta: variation?.priceDelta,
+          notes: input.notes,
+          preparationSector: product.preparationSector,
+          status: "pending",
+          createdBy: profile?.id,
+          createdAt: now,
+          updatedAt: now
+        };
+
+        let next: AppState = {
+          ...state,
+          orderItems: [...state.orderItems, item],
+          orderItemAddons: [...state.orderItemAddons, ...addons]
+        };
+        next = withTotals(next, orderId);
+        next = {
+          ...next,
+          auditLogs: [...next.auditLogs, createAuditLog(next, "order_item_added", "order_items", itemId)]
+        };
+        commit(next, "order_item");
+        return itemId;
+      },
+      sendItemsToPreparation(orderId) {
+        const now = new Date().toISOString();
+        let hasPrepItem = false;
+        const nextItems = state.orderItems.map((item) => {
+          if (item.orderId !== orderId || item.status !== "pending") return item;
+          if (item.preparationSector !== "none") hasPrepItem = true;
+          return {
+            ...item,
+            status: item.preparationSector === "none" ? "delivered" : "sent",
+            sentAt: now,
+            deliveredAt: item.preparationSector === "none" ? now : item.deliveredAt,
+            updatedAt: now
+          } satisfies OrderItem;
+        });
+        let next: AppState = {
+          ...state,
+          orderItems: nextItems,
+          orders: state.orders.map((order) =>
+            order.id === orderId
+              ? { ...order, status: hasPrepItem ? "sent" : "delivered", updatedAt: now }
+              : order
+          )
+        };
+        next = {
+          ...next,
+          auditLogs: [...next.auditLogs, createAuditLog(next, "items_sent_to_preparation", "orders", orderId)]
+        };
+        commit(next, "preparation");
+      },
+      updateOrderItemStatus(itemId, status) {
+        const now = new Date().toISOString();
+        const oldItem = state.orderItems.find((item) => item.id === itemId);
+        if (!oldItem) return;
+
+        const nextItems = state.orderItems.map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                status,
+                updatedAt: now,
+                preparingAt: status === "preparing" ? now : item.preparingAt,
+                readyAt: status === "ready" ? now : item.readyAt,
+                deliveredAt: status === "delivered" ? now : item.deliveredAt
+              }
+            : item
+        );
+        const orderItems = nextItems.filter((item) => item.orderId === oldItem.orderId && item.status !== "cancelled");
+        const orderStatus = orderItems.some((item) => item.status === "preparing")
+          ? "preparing"
+          : orderItems.length > 0 && orderItems.every((item) => item.status === "ready" || item.status === "delivered")
+            ? "ready"
+            : "sent";
+
+        let next: AppState = {
+          ...state,
+          orderItems: nextItems,
+          orders: state.orders.map((order) =>
+            order.id === oldItem.orderId && order.status !== "closed"
+              ? { ...order, status: orderStatus, updatedAt: now }
+              : order
+          )
+        };
+        next = {
+          ...next,
+          auditLogs: [...next.auditLogs, createAuditLog(next, "order_item_status_updated", "order_items", itemId, oldItem)]
+        };
+        commit(next, "preparation");
+      },
+      cancelOrderItem(itemId, reason) {
+        const activeProfile = currentProfile();
+        const oldItem = state.orderItems.find((item) => item.id === itemId);
+        if (!oldItem || !reason.trim()) return;
+        if (oldItem.status === "preparing" && activeProfile?.role !== "owner") return;
+
+        const now = new Date().toISOString();
+        let next: AppState = {
+          ...state,
+          orderItems: state.orderItems.map((item) =>
+            item.id === itemId
+              ? { ...item, status: "cancelled", cancelReason: reason, updatedAt: now }
+              : item
+          )
+        };
+        next = withTotals(next, oldItem.orderId);
+        next = {
+          ...next,
+          auditLogs: [
+            ...next.auditLogs,
+            createAuditLog(next, "order_item_cancelled", "order_items", itemId, oldItem, { reason })
+          ]
+        };
+        commit(next, "order_item");
+      },
+      updateOrderDiscount(orderId, discount) {
+        let next: AppState = {
+          ...state,
+          orders: state.orders.map((order) =>
+            order.id === orderId ? { ...order, discount: Math.max(0, discount) } : order
+          )
+        };
+        next = withTotals(next, orderId);
+        next = {
+          ...next,
+          auditLogs: [...next.auditLogs, createAuditLog(next, "discount_applied", "orders", orderId)]
+        };
+        commit(next, "order");
+      },
+      transferOrderTable(orderId, newTableId) {
+        const now = new Date().toISOString();
+        const order = state.orders.find((item) => item.id === orderId);
+        if (!order || order.tableId === newTableId) return;
+        const oldTableId = order.tableId;
+        let next: AppState = {
+          ...state,
+          orders: state.orders.map((item) =>
+            item.id === orderId ? { ...item, tableId: newTableId, updatedAt: now } : item
+          ),
+          tabs: state.tabs.map((tab) =>
+            tab.id === order.tabId ? { ...tab, tableId: newTableId } : tab
+          ),
+          tables: state.tables.map((table) =>
+            table.id === newTableId ? { ...table, status: "occupied", updatedAt: now } : table
+          )
+        };
+        const oldHasOpen = next.orders.some(
+          (item) => item.tableId === oldTableId && item.id !== orderId && !["closed", "cancelled"].includes(item.status)
+        );
+        if (oldTableId && !oldHasOpen) {
+          next = {
+            ...next,
+            tables: next.tables.map((table) =>
+              table.id === oldTableId ? { ...table, status: "free", updatedAt: now } : table
+            )
+          };
+        }
+        next = {
+          ...next,
+          auditLogs: [
+            ...next.auditLogs,
+            createAuditLog(next, "table_transferred", "orders", orderId, { tableId: oldTableId }, { tableId: newTableId })
+          ]
+        };
+        commit(next, "tables");
+      },
+      mergeOrders(sourceOrderId, targetOrderId) {
+        const now = new Date().toISOString();
+        const source = state.orders.find((item) => item.id === sourceOrderId);
+        const target = state.orders.find((item) => item.id === targetOrderId);
+        if (!source || !target || source.id === target.id) return;
+        let next: AppState = {
+          ...state,
+          orderItems: state.orderItems.map((item) =>
+            item.orderId === sourceOrderId ? { ...item, orderId: targetOrderId, updatedAt: now } : item
+          ),
+          orders: state.orders.map((order) =>
+            order.id === sourceOrderId
+              ? { ...order, status: "cancelled", cancelReason: `Juntado ao pedido ${targetOrderId}`, updatedAt: now }
+              : order
+          )
+        };
+        next = withTotals(next, targetOrderId);
+        if (source.tableId) {
+          const sourceHasOpen = next.orders.some(
+            (item) => item.tableId === source.tableId && item.id !== sourceOrderId && !["closed", "cancelled"].includes(item.status)
+          );
+          if (!sourceHasOpen) {
+            next = {
+              ...next,
+              tables: next.tables.map((table) =>
+                table.id === source.tableId ? { ...table, status: "free", updatedAt: now } : table
+              )
+            };
+          }
+        }
+        next = {
+          ...next,
+          auditLogs: [
+            ...next.auditLogs,
+            createAuditLog(next, "tables_merged", "orders", targetOrderId, { sourceOrderId }, { targetOrderId })
+          ]
+        };
+        commit(next, "order");
+      },
+      closeOrder(orderId) {
+        const now = new Date().toISOString();
+        const order = state.orders.find((item) => item.id === orderId);
+        if (!order) return;
+
+        let next: AppState = {
+          ...state,
+          orders: state.orders.map((item) =>
+            item.id === orderId
+              ? { ...item, status: "closed", closedBy: profile?.id, closedAt: now, updatedAt: now }
+              : item
+          ),
+          tabs: state.tabs.map((tab) =>
+            tab.id === order.tabId ? { ...tab, status: "closed", closedBy: profile?.id, closedAt: now } : tab
+          )
+        };
+        const hasOtherOpen = next.orders.some(
+          (item) => item.tableId === order.tableId && item.id !== orderId && !["closed", "cancelled"].includes(item.status)
+        );
+        if (order.tableId && !hasOtherOpen) {
+          next = {
+            ...next,
+            tables: next.tables.map((table) =>
+              table.id === order.tableId ? { ...table, status: "free", updatedAt: now } : table
+            )
+          };
+        }
+        if (order.tableId) {
+          next = {
+            ...next,
+            tableAlerts: (next.tableAlerts ?? []).map((alert) =>
+              alert.tableId === order.tableId && alert.active
+                ? { ...alert, active: false, resolvedAt: now }
+                : alert
+            )
+          };
+        }
+        next = {
+          ...next,
+          auditLogs: [...next.auditLogs, createAuditLog(next, "order_closed", "orders", orderId)]
+        };
+        commit(next, "order");
+      },
+      reopenOrder(orderId, reason) {
+        const now = new Date().toISOString();
+        const order = state.orders.find((item) => item.id === orderId);
+        const activeProfile = currentProfile();
+        if (!order || !reason.trim() || !["owner", "waiter"].includes(activeProfile?.role ?? "bar")) return;
+
+        let next: AppState = {
+          ...state,
+          orders: state.orders.map((item) =>
+            item.id === orderId
+              ? { ...item, status: "open", closedAt: undefined, closedBy: undefined, updatedAt: now }
+              : item
+          )
+        };
+        if (order.tableId) {
+          next = {
+            ...next,
+            tables: next.tables.map((table) =>
+              table.id === order.tableId ? { ...table, status: "occupied", updatedAt: now } : table
+            )
+          };
+        }
+        next = {
+          ...next,
+          auditLogs: [...next.auditLogs, createAuditLog(next, "order_reopened", "orders", orderId, order, { reason })]
+        };
+        commit(next, "order");
+      },
+      registerPayment(orderId, input) {
+        const now = new Date().toISOString();
+        const order = state.orders.find((item) => item.id === orderId);
+        if (!order || input.amount <= 0) return;
+        const paymentId = uid("pay");
+        const activeCash = state.cashSessions.find(
+          (item) => item.restaurantId === order.restaurantId && item.status === "open"
+        );
+
+        let next: AppState = {
+          ...state,
+          payments: [
+            ...state.payments,
+            {
+              id: paymentId,
+              restaurantId: order.restaurantId,
+              orderId,
+              method: input.method,
+              amount: Number(input.amount.toFixed(2)),
+              cardBrand: input.cardBrand,
+              changeAmount: input.changeAmount,
+              createdBy: profile?.id,
+              createdAt: now
+            }
+          ],
+          financialEntries: [
+            ...state.financialEntries,
+            {
+              id: uid("fin"),
+              restaurantId: order.restaurantId,
+              type: "income",
+              category: input.method === "internal_consumption" ? "internal_consumption" : "sale",
+              description: `Pedido ${order.id}`,
+              amount: Number(input.amount.toFixed(2)),
+              date: now.slice(0, 10),
+              paid: true,
+              paymentMethod: input.method,
+              orderId,
+              createdBy: profile?.id,
+              createdAt: now,
+              updatedAt: now
+            }
+          ]
+        };
+
+        if (activeCash && input.method === "cash") {
+          next = {
+            ...next,
+            cashMovements: [
+              ...next.cashMovements,
+              {
+                id: uid("cash_move"),
+                restaurantId: order.restaurantId,
+                cashSessionId: activeCash.id,
+                type: "sale",
+                amount: input.amount,
+                description: `Pedido ${order.id}`,
+                createdBy: profile?.id,
+                createdAt: now
+              }
+            ],
+            cashSessions: next.cashSessions.map((session) =>
+              session.id === activeCash.id
+                ? { ...session, expectedAmount: session.expectedAmount + input.amount }
+                : session
+            )
+          };
+        }
+
+        next = {
+          ...next,
+          auditLogs: [...next.auditLogs, createAuditLog(next, "payment_registered", "payments", paymentId)]
+        };
+
+        const paid = getPaidTotal(next, orderId);
+        if (paid + 0.001 >= order.total) {
+          next = {
+            ...next,
+            orders: next.orders.map((item) =>
+              item.id === orderId
+                ? { ...item, status: "closed", closedBy: profile?.id, closedAt: now, updatedAt: now }
+                : item
+            ),
+            tabs: next.tabs.map((tab) =>
+              tab.id === order.tabId ? { ...tab, status: "closed", closedBy: profile?.id, closedAt: now } : tab
+            )
+          };
+          if (order.tableId) {
+            next = {
+              ...next,
+              tables: next.tables.map((table) =>
+                table.id === order.tableId ? { ...table, status: "free", updatedAt: now } : table
+              ),
+              tableAlerts: (next.tableAlerts ?? []).map((alert) =>
+                alert.tableId === order.tableId && alert.active
+                  ? { ...alert, active: false, resolvedAt: now }
+                  : alert
+              )
+            };
+          }
+        }
+
+        commit(next, "payment");
+      },
+      createExpense(input) {
+        const description = input.description.trim();
+        const amount = Number(input.amount.toFixed(2));
+        if (!description || amount <= 0 || !input.category || !input.date) return;
+        const now = new Date().toISOString();
+        const entryId = uid("fin");
+        let next: AppState = {
+          ...state,
+          financialEntries: [
+            ...state.financialEntries,
+            {
+              id: entryId,
+              restaurantId: restaurant?.id ?? state.restaurants[0].id,
+              type: "expense",
+              category: input.category,
+              description,
+              amount,
+              date: input.date,
+              paid: true,
+              paymentMethod: input.paymentMethod,
+              notes: input.notes?.trim() || undefined,
+              createdBy: profile?.id,
+              createdAt: now,
+              updatedAt: now
+            }
+          ]
+        };
+        next = {
+          ...next,
+          auditLogs: [...next.auditLogs, createAuditLog(next, "expense_created", "financial_entries", entryId)]
+        };
+        commit(next, "finance");
+      },
+      createCategory(name) {
+        const now = new Date().toISOString();
+        const restaurantId = restaurant?.id ?? state.restaurants[0].id;
+        const category: Category = {
+          id: uid("cat"),
+          restaurantId,
+          name,
+          sortOrder: state.categories.length + 1,
+          active: true,
+          createdAt: now,
+          updatedAt: now
+        };
+        commit({ ...state, categories: [...state.categories, category] }, "catalog");
+      },
+      createProduct(input) {
+        const now = new Date().toISOString();
+        const restaurantId = restaurant?.id ?? state.restaurants[0].id;
+        const product: Product = {
+          id: uid("prod"),
+          restaurantId,
+          categoryId: input.categoryId,
+          name: input.name,
+          description: input.description,
+          price: Number(input.price),
+          preparationSector: input.preparationSector,
+          estimatedTimeMinutes: input.estimatedTimeMinutes,
+          available: input.available ?? true,
+          hasStockControl: input.hasStockControl ?? false,
+          stockQuantity: input.stockQuantity ?? 0,
+          stockMinimum: input.stockMinimum ?? 0,
+          imageUrl: input.imageUrl,
+          active: input.active ?? true,
+          createdAt: now,
+          updatedAt: now
+        };
+        commit({ ...state, products: [...state.products, product] }, "catalog");
+      },
+      updateProduct(productId, patch) {
+        const oldProduct = state.products.find((item) => item.id === productId);
+        const now = new Date().toISOString();
+        let next: AppState = {
+          ...state,
+          products: state.products.map((product) =>
+            product.id === productId ? { ...product, ...patch, updatedAt: now } : product
+          )
+        };
+        next = {
+          ...next,
+          auditLogs: [
+            ...next.auditLogs,
+            createAuditLog(next, "product_updated", "products", productId, oldProduct, patch)
+          ]
+        };
+        commit(next, "catalog");
+      },
+      recordStockMovement(productId, type, quantity, reason) {
+        const product = state.products.find((item) => item.id === productId);
+        const amount = Math.abs(quantity);
+        if (!product || amount <= 0 || !reason.trim()) return;
+        const currentQuantity = product.stockQuantity ?? 0;
+        const nextQuantity = Math.max(0, type === "entry" ? currentQuantity + amount : currentQuantity - amount);
+        const movedQuantity = Math.abs(nextQuantity - currentQuantity);
+        if (movedQuantity <= 0) return;
+        const now = new Date().toISOString();
+        const movementId = uid("stock");
+        let next: AppState = {
+          ...state,
+          products: state.products.map((item) =>
+            item.id === productId
+              ? { ...item, hasStockControl: true, stockQuantity: nextQuantity, updatedAt: now }
+              : item
+          ),
+          stockMovements: [
+            ...(state.stockMovements ?? []),
+            {
+              id: movementId,
+              restaurantId: product.restaurantId,
+              productId,
+              type,
+              quantity: movedQuantity,
+              reason: reason.trim(),
+              createdBy: profile?.id,
+              createdAt: now
+            }
+          ]
+        };
+        next = {
+          ...next,
+          auditLogs: [...next.auditLogs, createAuditLog(next, "stock_movement_created", "stock_movements", movementId)]
+        };
+        commit(next, "stock");
+      },
+      updateTable(tableId, patch) {
+        const now = new Date().toISOString();
+        commit(
+          {
+            ...state,
+            tables: state.tables.map((table) =>
+              table.id === tableId ? { ...table, ...patch, updatedAt: now } : table
+            )
+          },
+          "tables"
+        );
+      },
+      requestTableService(tableId, type) {
+        const table = state.tables.find((item) => item.id === tableId);
+        if (!table) return;
+        const now = new Date().toISOString();
+        const hasOpenAlert = (state.tableAlerts ?? []).some(
+          (alert) => alert.tableId === tableId && alert.type === type && alert.active
+        );
+        commit(
+          {
+            ...state,
+            tableAlerts: hasOpenAlert
+              ? state.tableAlerts
+              : [
+                  ...(state.tableAlerts ?? []),
+                  {
+                    id: uid("table_alert"),
+                    restaurantId: table.restaurantId,
+                    tableId,
+                    type,
+                    active: true,
+                    createdAt: now
+                  }
+                ],
+            tables:
+              type === "bill_request"
+                ? state.tables.map((item) =>
+                    item.id === tableId ? { ...item, status: "closing", updatedAt: now } : item
+                  )
+                : state.tables
+          },
+          "tables"
+        );
+      },
+      resolveTableAlerts(tableId, type) {
+        const now = new Date().toISOString();
+        commit(
+          {
+            ...state,
+            tableAlerts: (state.tableAlerts ?? []).map((alert) =>
+              alert.tableId === tableId && alert.active && (!type || alert.type === type)
+                ? { ...alert, active: false, resolvedAt: now }
+                : alert
+            )
+          },
+          "tables"
+        );
+      },
+      createTable() {
+        const now = new Date().toISOString();
+        const restaurantId = restaurant?.id ?? state.restaurants[0].id;
+        const max = Math.max(0, ...state.tables.map((table) => table.number));
+        commit(
+          {
+            ...state,
+            tables: [
+              ...state.tables,
+              {
+                id: uid("table"),
+                restaurantId,
+                number: max + 1,
+                name: `Mesa ${max + 1}`,
+                status: "free",
+                active: true,
+                createdAt: now,
+                updatedAt: now
+              }
+            ]
+          },
+          "tables"
+        );
+      },
+      updateRestaurant(patch) {
+        const now = new Date().toISOString();
+        commit(
+          {
+            ...state,
+            restaurants: state.restaurants.map((item) =>
+              item.id === restaurant?.id ? { ...item, ...patch, updatedAt: now } : item
+            )
+          },
+          "settings"
+        );
+      },
+      updateSettings(patch) {
+        commit(
+          {
+            ...state,
+            settings: state.settings.map((item) =>
+              item.restaurantId === restaurant?.id ? { ...item, ...patch } : item
+            )
+          },
+          "settings"
+        );
+      },
+      createProfile(name, email, role) {
+        const now = new Date().toISOString();
+        const profileId = uid("profile");
+        const normalized = email.trim().toLowerCase();
+        commit(
+          {
+            ...state,
+            profiles: [
+              ...state.profiles,
+              {
+                id: profileId,
+                userId: uid("user"),
+                restaurantId: restaurant?.id ?? state.restaurants[0].id,
+                name,
+                email: normalized,
+                role,
+                active: true,
+                createdAt: now,
+                updatedAt: now
+              }
+            ],
+            credentials: [
+              ...state.credentials,
+              {
+                email: normalized,
+                password: "demo123",
+                profileId
+              }
+            ]
+          },
+          "users"
+        );
+      },
+      openCashSession(openingAmount) {
+        const current = state.cashSessions.find(
+          (item) => item.restaurantId === restaurant?.id && item.status === "open"
+        );
+        if (current) return current.id;
+        const now = new Date().toISOString();
+        const sessionId = uid("cash");
+        let next: AppState = {
+          ...state,
+          cashSessions: [
+              ...state.cashSessions,
+              {
+                id: sessionId,
+                restaurantId: restaurant?.id ?? state.restaurants[0].id,
+                openedBy: profile?.id ?? state.profiles[0].id,
+                openingAmount,
+                expectedAmount: openingAmount,
+                status: "open",
+                openedAt: now
+              }
+          ],
+          cashMovements: [
+              ...state.cashMovements,
+              {
+                id: uid("cash_move"),
+                restaurantId: restaurant?.id ?? state.restaurants[0].id,
+                cashSessionId: sessionId,
+                type: "supply",
+                amount: openingAmount,
+                description: "Abertura de caixa",
+                createdBy: profile?.id,
+                createdAt: now
+              }
+          ]
+        };
+        next = {
+          ...next,
+          auditLogs: [...next.auditLogs, createAuditLog(next, "cash_opened", "cash_sessions", sessionId)]
+        };
+        commit(next, "cash");
+        return sessionId;
+      },
+      addCashMovement(type, amount, description) {
+        const session = state.cashSessions.find(
+          (item) => item.restaurantId === restaurant?.id && item.status === "open"
+        );
+        if (!session || amount <= 0 || !description.trim()) return;
+        const now = new Date().toISOString();
+        const signed = type === "withdrawal" ? -amount : amount;
+        const movementId = uid("cash_move");
+        let next: AppState = {
+          ...state,
+          cashMovements: [
+              ...state.cashMovements,
+              {
+                id: movementId,
+                restaurantId: session.restaurantId,
+                cashSessionId: session.id,
+                type,
+                amount,
+                description,
+                createdBy: profile?.id,
+                createdAt: now
+              }
+          ],
+          cashSessions: state.cashSessions.map((item) =>
+              item.id === session.id ? { ...item, expectedAmount: item.expectedAmount + signed } : item
+          )
+        };
+        next = {
+          ...next,
+          auditLogs: [...next.auditLogs, createAuditLog(next, "cash_movement_created", "cash_movements", movementId)]
+        };
+        commit(next, "cash");
+      },
+      closeCashSession(countedAmount) {
+        const session = state.cashSessions.find(
+          (item) => item.restaurantId === restaurant?.id && item.status === "open"
+        );
+        if (!session) return;
+        const now = new Date().toISOString();
+        const difference = countedAmount - session.expectedAmount;
+        let next: AppState = {
+          ...state,
+          cashSessions: state.cashSessions.map((item) =>
+            item.id === session.id
+              ? {
+                  ...item,
+                  countedAmount,
+                  differenceAmount: difference,
+                  closedBy: profile?.id,
+                  status: "closed",
+                  closedAt: now
+                }
+              : item
+          )
+        };
+        next = {
+          ...next,
+          auditLogs: [...next.auditLogs, createAuditLog(next, "cash_closed", "cash_sessions", session.id)]
+        };
+        commit(next, "cash");
+      },
+      updateProfile(profileId, patch) {
+        const now = new Date().toISOString();
+        commit(
+          {
+            ...state,
+            profiles: state.profiles.map((item) =>
+              item.id === profileId ? { ...item, ...patch, updatedAt: now } : item
+            )
+          },
+          "users"
+        );
+      }
+    };
+  }, [hydrated, profile, restaurant, settings, state]);
+
+  return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
+}
+
+export function useStore() {
+  const value = useContext(StoreContext);
+  if (!value) {
+    throw new Error("useStore must be used inside StoreProvider");
+  }
+  return value;
+}
+
+function loadState() {
+  if (typeof window === "undefined") return createSeedState();
+
+  try {
+    const parsed = storageAdapter.load();
+    if (!parsed) return createSeedState();
+    if (!parsed.restaurants?.length || !parsed.products?.length) return createSeedState();
+    return migrateDemoText(parsed);
+  } catch {
+    return createSeedState();
+  }
+}
+
+function migrateDemoText(state: AppState): AppState {
+  const freshDemo = createSeedState();
+  const needsMaricotaCatalog =
+    state.restaurants.some((restaurant) => restaurant.id === "rest_maricota_demo") &&
+    !state.products.some((product) => product.id === "prod_bacardi_copo");
+  const stockDefaults = new Map(freshDemo.products.map((product) => [product.id, product]));
+  const demoExpense = freshDemo.financialEntries.find((entry) => entry.id === "fin_demo_gas");
+  const text: Record<string, string> = {
+    "Garcom HYOC": "Garçom Maricota",
+    "Dono HYOC": "Dono Maricota",
+    "Garçom HYOC": "Garçom Maricota",
+    "Cozinha HYOC": "Cozinha Maricota",
+    "Bar HYOC": "Bar Maricota",
+    Garcom: "Garçom",
+    Porcoes: "Porções",
+    Agua: "Água",
+    "Porcao crocante": "Porção crocante",
+    "Porcao de calabresa": "Porção de calabresa"
+  };
+
+  const restaurants = state.restaurants.map((restaurant) => ({
+    ...restaurant,
+    name: restaurant.name === "HYOC Boteco Demo" ? "Boteco da Maricota" : restaurant.name,
+    slug: restaurant.slug === "hyoc-boteco-demo" ? "boteco-da-maricota" : restaurant.slug,
+    city: restaurant.city ?? "Iguatu-CE",
+    phone: restaurant.phone === "(11) 99999-0000" || !restaurant.phone ? "+55 88 9629-8276" : restaurant.phone,
+    whatsappUrl: restaurant.whatsappUrl ?? "https://wa.me/558896298276",
+    address: restaurant.address === "Rua Demo, 123" || !restaurant.address ? "Iguatu-CE" : restaurant.address
+  }));
+  const credentialProfile = (email: string) => state.credentials.find((item) => item.email === email)?.profileId;
+  const credentials = [
+    ...state.credentials,
+    credentialProfile("dono@hyoc.demo") && !state.credentials.some((item) => item.email === "dono@mesai.demo")
+      ? { email: "dono@mesai.demo", password: "demo123", profileId: credentialProfile("dono@hyoc.demo")! }
+      : undefined,
+    credentialProfile("garcom@hyoc.demo") && !state.credentials.some((item) => item.email === "garcom@mesai.demo")
+      ? { email: "garcom@mesai.demo", password: "demo123", profileId: credentialProfile("garcom@hyoc.demo")! }
+      : undefined,
+    credentialProfile("cozinha@hyoc.demo") && !state.credentials.some((item) => item.email === "cozinha@mesai.demo")
+      ? { email: "cozinha@mesai.demo", password: "demo123", profileId: credentialProfile("cozinha@hyoc.demo")! }
+      : undefined,
+    credentialProfile("bar@hyoc.demo") && !state.credentials.some((item) => item.email === "bar@mesai.demo")
+      ? { email: "bar@mesai.demo", password: "demo123", profileId: credentialProfile("bar@hyoc.demo")! }
+      : undefined
+  ].filter(Boolean) as AppState["credentials"];
+
+  return {
+    ...state,
+    restaurants,
+    tableAlerts: state.tableAlerts ?? [],
+    profiles: state.profiles.map((profile) => ({ ...profile, name: text[profile.name] ?? profile.name })),
+    categories: needsMaricotaCatalog
+      ? freshDemo.categories
+      : state.categories.map((category) => ({ ...category, name: text[category.name] ?? category.name })),
+    products: needsMaricotaCatalog
+      ? freshDemo.products
+      : state.products.map((product) => {
+          const stockDefault = stockDefaults.get(product.id);
+          const needsStockDefaults = !product.stockUnit && stockDefault?.stockUnit;
+          return {
+            ...product,
+            name: text[product.name] ?? product.name,
+            description: product.description ? text[product.description] ?? product.description : product.description,
+            hasStockControl: needsStockDefaults ? stockDefault.hasStockControl : product.hasStockControl,
+            stockQuantity: needsStockDefaults ? stockDefault.stockQuantity : product.stockQuantity,
+            stockMinimum: needsStockDefaults ? stockDefault.stockMinimum : product.stockMinimum,
+            stockUnit: product.stockUnit ?? stockDefault?.stockUnit
+          };
+        }),
+    productVariations: needsMaricotaCatalog ? freshDemo.productVariations : state.productVariations,
+    productAddons: needsMaricotaCatalog ? freshDemo.productAddons : state.productAddons,
+    productAllowedAddons: needsMaricotaCatalog ? freshDemo.productAllowedAddons : state.productAllowedAddons,
+    orderItems: state.orderItems.map((item) => ({
+      ...item,
+      productNameSnapshot: text[item.productNameSnapshot] ?? item.productNameSnapshot
+    })),
+    financialEntries:
+      demoExpense && !state.financialEntries.some((entry) => entry.type === "expense")
+        ? [...state.financialEntries, demoExpense]
+        : state.financialEntries,
+    stockMovements: state.stockMovements ?? [],
+    credentials
+  };
+}

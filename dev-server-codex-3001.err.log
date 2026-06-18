@@ -1,0 +1,91 @@
+ ⨯ Error: Could not find the module "C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '2604452553'
+}
+ ⨯ Error: Could not find the module "C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1378304205'
+}
+ ⨯ Error: Could not find the module "C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1378304205'
+}
+ ⨯ Error: Could not find the module "C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>)
+    at stringify (<anonymous>) {
+  digest: '1378304205'
+}
+ ⨯ Error: Could not find the module "C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '2604452553'
+}
+ ⨯ Error: Could not find the module "C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '2604452553'
+}
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  digest: '3545153326'
+}
+ ⨯ Error: Could not find the module "C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\next-devtools\userspace\app\segment-explorer-node.js#SegmentViewNode" in the React Client Manifest. This is probably a bug in the React Server Components bundler.
+    at stringify (<anonymous>) {
+  digest: '2604452553'
+}
+[TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function]
+ ⨯ [TypeError: __webpack_modules__[moduleId] is not a function] {
+  page: '/r/boteco-da-maricota/mesa/table_2'
+}
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\DumpStack.log.tmp'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\System Volume Information'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\hiberfil.sys'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\pagefile.sys'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\swapfile.sys'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\DumpStack.log.tmp'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\System Volume Information'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\pagefile.sys'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\hiberfil.sys'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\swapfile.sys'
+ ⨯ Failed to generate static paths for /r/[restaurantSlug]/mesa/[tableId]:
+[Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\webpack-runtime.js
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\app\r\[restaurantSlug]\mesa\[tableId]\page.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\require.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\load-components.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\utils.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\compiled\jest-worker\processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Failed to generate static paths for /r/[restaurantSlug]/mesa/[tableId]:
+[Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\webpack-runtime.js
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\app\r\[restaurantSlug]\mesa\[tableId]\page.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\require.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\load-components.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\utils.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\compiled\jest-worker\processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Failed to generate static paths for /r/[restaurantSlug]/mesa/[tableId]:
+[Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\webpack-runtime.js
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\app\r\[restaurantSlug]\mesa\[tableId]\page.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\require.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\load-components.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\utils.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\compiled\jest-worker\processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}

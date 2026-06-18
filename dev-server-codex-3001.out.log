@@ -1,0 +1,48 @@
+
+> hyoc-boteco@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 3001
+
+   ▲ Next.js 15.5.19
+   - Local:        http://127.0.0.1:3001
+   - Network:      http://127.0.0.1:3001
+
+ ✓ Starting...
+ ✓ Ready in 2.3s
+ ○ Compiling /app/login ...
+ ✓ Compiled /app/login in 1575ms (737 modules)
+ GET /app/login 200 in 2240ms
+ GET /app/login 200 in 87ms
+ ○ Compiling /app/dashboard ...
+ ✓ Compiled /app/dashboard in 2.1s (827 modules)
+ GET /app/dashboard 200 in 2324ms
+ GET /app/dashboard 200 in 62ms
+ ○ Compiling /app/settings ...
+ ✓ Compiled /app/settings in 547ms (838 modules)
+ GET /app/dashboard 200 in 349ms
+ GET /app/settings 200 in 954ms
+ GET /app/login 200 in 49ms
+ GET /app/dashboard 200 in 38ms
+ GET /app/dashboard 200 in 36ms
+ GET /app/settings 200 in 74ms
+ GET /app/dashboard 200 in 67ms
+ GET /app/settings 200 in 66ms
+ GET /app/dashboard 200 in 80ms
+ GET /app/settings 200 in 67ms
+ GET /app/settings 200 in 62ms
+ GET /app/settings 200 in 86ms
+ GET /app/dashboard 200 in 62ms
+ GET /app/settings 200 in 84ms
+ GET /app/dashboard 200 in 64ms
+ ○ Compiling /r/[restaurantSlug]/mesa/[tableId] ...
+ ✓ Compiled /r/[restaurantSlug]/mesa/[tableId] in 1027ms (871 modules)
+ GET /app/dashboard 200 in 189ms
+ GET /r/boteco-da-maricota/mesa/table_2 200 in 2081ms
+ ✓ Compiled in 778ms (871 modules)
+ GET /r/boteco-da-maricota/mesa/table_2 200 in 219ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 2s (1218 modules)
+ GET /r/boteco-da-maricota/mesa/table_2 200 in 1324ms
+ GET /r/boteco-da-maricota/mesa/table_2 200 in 36ms
+ GET /r/boteco-da-maricota/mesa/table_2 200 in 35ms
+ GET /r/boteco-da-maricota/mesa/table_2 500 in 5300ms
+[?25h

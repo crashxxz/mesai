@@ -1,0 +1,707 @@
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ Error: Cannot find module './680.js'
+Require stack:
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\webpack-runtime.js
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\app\r\[restaurantSlug]\mesa\[tableId]\page.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\require.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\load-components.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\utils.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\swc\options.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\swc\index.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\analysis\parse-module.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\analysis\get-page-static-info.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\HyOC\Documents\boteco\boteco\.next\server\app\app\(workspace)\bar\page.js:2:7422)
+    at Object.<anonymous> (C:\Users\HyOC\Documents\boteco\boteco\.next\server\app\app\(workspace)\bar\page.js:2:7480) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/app/bar'
+}
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\DumpStack.log.tmp'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\System Volume Information'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\hiberfil.sys'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\pagefile.sys'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\swapfile.sys'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\DumpStack.log.tmp'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\System Volume Information'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\hiberfil.sys'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\pagefile.sys'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\swapfile.sys'
+ ⨯ Failed to generate static paths for /r/[restaurantSlug]/mesa/[tableId]:
+[Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\webpack-runtime.js
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\app\r\[restaurantSlug]\mesa\[tableId]\page.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\require.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\load-components.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\utils.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\compiled\jest-worker\processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Failed to generate static paths for /r/[restaurantSlug]/mesa/[tableId]:
+[Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\webpack-runtime.js
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\app\r\[restaurantSlug]\mesa\[tableId]\page.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\require.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\load-components.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\utils.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\compiled\jest-worker\processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Failed to generate static paths for /r/[restaurantSlug]/mesa/[tableId]:
+[Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\webpack-runtime.js
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\app\r\[restaurantSlug]\mesa\[tableId]\page.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\require.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\load-components.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\utils.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\compiled\jest-worker\processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ [Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\webpack-runtime.js
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\app\r\[restaurantSlug]\mesa\[tableId]\page.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\require.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\load-components.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\utils.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\compiled\jest-worker\processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/r/hyoc-boteco-demo/mesa/table_2'
+}
+ ⨯ [Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\webpack-runtime.js
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\app\r\[restaurantSlug]\mesa\[tableId]\page.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\require.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\load-components.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\utils.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\compiled\jest-worker\processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/r/hyoc-boteco-demo/mesa/table_2'
+}
+ ⨯ [Error: Cannot find module './vendor-chunks/@supabase.js'
+Require stack:
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\webpack-runtime.js
+- C:\Users\HyOC\Documents\boteco\boteco\.next\server\app\r\[restaurantSlug]\mesa\[tableId]\page.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\require.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\load-components.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\build\utils.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\HyOC\Documents\boteco\boteco\node_modules\next\dist\compiled\jest-worker\processChild.js] {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array],
+  page: '/r/hyoc-boteco-demo/mesa/table_2'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\DumpStack.log.tmp'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\System Volume Information'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\hiberfil.sys'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\pagefile.sys'
+Watchpack Error (initial scan): Error: EINVAL: invalid argument, lstat 'C:\swapfile.sys'
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\app-paths-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\app-paths-manifest.json',
+  page: '/'
+}
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\server\pages-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\server\\pages-manifest.json'
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\HyOC\Documents\boteco\boteco\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\HyOC\\Documents\\boteco\\boteco\\.next\\routes-manifest.json'
+}

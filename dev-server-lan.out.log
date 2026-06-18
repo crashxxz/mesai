@@ -1,0 +1,42 @@
+
+> hyoc-boteco@0.1.0 dev:lan
+> next dev --hostname 0.0.0.0
+
+   ▲ Next.js 15.5.19
+   - Local:        http://localhost:3000
+   - Network:      http://0.0.0.0:3000
+
+ ✓ Starting...
+ ✓ Ready in 2.9s
+ ○ Compiling /app/login ...
+ ✓ Compiled /app/login in 4.9s (753 modules)
+ GET /app/login 200 in 140ms
+ GET /app/login 200 in 93ms
+ ○ Compiling /app/dashboard ...
+ ✓ Compiled /app/dashboard in 1326ms (829 modules)
+ GET /app/dashboard 200 in 1549ms
+ GET /app/dashboard 200 in 81ms
+ ○ Compiling /app/products ...
+ ✓ Compiled /app/products in 982ms (840 modules)
+ GET /app/products 200 in 1399ms
+ ○ Compiling /r/[restaurantSlug]/mesa/[tableId] ...
+ ✓ Compiled /r/[restaurantSlug]/mesa/[tableId] in 606ms (867 modules)
+ GET /r/boteco-da-maricota/mesa/table_2 200 in 1900ms
+ ✓ Compiled in 541ms (872 modules)
+ GET /r/boteco-da-maricota/mesa/table_2 200 in 135ms
+ GET /r/boteco-da-maricota/mesa/table_2 200 in 332ms
+ ✓ Compiled /app/settings in 427ms (867 modules)
+ GET /app/settings 200 in 829ms
+ ✓ Compiled /app/login in 440ms (521 modules)
+ GET /app/login 200 in 587ms
+ GET /app/dashboard 200 in 68ms
+ GET /app/dashboard 200 in 40ms
+ GET /app/products 200 in 318ms
+ ○ Compiling /app/tables ...
+ ✓ Compiled /app/tables in 532ms (897 modules)
+ GET /app/tables 200 in 802ms
+ ○ Compiling /app/kitchen ...
+ ✓ Compiled /app/kitchen in 1690ms (924 modules)
+ GET /app/kitchen 200 in 1984ms
+ ✓ Compiled /app/bar in 476ms (933 modules)
+ GET /app/bar 200 in 730ms

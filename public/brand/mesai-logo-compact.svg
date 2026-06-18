@@ -1,0 +1,12 @@
+<svg width="360" height="88" viewBox="0 0 360 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(8 8) scale(1.125)">
+    <rect x="2" y="2" width="60" height="60" rx="16" fill="#111827"/>
+    <path d="M27 10H37M27 54H37M10 27V37M54 27V37" stroke="#F59E0B" stroke-width="4" stroke-linecap="round"/>
+    <rect x="16" y="16" width="32" height="32" rx="9" stroke="#F59E0B" stroke-width="4"/>
+    <path d="M21 39V26L32 35L39 29" stroke="#FFF7ED" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M37 37L42 42L51 30" stroke="#10B981" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="98" y="57" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="800" letter-spacing="-2">
+    <tspan fill="#111827">Mesa</tspan><tspan fill="#F59E0B">í</tspan>
+  </text>
+</svg>

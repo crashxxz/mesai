@@ -1,0 +1,14 @@
+
+> hyoc-boteco@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 3001
+
+   ▲ Next.js 15.5.19
+   - Local:        http://127.0.0.1:3001
+   - Network:      http://127.0.0.1:3001
+
+ ✓ Starting...
+ ✓ Ready in 3.5s
+ ○ Compiling /app/login ...
+ ✓ Compiled /app/login in 9s (743 modules)
+ GET /app/login 200 in 11002ms
+ ✓ Compiled in 488ms (304 modules)
