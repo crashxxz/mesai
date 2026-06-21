@@ -23,6 +23,7 @@ import {
 import type {
   AppState,
   Category,
+  Order,
   OrderItem,
   OrderItemAddon,
   OrderItemStatus,
@@ -33,6 +34,7 @@ import type {
   Restaurant,
   RestaurantSettings,
   RestaurantTable,
+  TableAlert,
   TableAlertType,
   UUID
 } from "@/lib/types";
@@ -102,7 +104,7 @@ interface StoreContextValue {
   createTable: () => void;
   updateRestaurant: (patch: Partial<Restaurant>) => void;
   updateSettings: (patch: Partial<RestaurantSettings>) => void;
-  createProfile: (name: string, email: string, password: string, role: Profile["role"], active: boolean) => void;
+  createProfile: (name: string, username: string, email: string, password: string, roles: Profile["role"][], active: boolean) => void;
   openCashSession: (openingAmount: number) => UUID;
   addCashMovement: (type: "withdrawal" | "supply" | "adjustment", amount: number, description: string) => void;
   closeCashSession: (countedAmount: number) => void;
@@ -144,6 +146,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       storageAdapter.save(state);
     }
   }, [hydrated, state]);
+
+  useEffect(() => {
+    if (runtimeConfig.dataMode !== "supabase" || !hydrated || !state.currentProfileId) return;
+    let mounted = true;
+    const timer = window.setInterval(() => {
+      void supabaseGateway.loadWorkspace().then((workspace) => {
+        if (mounted) setState((current) => mergeWorkspace(current, workspace));
+      }).catch(() => undefined);
+    }, 15000);
+    return () => { mounted = false; window.clearInterval(timer); };
+  }, [hydrated, state.currentProfileId]);
 
   const profile = state.profiles.find((item) => item.id === state.currentProfileId);
   const restaurant = state.restaurants.find((item) => item.id === profile?.restaurantId) ?? state.restaurants[0];
@@ -241,18 +254,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       settings,
       async login(email, password) {
         if (runtimeConfig.dataMode === "supabase") {
-          try {
-            await supabaseGateway.signIn(email, password);
-            const workspace = await supabaseGateway.loadWorkspace();
-            commit(mergeWorkspace(state, workspace), "auth");
-            return workspace.profile;
-          } catch {
-            return undefined;
-          }
+          await supabaseGateway.signIn(email, password);
+          const workspace = await supabaseGateway.loadWorkspace();
+          commit(mergeWorkspace(state, workspace), "auth");
+          return workspace.profile;
         }
         const normalized = email.trim().toLowerCase();
         const credential = state.credentials.find(
-          (item) => item.email === normalized && item.password === password
+          (item) => (item.email === normalized || item.username === normalized) && item.password === password
         );
         const nextProfile = state.profiles.find((item) => item.id === credential?.profileId && item.active);
         if (!credential || !nextProfile) return undefined;
@@ -820,7 +829,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const now = new Date().toISOString();
         const restaurantId = restaurant?.id ?? state.restaurants[0].id;
         const category: Category = {
-          id: uid("cat"),
+          id: runtimeConfig.dataMode === "supabase" ? crypto.randomUUID() : uid("cat"),
           restaurantId,
           name,
           sortOrder: state.categories.length + 1,
@@ -828,13 +837,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           createdAt: now,
           updatedAt: now
         };
+        if (runtimeConfig.dataMode === "supabase") void supabase?.from("categories").insert({ id: category.id, restaurant_id: restaurantId, name, sort_order: category.sortOrder, active: true });
         commit({ ...state, categories: [...state.categories, category] }, "catalog");
       },
       createProduct(input) {
         const now = new Date().toISOString();
         const restaurantId = restaurant?.id ?? state.restaurants[0].id;
         const product: Product = {
-          id: uid("prod"),
+          id: runtimeConfig.dataMode === "supabase" ? crypto.randomUUID() : uid("prod"),
           restaurantId,
           categoryId: input.categoryId,
           name: input.name,
@@ -851,11 +861,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           createdAt: now,
           updatedAt: now
         };
+        if (runtimeConfig.dataMode === "supabase") void supabase?.from("products").insert(toProductRow(product));
         commit({ ...state, products: [...state.products, product] }, "catalog");
       },
       updateProduct(productId, patch) {
         const oldProduct = state.products.find((item) => item.id === productId);
         const now = new Date().toISOString();
+        if (runtimeConfig.dataMode === "supabase") void supabase?.from("products").update(toProductPatch(patch)).eq("id", productId);
         let next: AppState = {
           ...state,
           products: state.products.map((product) =>
@@ -1014,10 +1026,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           "settings"
         );
       },
-      createProfile(name, email, password, role, active) {
+      createProfile(name, username, email, password, roles, active) {
         const now = new Date().toISOString();
         const profileId = uid("profile");
         const normalized = email.trim().toLowerCase();
+        const role = (["manager", "cashier", "waiter", "kitchen", "bar"] as Profile["role"][]).find((item) => roles.includes(item)) ?? "waiter";
         commit(
           {
             ...state,
@@ -1029,7 +1042,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 restaurantId: restaurant?.id ?? state.restaurants[0].id,
                 name,
                 email: normalized,
+                username,
                 role,
+                roles,
                 active,
                 createdAt: now,
                 updatedAt: now
@@ -1038,7 +1053,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             credentials: [
               ...state.credentials,
               {
-                email: normalized,
+                email: normalized || `${username}@interno.mesai.local`,
+                username,
                 password,
                 profileId
               }
@@ -1203,6 +1219,12 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
         serviceFeePercent: Number(settingsRow.service_fee_percent ?? 10)
       }
     : undefined;
+  const remoteCategories: Category[] = workspace.categories.map((item) => ({ id: String(item.id), restaurantId: id, name: String(item.name), sortOrder: Number(item.sort_order ?? 0), active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) }));
+  const remoteProducts: Product[] = workspace.products.map((item) => ({ id: String(item.id), restaurantId: id, categoryId: String(item.category_id), name: String(item.name), description: typeof item.description === "string" ? item.description : undefined, price: Number(item.price), preparationSector: item.preparation_sector as Product["preparationSector"], estimatedTimeMinutes: item.estimated_time_minutes ? Number(item.estimated_time_minutes) : undefined, available: item.available !== false, hasStockControl: item.has_stock_control === true, stockQuantity: item.stock_quantity === null ? undefined : Number(item.stock_quantity), stockMinimum: item.stock_minimum === null ? undefined : Number(item.stock_minimum), stockUnit: item.stock_unit as Product["stockUnit"], imageUrl: typeof item.image_url === "string" ? item.image_url : undefined, active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) }));
+  const remoteTables: RestaurantTable[] = workspace.tables.map((item) => ({ id: String(item.id), restaurantId: id, number: Number(item.number), name: typeof item.name === "string" ? item.name : undefined, status: item.status as RestaurantTable["status"], active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) }));
+  const remoteOrders: Order[] = workspace.orders.map((item) => ({ id: String(item.id), restaurantId: id, tableId: item.table_id ? String(item.table_id) : undefined, tabId: item.tab_id ? String(item.tab_id) : undefined, customerName: typeof item.customer_name === "string" ? item.customer_name : undefined, source: item.source as Order["source"], status: item.status as Order["status"], createdBy: item.created_by ? String(item.created_by) : undefined, closedBy: item.closed_by ? String(item.closed_by) : undefined, subtotal: Number(item.subtotal ?? 0), discount: Number(item.discount ?? 0), serviceFee: Number(item.service_fee ?? 0), deliveryFee: Number(item.delivery_fee ?? 0), total: Number(item.total ?? 0), notes: typeof item.notes === "string" ? item.notes : undefined, cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), closedAt: item.closed_at ? String(item.closed_at) : undefined }));
+  const remoteOrderItems: OrderItem[] = workspace.orderItems.map((item) => ({ id: String(item.id), orderId: String(item.order_id), restaurantId: id, productId: String(item.product_id), productNameSnapshot: String(item.product_name_snapshot), unitPriceSnapshot: Number(item.unit_price_snapshot), quantity: Number(item.quantity), variationName: typeof item.variation_name === "string" ? item.variation_name : undefined, variationPriceDelta: item.variation_price_delta === null ? undefined : Number(item.variation_price_delta), notes: typeof item.notes === "string" ? item.notes : undefined, preparationSector: item.preparation_sector as OrderItem["preparationSector"], status: item.status as OrderItem["status"], cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined, createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), sentAt: item.sent_at ? String(item.sent_at) : undefined, preparingAt: item.preparing_at ? String(item.preparing_at) : undefined, readyAt: item.ready_at ? String(item.ready_at) : undefined, deliveredAt: item.delivered_at ? String(item.delivered_at) : undefined }));
+  const remoteAlerts: TableAlert[] = workspace.tableAlerts.map((item) => ({ id: String(item.id), restaurantId: id, tableId: String(item.table_id), type: item.type as TableAlert["type"], active: item.active === true, createdAt: String(item.created_at ?? now), resolvedAt: item.resolved_at ? String(item.resolved_at) : undefined }));
 
   return {
     ...current,
@@ -1211,8 +1233,25 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
       ? [...current.settings.filter((item) => item.restaurantId !== id), remoteSettings]
       : current.settings,
     profiles: [...current.profiles.filter((item) => item.userId !== workspace.profile.userId), workspace.profile],
+    categories: [...current.categories.filter((item) => item.restaurantId !== id), ...remoteCategories],
+    products: [...current.products.filter((item) => item.restaurantId !== id), ...remoteProducts],
+    tables: [...current.tables.filter((item) => item.restaurantId !== id), ...remoteTables],
+    orders: [...current.orders.filter((item) => item.restaurantId !== id), ...remoteOrders],
+    orderItems: [...current.orderItems.filter((item) => item.restaurantId !== id), ...remoteOrderItems],
+    tableAlerts: [...current.tableAlerts.filter((item) => item.restaurantId !== id), ...remoteAlerts],
     currentProfileId: workspace.profile.id
   };
+}
+
+function toProductRow(product: Product) {
+  return { id: product.id, restaurant_id: product.restaurantId, category_id: product.categoryId, name: product.name, description: product.description ?? null, price: product.price, preparation_sector: product.preparationSector, estimated_time_minutes: product.estimatedTimeMinutes ?? null, available: product.available, has_stock_control: product.hasStockControl, stock_quantity: product.stockQuantity ?? null, stock_minimum: product.stockMinimum ?? null, stock_unit: product.stockUnit ?? null, image_url: product.imageUrl ?? null, active: product.active };
+}
+
+function toProductPatch(patch: Partial<Product>) {
+  const row: Record<string, unknown> = {};
+  const fields: Array<[keyof Product, string]> = [["categoryId", "category_id"], ["name", "name"], ["description", "description"], ["price", "price"], ["preparationSector", "preparation_sector"], ["estimatedTimeMinutes", "estimated_time_minutes"], ["available", "available"], ["hasStockControl", "has_stock_control"], ["stockQuantity", "stock_quantity"], ["stockMinimum", "stock_minimum"], ["stockUnit", "stock_unit"], ["imageUrl", "image_url"], ["active", "active"]];
+  for (const [key, column] of fields) if (key in patch) row[column] = patch[key] ?? null;
+  return row;
 }
 
 function loadState() {

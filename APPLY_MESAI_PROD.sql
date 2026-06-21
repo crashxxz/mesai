@@ -630,10 +630,10 @@ begin
   where id = p_table_id and active = true;
 
   if v_restaurant_id is null or v_restaurant_id <> public.current_restaurant_id() then
-    raise exception 'Mesa não encontrada';
+    raise exception 'Mesa nÃ£o encontrada';
   end if;
   if public.current_role() not in ('owner', 'manager') then
-    raise exception 'Sem permissão para gerar QR';
+    raise exception 'Sem permissÃ£o para gerar QR';
   end if;
 
   insert into public.table_qr_tokens (restaurant_id, table_id, token_hash, active, rotated_at, created_by)
@@ -672,7 +672,7 @@ begin
     and active
     and (expires_at is null or expires_at > now());
 
-  if v_token.id is null then raise exception 'QR inválido ou expirado'; end if;
+  if v_token.id is null then raise exception 'QR invÃ¡lido ou expirado'; end if;
 
   return jsonb_build_object(
     'restaurant', (select jsonb_build_object('id', r.id, 'name', r.name, 'slug', r.slug, 'logo_url', r.logo_url, 'phone', r.phone, 'whatsapp_url', r.whatsapp_url, 'maps_url', r.maps_url, 'address', r.address, 'city', r.city) from public.restaurants r where r.id = v_token.restaurant_id),
@@ -703,7 +703,7 @@ begin
     and active
     and (expires_at is null or expires_at > now());
 
-  if v_token.id is null then raise exception 'QR inválido ou expirado'; end if;
+  if v_token.id is null then raise exception 'QR invÃ¡lido ou expirado'; end if;
 
   insert into public.qr_sessions (restaurant_id, table_id, session_hash)
   values (v_token.restaurant_id, v_token.table_id, digest(v_session, 'sha256'));
@@ -721,12 +721,12 @@ declare
   v_session public.qr_sessions%rowtype;
   v_alert_id uuid;
 begin
-  if p_type not in ('waiter_call', 'bill_request') then raise exception 'Tipo inválido'; end if;
+  if p_type not in ('waiter_call', 'bill_request') then raise exception 'Tipo invÃ¡lido'; end if;
   select * into v_session from public.qr_sessions
   where session_hash = digest(p_session_token, 'sha256') and active and expires_at > now();
-  if v_session.id is null then raise exception 'Sessão inválida ou expirada'; end if;
+  if v_session.id is null then raise exception 'SessÃ£o invÃ¡lida ou expirada'; end if;
   if exists (select 1 from public.table_alerts where table_id = v_session.table_id and type = p_type and active and created_at > now() - interval '2 minutes') then
-    raise exception 'Aguarde antes de repetir a solicitação';
+    raise exception 'Aguarde antes de repetir a solicitaÃ§Ã£o';
   end if;
   insert into public.table_alerts (restaurant_id, table_id, type)
   values (v_session.restaurant_id, v_session.table_id, p_type)
@@ -804,13 +804,13 @@ declare
 begin
   select * into v_profile from public.profiles where user_id = auth.uid() and active limit 1;
   if v_profile.id is null or v_profile.role not in ('owner', 'manager', 'waiter', 'cashier') then
-    raise exception 'Sem permissão para criar pedido';
+    raise exception 'Sem permissÃ£o para criar pedido';
   end if;
   if jsonb_array_length(coalesce(p_items, '[]'::jsonb)) = 0 then raise exception 'Pedido sem itens'; end if;
 
   if p_table_id is not null then
     perform 1 from public.tables where id = p_table_id and restaurant_id = v_profile.restaurant_id and active for update;
-    if not found then raise exception 'Mesa não encontrada'; end if;
+    if not found then raise exception 'Mesa nÃ£o encontrada'; end if;
     select id into v_tab_id from public.tabs
       where table_id = p_table_id and restaurant_id = v_profile.restaurant_id and status = 'open'
       order by opened_at desc limit 1;
@@ -832,7 +832,7 @@ begin
     select * into v_product from public.products
       where id = (v_item->>'product_id')::uuid
         and restaurant_id = v_profile.restaurant_id and active and available and price > 0;
-    if v_product.id is null then raise exception 'Produto inválido ou indisponível'; end if;
+    if v_product.id is null then raise exception 'Produto invÃ¡lido ou indisponÃ­vel'; end if;
 
     v_addon_total := 0;
     for v_addon_id in select value::text::uuid from jsonb_array_elements_text(coalesce(v_item->'addon_ids', '[]'::jsonb))
@@ -840,7 +840,7 @@ begin
       select a.* into v_addon from public.product_addons a
       join public.product_allowed_addons pa on pa.addon_id = a.id
       where pa.product_id = v_product.id and a.id = v_addon_id and a.active;
-      if v_addon.id is null then raise exception 'Adicional inválido'; end if;
+      if v_addon.id is null then raise exception 'Adicional invÃ¡lido'; end if;
       v_addon_total := v_addon_total + v_addon.price;
     end loop;
 
@@ -896,7 +896,7 @@ begin
   select * into v_session from public.qr_sessions
   where session_hash = digest(p_session_token, 'sha256') and active and expires_at > now()
   for update;
-  if v_session.id is null then raise exception 'Sessão inválida ou expirada'; end if;
+  if v_session.id is null then raise exception 'SessÃ£o invÃ¡lida ou expirada'; end if;
   if jsonb_array_length(coalesce(p_items, '[]'::jsonb)) = 0 then raise exception 'Pedido sem itens'; end if;
   select qr_orders_need_approval into v_needs_approval from public.restaurant_settings where restaurant_id = v_session.restaurant_id;
 
@@ -918,7 +918,7 @@ begin
     select * into v_product from public.products
       where id = (v_item->>'product_id')::uuid
         and restaurant_id = v_session.restaurant_id and active and available and price > 0;
-    if v_product.id is null then raise exception 'Produto inválido ou indisponível'; end if;
+    if v_product.id is null then raise exception 'Produto invÃ¡lido ou indisponÃ­vel'; end if;
     insert into public.order_items (
       order_id, restaurant_id, product_id, product_name_snapshot, unit_price_snapshot,
       quantity, notes, preparation_sector, status, sent_at
@@ -952,9 +952,9 @@ declare
 begin
   select * into v_session from public.qr_sessions
   where session_hash = digest(p_session_token, 'sha256') and active and expires_at > now();
-  if v_session.id is null then raise exception 'Sessão inválida ou expirada'; end if;
+  if v_session.id is null then raise exception 'SessÃ£o invÃ¡lida ou expirada'; end if;
   if not exists (select 1 from public.orders where id = p_order_id and table_id = v_session.table_id and restaurant_id = v_session.restaurant_id and source = 'qr_code') then
-    raise exception 'Pedido não encontrado';
+    raise exception 'Pedido nÃ£o encontrado';
   end if;
   return jsonb_build_object(
     'order', (select to_jsonb(o) from public.orders o where o.id = p_order_id),
@@ -975,19 +975,19 @@ declare
 begin
   select * into v_profile from public.profiles where user_id = auth.uid() and active limit 1;
   select * into v_item from public.order_items where id = p_item_id for update;
-  if v_item.id is null or v_item.restaurant_id <> v_profile.restaurant_id then raise exception 'Item não encontrado'; end if;
+  if v_item.id is null or v_item.restaurant_id <> v_profile.restaurant_id then raise exception 'Item nÃ£o encontrado'; end if;
   if not (
     v_profile.role in ('owner', 'manager')
     or (v_profile.role = 'kitchen' and v_item.preparation_sector = 'kitchen')
     or (v_profile.role = 'bar' and v_item.preparation_sector = 'bar')
     or (v_profile.role = 'waiter' and p_status = 'delivered')
-  ) then raise exception 'Sem permissão para atualizar o item'; end if;
+  ) then raise exception 'Sem permissÃ£o para atualizar o item'; end if;
   if not (
     (v_item.status = 'sent' and p_status = 'received')
     or (v_item.status = 'received' and p_status = 'preparing')
     or (v_item.status = 'preparing' and p_status = 'ready')
     or (v_item.status = 'ready' and p_status = 'delivered')
-  ) then raise exception 'Transição de status inválida'; end if;
+  ) then raise exception 'TransiÃ§Ã£o de status invÃ¡lida'; end if;
   update public.order_items set
     status = p_status,
     preparing_at = case when p_status = 'preparing' then now() else preparing_at end,
@@ -1018,10 +1018,10 @@ declare
 begin
   select * into v_profile from public.profiles where user_id = auth.uid() and active limit 1;
   select * into v_order from public.orders where id = p_order_id for update;
-  if v_order.id is null or v_order.restaurant_id <> v_profile.restaurant_id or v_order.status in ('closed', 'cancelled') then raise exception 'Pedido inválido'; end if;
+  if v_order.id is null or v_order.restaurant_id <> v_profile.restaurant_id or v_order.status in ('closed', 'cancelled') then raise exception 'Pedido invÃ¡lido'; end if;
   select waiter_can_close_account into v_waiter_allowed from public.restaurant_settings where restaurant_id = v_profile.restaurant_id;
-  if v_profile.role not in ('owner', 'manager', 'cashier') and not (v_profile.role = 'waiter' and v_waiter_allowed) then raise exception 'Sem permissão para receber'; end if;
-  if p_amount <= 0 then raise exception 'Valor inválido'; end if;
+  if v_profile.role not in ('owner', 'manager', 'cashier') and not (v_profile.role = 'waiter' and v_waiter_allowed) then raise exception 'Sem permissÃ£o para receber'; end if;
+  if p_amount <= 0 then raise exception 'Valor invÃ¡lido'; end if;
   insert into public.payments (restaurant_id, order_id, method, amount, card_brand, change_amount, created_by)
   values (v_profile.restaurant_id, p_order_id, p_method, p_amount, nullif(trim(p_card_brand), ''), p_change_amount, v_profile.id)
   returning id into v_payment_id;
@@ -1045,9 +1045,9 @@ declare
 begin
   select * into v_profile from public.profiles where user_id = auth.uid() and active limit 1;
   select * into v_order from public.orders where id = p_order_id for update;
-  if v_order.id is null or v_order.restaurant_id <> v_profile.restaurant_id or v_order.status in ('closed', 'cancelled') then raise exception 'Pedido inválido'; end if;
+  if v_order.id is null or v_order.restaurant_id <> v_profile.restaurant_id or v_order.status in ('closed', 'cancelled') then raise exception 'Pedido invÃ¡lido'; end if;
   select waiter_can_close_account into v_waiter_allowed from public.restaurant_settings where restaurant_id = v_profile.restaurant_id;
-  if v_profile.role not in ('owner', 'manager', 'cashier') and not (v_profile.role = 'waiter' and v_waiter_allowed) then raise exception 'Sem permissão para fechar'; end if;
+  if v_profile.role not in ('owner', 'manager', 'cashier') and not (v_profile.role = 'waiter' and v_waiter_allowed) then raise exception 'Sem permissÃ£o para fechar'; end if;
   select coalesce(sum(amount), 0) into v_paid from public.payments where order_id = p_order_id;
   if v_paid < v_order.total then raise exception 'Pagamento incompleto'; end if;
   update public.orders set status = 'closed', closed_by = v_profile.id, closed_at = now() where id = p_order_id;
@@ -1075,10 +1075,10 @@ declare
   v_next numeric(12,3);
 begin
   select * into v_profile from public.profiles where user_id = auth.uid() and active limit 1;
-  if v_profile.role not in ('owner', 'manager') then raise exception 'Sem permissão para estoque'; end if;
+  if v_profile.role not in ('owner', 'manager') then raise exception 'Sem permissÃ£o para estoque'; end if;
   select * into v_product from public.products where id = p_product_id and restaurant_id = v_profile.restaurant_id for update;
   if v_product.id is null or not v_product.has_stock_control then raise exception 'Produto sem controle de estoque'; end if;
-  if p_type not in ('entry', 'exit', 'adjustment') or p_quantity <= 0 then raise exception 'Movimento inválido'; end if;
+  if p_type not in ('entry', 'exit', 'adjustment') or p_quantity <= 0 then raise exception 'Movimento invÃ¡lido'; end if;
   v_next := case when p_type = 'exit' then coalesce(v_product.stock_quantity, 0) - p_quantity else coalesce(v_product.stock_quantity, 0) + p_quantity end;
   if v_next < 0 then raise exception 'Estoque insuficiente'; end if;
   update public.products set stock_quantity = v_next where id = p_product_id;
@@ -1120,9 +1120,9 @@ declare
   v_session_id uuid;
 begin
   select * into v_profile from public.profiles where user_id = auth.uid() and active limit 1;
-  if v_profile.role not in ('owner', 'manager', 'cashier') then raise exception 'Sem permissão para abrir caixa'; end if;
-  if p_opening_amount < 0 then raise exception 'Valor inicial inválido'; end if;
-  if exists (select 1 from public.cash_sessions where restaurant_id = v_profile.restaurant_id and status = 'open') then raise exception 'Já existe caixa aberto'; end if;
+  if v_profile.role not in ('owner', 'manager', 'cashier') then raise exception 'Sem permissÃ£o para abrir caixa'; end if;
+  if p_opening_amount < 0 then raise exception 'Valor inicial invÃ¡lido'; end if;
+  if exists (select 1 from public.cash_sessions where restaurant_id = v_profile.restaurant_id and status = 'open') then raise exception 'JÃ¡ existe caixa aberto'; end if;
   insert into public.cash_sessions (restaurant_id, opened_by, opening_amount, expected_amount)
   values (v_profile.restaurant_id, v_profile.id, p_opening_amount, p_opening_amount)
   returning id into v_session_id;
@@ -1145,8 +1145,8 @@ declare
   v_delta numeric(12,2);
 begin
   select * into v_profile from public.profiles where user_id = auth.uid() and active limit 1;
-  if v_profile.role not in ('owner', 'manager', 'cashier') then raise exception 'Sem permissão para movimentar caixa'; end if;
-  if p_type not in ('withdrawal', 'supply', 'adjustment') or p_amount <= 0 then raise exception 'Movimento inválido'; end if;
+  if v_profile.role not in ('owner', 'manager', 'cashier') then raise exception 'Sem permissÃ£o para movimentar caixa'; end if;
+  if p_type not in ('withdrawal', 'supply', 'adjustment') or p_amount <= 0 then raise exception 'Movimento invÃ¡lido'; end if;
   select * into v_session from public.cash_sessions
     where restaurant_id = v_profile.restaurant_id and status = 'open' for update;
   if v_session.id is null then raise exception 'Caixa fechado'; end if;
@@ -1174,8 +1174,8 @@ declare
   v_expected numeric(12,2);
 begin
   select * into v_profile from public.profiles where user_id = auth.uid() and active limit 1;
-  if v_profile.role not in ('owner', 'manager', 'cashier') then raise exception 'Sem permissão para fechar caixa'; end if;
-  if p_counted_amount < 0 then raise exception 'Valor contado inválido'; end if;
+  if v_profile.role not in ('owner', 'manager', 'cashier') then raise exception 'Sem permissÃ£o para fechar caixa'; end if;
+  if p_counted_amount < 0 then raise exception 'Valor contado invÃ¡lido'; end if;
   select * into v_session from public.cash_sessions
     where restaurant_id = v_profile.restaurant_id and status = 'open' for update;
   if v_session.id is null then raise exception 'Caixa fechado'; end if;
@@ -1208,8 +1208,111 @@ grant execute on function public.close_cash_session(numeric) to authenticated;
 delete from public.restaurants where slug = 'hyoc-boteco-demo';
 delete from auth.users where email in ('dono@hyoc.demo', 'garcom@hyoc.demo', 'cozinha@hyoc.demo', 'bar@hyoc.demo');
 
--- ===== 7. SEED DE PRODUCAO =====
--- Gerado por npm run seed:generate. Não editar manualmente.
+-- ===== 7. MIGRATION: 202606210000_preparation_both.sql =====
+alter type public.preparation_sector add value if not exists 'both';
+
+-- ===== 8. MIGRATION: 202606210001_team_alias_roles.sql =====
+alter table public.profiles add column if not exists username text;
+alter table public.profiles add column if not exists technical_email text;
+alter table public.profiles add column if not exists roles public.profile_role[] not null default '{}';
+alter table public.profiles add column if not exists deleted_at timestamptz;
+
+update public.profiles
+set roles = array[role]::public.profile_role[]
+where cardinality(roles) = 0;
+
+create unique index if not exists uq_profiles_restaurant_username
+  on public.profiles (restaurant_id, lower(username))
+  where username is not null and deleted_at is null;
+
+create or replace function public.current_roles()
+returns public.profile_role[]
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select case
+    when role = 'owner' then array['owner','manager','waiter','kitchen','bar','cashier']::public.profile_role[]
+    when cardinality(roles) > 0 then roles
+    else array[role]::public.profile_role[]
+  end
+  from public.profiles
+  where user_id = auth.uid() and active and deleted_at is null
+  limit 1;
+$$;
+
+create or replace function public.get_public_restaurant_tables(p_slug text)
+returns jsonb
+language sql
+security definer
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'restaurant', jsonb_build_object('id', r.id, 'name', r.name, 'slug', r.slug),
+    'tables', coalesce((
+      select jsonb_agg(jsonb_build_object('id', t.id, 'number', t.number, 'name', t.name) order by t.number)
+      from public.tables t where t.restaurant_id = r.id and t.active
+    ), '[]'::jsonb)
+  )
+  from public.restaurants r
+  where r.slug = p_slug
+  limit 1;
+$$;
+
+grant execute on function public.get_public_restaurant_tables(text) to anon, authenticated;
+
+drop policy if exists "owner manage profiles" on public.profiles;
+create policy "owner manager manage profiles" on public.profiles
+  for all to authenticated
+  using (restaurant_id = public.current_restaurant_id() and public.current_roles() && array['owner','manager']::public.profile_role[])
+  with check (restaurant_id = public.current_restaurant_id() and public.current_roles() && array['owner','manager']::public.profile_role[]);
+
+drop policy if exists "owner manage products" on public.products;
+create policy "owner manager manage products" on public.products
+  for all to authenticated
+  using (restaurant_id = public.current_restaurant_id() and public.current_roles() && array['owner','manager']::public.profile_role[])
+  with check (restaurant_id = public.current_restaurant_id() and public.current_roles() && array['owner','manager']::public.profile_role[]);
+
+create or replace function public.update_preparation_status(p_item_id uuid, p_status public.order_item_status)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_profile public.profiles%rowtype;
+  v_item public.order_items%rowtype;
+  v_roles public.profile_role[];
+begin
+  select * into v_profile from public.profiles where user_id = auth.uid() and active and deleted_at is null limit 1;
+  v_roles := public.current_roles();
+  select * into v_item from public.order_items where id = p_item_id for update;
+  if v_item.id is null or v_item.restaurant_id <> v_profile.restaurant_id then raise exception 'Item nÃ£o encontrado'; end if;
+  if not (
+    v_roles && array['owner','manager']::public.profile_role[]
+    or ('kitchen' = any(v_roles) and v_item.preparation_sector in ('kitchen','both'))
+    or ('bar' = any(v_roles) and v_item.preparation_sector in ('bar','both'))
+    or ('waiter' = any(v_roles) and p_status = 'delivered')
+  ) then raise exception 'Sem permissÃ£o para atualizar o item'; end if;
+  if not (
+    (v_item.status = 'sent' and p_status = 'received')
+    or (v_item.status = 'received' and p_status = 'preparing')
+    or (v_item.status = 'preparing' and p_status = 'ready')
+    or (v_item.status = 'ready' and p_status = 'delivered')
+  ) then raise exception 'TransiÃ§Ã£o de status invÃ¡lida'; end if;
+  update public.order_items set
+    status = p_status,
+    preparing_at = case when p_status = 'preparing' then now() else preparing_at end,
+    ready_at = case when p_status = 'ready' then now() else ready_at end,
+    delivered_at = case when p_status = 'delivered' then now() else delivered_at end
+  where id = p_item_id;
+  return p_item_id;
+end;
+$$;
+
+-- ===== 9. SEED DE PRODUCAO =====
+-- Gerado por npm run seed:generate. NÃ£o editar manualmente.
 do $$
 declare
   v_restaurant_id uuid;
@@ -1244,14 +1347,14 @@ begin
     (v_restaurant_id, 'Petiscos', 1, true),
     (v_restaurant_id, 'Churrasco', 2, true),
     (v_restaurant_id, 'Pratos', 3, true),
-    (v_restaurant_id, 'Água', 4, true),
+    (v_restaurant_id, 'Ãgua', 4, true),
     (v_restaurant_id, 'Sucos', 5, true),
     (v_restaurant_id, 'Refrigerantes 1 litro', 6, true),
     (v_restaurant_id, 'Refrigerantes lata', 7, true),
     (v_restaurant_id, 'Refrigerantes 600ml', 8, true),
     (v_restaurant_id, 'Long neck', 9, true),
     (v_restaurant_id, 'Long neck zero', 10, true),
-    (v_restaurant_id, 'Energético', 11, true),
+    (v_restaurant_id, 'EnergÃ©tico', 11, true),
     (v_restaurant_id, 'Cervejas', 12, true),
     (v_restaurant_id, 'Bebidas quentes', 13, true)
   on conflict (restaurant_id, name) do update set sort_order = excluded.sort_order, active = excluded.active;
@@ -1264,17 +1367,17 @@ begin
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'Pastelzinho', null, 15, 'kitchen', 9, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'Macaxeira', null, 15, 'kitchen', 10, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'Batatinha', null, 15, 'kitchen', 10, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'Batata rústica', null, 15, 'kitchen', 12, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'Feijão verde', null, 15, 'kitchen', 10, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'Feijão verde especial', null, 25, 'kitchen', 12, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'Batata rÃºstica', null, 15, 'kitchen', 12, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'FeijÃ£o verde', null, 15, 'kitchen', 10, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'FeijÃ£o verde especial', null, 25, 'kitchen', 12, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'Tripa', null, 15, 'kitchen', 12, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'Torresmo', null, 12, 'kitchen', 10, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'Mungunzá', null, 15, 'kitchen', 9, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'Pão de alho', null, 6, 'kitchen', 7, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'MungunzÃ¡', null, 15, 'kitchen', 9, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'PÃ£o de alho', null, 6, 'kitchen', 7, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'Bolinha de queijo', null, 15, 'kitchen', 8, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Petiscos'), 'Bolinha mista', null, 15, 'kitchen', 8, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Churrasco'), 'Linguiça Toscana', null, 5, 'kitchen', 10, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Churrasco'), 'Espeto de coração', 'Preço pendente', 0, 'kitchen', 10, false, false, 0, 0, null, null, false),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Churrasco'), 'LinguiÃ§a Toscana', null, 5, 'kitchen', 10, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Churrasco'), 'Espeto de coraÃ§Ã£o', 'PreÃ§o pendente', 0, 'kitchen', 10, false, false, 0, 0, null, null, false),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Churrasco'), 'Espeto de queijo', null, 10, 'kitchen', 10, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Churrasco'), 'Espeto de boi', null, 12, 'kitchen', 12, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Churrasco'), 'Espeto de porco', null, 12, 'kitchen', 12, true, false, 0, 0, null, null, true),
@@ -1282,49 +1385,49 @@ begin
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Churrasco'), 'Espeto de frango com bacon', null, 14, 'kitchen', 12, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Churrasco'), 'Boi 300g', null, 30, 'kitchen', 15, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Churrasco'), 'Porco 300g', null, 25, 'kitchen', 15, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Churrasco'), 'Mistão', null, 35, 'kitchen', 15, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Churrasco'), 'MistÃ£o', null, 35, 'kitchen', 15, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Pratos'), 'Arroz branco', null, 10, 'kitchen', 8, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Pratos'), 'Arroz à grega', null, 14, 'kitchen', 10, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Pratos'), 'Arroz Ã  grega', null, 14, 'kitchen', 10, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Pratos'), 'Arroz carreteiro', null, 15, 'kitchen', 10, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Pratos'), 'Baião comum', null, 12, 'kitchen', 9, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Pratos'), 'Baião mole', null, 14, 'kitchen', 10, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Água'), 'Água sem gás', null, 3, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Água'), 'Água com gás', null, 4, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Água'), 'Água de coco', null, 6, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Água'), 'H2O', null, 8, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Pratos'), 'BaiÃ£o comum', null, 12, 'kitchen', 9, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Pratos'), 'BaiÃ£o mole', null, 14, 'kitchen', 10, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Ãgua'), 'Ãgua sem gÃ¡s', null, 3, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Ãgua'), 'Ãgua com gÃ¡s', null, 4, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Ãgua'), 'Ãgua de coco', null, 6, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Ãgua'), 'H2O', null, 8, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de goiaba copo', null, 8, 'bar', 5, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de acerola copo', null, 8, 'bar', 5, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de cajarana copo', null, 8, 'bar', 5, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de manga copo', null, 8, 'bar', 5, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de cajá copo', null, 8, 'bar', 5, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de maracujá copo', null, 10, 'bar', 5, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de cajÃ¡ copo', null, 8, 'bar', 5, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de maracujÃ¡ copo', null, 10, 'bar', 5, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de laranja copo', null, 10, 'bar', 5, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de abacaxi com limão copo', null, 10, 'bar', 5, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de abacaxi com limÃ£o copo', null, 10, 'bar', 5, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de goiaba jarra', null, 15, 'bar', 7, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de acerola jarra', null, 15, 'bar', 7, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de cajarana jarra', null, 15, 'bar', 7, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de manga jarra', null, 15, 'bar', 7, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de cajá jarra', null, 15, 'bar', 7, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de maracujá jarra', null, 20, 'bar', 7, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de cajÃ¡ jarra', null, 15, 'bar', 7, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de maracujÃ¡ jarra', null, 20, 'bar', 7, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de laranja jarra', null, 20, 'bar', 7, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de abacaxi com limão jarra', null, 20, 'bar', 7, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Refrigerantes 1 litro'), 'Guaraná 1L', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Sucos'), 'Suco de abacaxi com limÃ£o jarra', null, 20, 'bar', 7, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Refrigerantes 1 litro'), 'GuaranÃ¡ 1L', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Refrigerantes 1 litro'), 'Pepsi 1L', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Refrigerantes 1 litro'), 'Coca-Cola 1L', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Refrigerantes lata'), 'Pepsi lata', null, 6, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Refrigerantes lata'), 'Coca-Cola lata', null, 6, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Refrigerantes lata'), 'Guaraná lata', null, 6, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Refrigerantes lata'), 'GuaranÃ¡ lata', null, 6, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Refrigerantes 600ml'), 'Coca-Cola 600ml', null, 8, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Long neck'), 'Corona long neck', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Long neck'), 'Heineken long neck', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Long neck'), 'Cabaré long neck', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Long neck'), 'CabarÃ© long neck', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Long neck'), 'Budweiser long neck', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Long neck'), 'Spaten long neck', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Long neck zero'), 'Budweiser zero long neck', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Long neck zero'), 'Heineken zero long neck', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Energético'), 'Red Bull', null, 14, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Energético'), 'Monster pequeno', null, 12, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Energético'), 'Monster grande', null, 15, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'EnergÃ©tico'), 'Red Bull', null, 14, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'EnergÃ©tico'), 'Monster pequeno', null, 12, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'EnergÃ©tico'), 'Monster grande', null, 15, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Cervejas'), 'Litrinho', null, 4, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Cervejas'), 'Latinha', null, 6, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Cervejas'), 'Brahma 600ml', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
@@ -1344,21 +1447,21 @@ begin
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Campari dose', null, 9, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Martini dose', null, 8, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Vinho dose', null, 13, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Taça de vinho', null, 13, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'TaÃ§a de vinho', null, 13, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Vodka Absolut dose', null, 6, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Vodka Absolut copo', null, 15, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Vodka Smirnoff dose', null, 7, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Vodka Smirnoff copo', null, 15, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Vodka Orloff dose', null, 5, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Vodka Orloff copo', null, 12, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Ypióca dose', null, 3, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Ypióca copo', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Cachaça 51 dose', null, 3, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Cachaça 51 copo', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Pitú dose', null, 3, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Pitú copo', null, 8, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Ypióca 150 dose', null, 7, 'bar', 2, true, false, 0, 0, null, null, true),
-    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Ypióca 150 copo', null, 15, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'YpiÃ³ca dose', null, 3, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'YpiÃ³ca copo', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'CachaÃ§a 51 dose', null, 3, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'CachaÃ§a 51 copo', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'PitÃº dose', null, 3, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'PitÃº copo', null, 8, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'YpiÃ³ca 150 dose', null, 7, 'bar', 2, true, false, 0, 0, null, null, true),
+    (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'YpiÃ³ca 150 copo', null, 15, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Dreher dose', null, 3, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Dreher copo', null, 10, 'bar', 2, true, false, 0, 0, null, null, true),
     (v_restaurant_id, (select id from public.categories where restaurant_id = v_restaurant_id and name = 'Bebidas quentes'), 'Rum Montilla dose', null, 5, 'bar', 2, true, false, 0, 0, null, null, true),

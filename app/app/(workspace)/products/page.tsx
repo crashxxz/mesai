@@ -11,7 +11,7 @@ import { useBusinessPreset } from "@/lib/use-business-preset";
 import type { PreparationSector, StockUnit } from "@/lib/types";
 import { brl } from "@/lib/utils";
 
-const sectors: PreparationSector[] = ["kitchen", "bar", "none"];
+const sectors: PreparationSector[] = ["kitchen", "bar", "both", "none"];
 const stockUnits: StockUnit[] = ["unidade", "lata", "garrafa", "kg", "litro", "porcao"];
 
 export default function ProductsPage() {
@@ -442,6 +442,7 @@ export default function ProductsPage() {
                         onChange={(event) => updateProduct(product.id, { imageUrl: event.target.value })}
                         placeholder="Imagem URL"
                       />
+                      {product.imageUrl ? <Button type="button" variant="outline" onClick={() => updateProduct(product.id, { imageUrl: undefined })}>Remover imagem</Button> : null}
                       <label className="flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium">
                         <input
                           type="checkbox"

@@ -10,19 +10,27 @@ const roleWeight: Record<UserRole, number> = {
 };
 
 export function canAccess(profile: Profile | undefined, allowed: UserRole[]) {
-  return Boolean(profile?.active && allowed.includes(profile.role));
+  return Boolean(profile?.active && effectiveRoles(profile).some((role) => allowed.includes(role)));
 }
 
 export function canSeeFinance(profile: Profile | undefined) {
-  return profile?.role === "owner" || profile?.role === "manager";
+  return canAccess(profile, ["owner", "manager"]);
 }
 
 export function canCloseAccount(profile: Profile | undefined, waiterAllowed: boolean) {
-  return ["owner", "manager", "cashier"].includes(profile?.role ?? "") || (profile?.role === "waiter" && waiterAllowed);
+  return canAccess(profile, ["owner", "manager", "cashier"]) || (canAccess(profile, ["waiter"]) && waiterAllowed);
 }
 
 export function canManageProducts(profile: Profile | undefined) {
-  return profile?.role === "owner" || profile?.role === "manager";
+  return canAccess(profile, ["owner", "manager"]);
+}
+
+export function effectiveRoles(profile: Profile | undefined): UserRole[] {
+  if (!profile) return [];
+  if (profile.role === "owner" || profile.roles?.includes("owner")) {
+    return ["owner", "manager", "waiter", "kitchen", "bar", "cashier"];
+  }
+  return profile.roles?.length ? [...new Set(profile.roles)] : [profile.role];
 }
 
 export function roleLabel(role: UserRole) {

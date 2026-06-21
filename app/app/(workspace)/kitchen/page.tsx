@@ -19,7 +19,7 @@ export default function KitchenPage() {
       const readyItems = state.orderItems.filter(
         (item) =>
           item.restaurantId === restaurantId &&
-          item.preparationSector === "kitchen" &&
+          ["kitchen", "both"].includes(item.preparationSector) &&
           item.status === "ready"
       );
       return [...activeItems, ...readyItems];

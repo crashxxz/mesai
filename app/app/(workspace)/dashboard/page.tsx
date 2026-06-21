@@ -41,10 +41,10 @@ export default function DashboardPage() {
   const activeAlerts = state.tableAlerts.filter((alert) => alert.restaurantId === restaurantId && alert.active);
   const readyItems = state.orderItems.filter((item) => item.restaurantId === restaurantId && item.status === "ready");
   const kitchenQueue = state.orderItems.filter(
-    (item) => item.restaurantId === restaurantId && item.preparationSector === "kitchen" && ["sent", "received", "preparing"].includes(item.status)
+    (item) => item.restaurantId === restaurantId && ["kitchen", "both"].includes(item.preparationSector) && ["sent", "received", "preparing"].includes(item.status)
   );
   const barQueue = state.orderItems.filter(
-    (item) => item.restaurantId === restaurantId && item.preparationSector === "bar" && ["sent", "received", "preparing"].includes(item.status)
+    (item) => item.restaurantId === restaurantId && ["bar", "both"].includes(item.preparationSector) && ["sent", "received", "preparing"].includes(item.status)
   );
   const billRequests = activeAlerts.filter((alert) => alert.type === "bill_request").length;
   const waiterCalls = activeAlerts.filter((alert) => alert.type === "waiter_call").length;

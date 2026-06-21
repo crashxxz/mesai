@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ChefHat,
+  CircleHelp,
   ClipboardList,
   LayoutDashboard,
   LogOut,
@@ -17,13 +18,15 @@ import {
 import { useEffect } from "react";
 import { BrandLogo, BrandMark } from "@/components/brand-mark";
 import { MobileBottomNav, type NavItem } from "@/components/mobile-bottom-nav";
+import { NotificationCenter } from "@/components/notification-center";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
+import { canAccess } from "@/lib/permissions";
 import { useBusinessPreset } from "@/lib/use-business-preset";
 import type { UserRole } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type NavKey = "dashboard" | "tables" | "kitchen" | "bar" | "cash" | "products" | "finance" | "settings" | "team";
+type NavKey = "dashboard" | "tables" | "kitchen" | "bar" | "cash" | "products" | "finance" | "settings" | "team" | "help";
 
 const navItems: Array<NavItem & { key: NavKey; roles: UserRole[]; section: "operation" | "admin" }> = [
   { key: "dashboard", href: "/app/dashboard", label: "Agora", icon: LayoutDashboard, roles: ["owner", "manager"], section: "operation" },
@@ -34,7 +37,8 @@ const navItems: Array<NavItem & { key: NavKey; roles: UserRole[]; section: "oper
   { key: "products", href: "/app/products", label: "Cardápio", icon: Package, roles: ["owner", "manager"], section: "admin" },
   { key: "finance", href: "/app/finance", label: "Financeiro", icon: WalletCards, roles: ["owner", "manager"], section: "admin" },
   { key: "team", href: "/app/settings/users", label: "Equipe", icon: UsersRound, roles: ["manager"], section: "admin" },
-  { key: "settings", href: "/app/settings", label: "Ajustes", icon: Settings, roles: ["owner"], section: "admin" }
+  { key: "settings", href: "/app/settings", label: "Ajustes", icon: Settings, roles: ["owner"], section: "admin" },
+  { key: "help", href: "/app/help", label: "Como usar", icon: CircleHelp, roles: ["owner", "manager", "waiter", "kitchen", "bar", "cashier"], section: "admin" }
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -50,12 +54,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (!hydrated || !profile) return null;
 
   const allowedItems = navItems
-    .filter((item) => item.roles.includes(profile.role))
-    .map((item) => ({ ...item, label: item.key === "team" ? item.label : preset.menuLabels[item.key] }));
+    .filter((item) => canAccess(profile, item.roles))
+    .map((item) => ({ ...item, label: item.key === "team" || item.key === "help" ? item.label : preset.menuLabels[item.key] }));
   const operationItems = allowedItems.filter((item) => item.section === "operation");
   const adminItems = allowedItems.filter((item) => item.section === "admin");
   const mobileExtraItems: NavItem[] =
-    ["owner", "manager"].includes(profile.role) ? [{ href: "/app/settings/users", label: "Equipe", icon: UsersRound }] : [];
+    canAccess(profile, ["owner", "manager"]) ? [{ href: "/app/settings/users", label: "Equipe", icon: UsersRound }] : [];
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -101,7 +105,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <div className="truncate text-xs font-medium text-slate-500">{profile.name}</div>
             </div>
           </div>
-          <Button
+          <div className="flex items-center gap-1"><NotificationCenter /><Button
             variant="ghost"
             size="icon"
             title="Sair"
@@ -112,7 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             }}
           >
             <LogOut className="h-5 w-5" aria-hidden="true" />
-          </Button>
+          </Button></div>
         </div>
       </header>
 

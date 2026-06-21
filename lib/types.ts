@@ -3,7 +3,7 @@ export type UUID = string;
 export type UserRole = "owner" | "manager" | "waiter" | "kitchen" | "bar" | "cashier";
 export type TableStatus = "free" | "occupied" | "closing" | "reserved";
 export type TabStatus = "open" | "closed" | "cancelled";
-export type PreparationSector = "kitchen" | "bar" | "none";
+export type PreparationSector = "kitchen" | "bar" | "both" | "none";
 export type OrderSource = "waiter" | "qr_code" | "counter" | "delivery" | "takeaway";
 export type OrderStatus =
   | "open"
@@ -63,8 +63,11 @@ export interface Profile {
   restaurantId: UUID;
   name: string;
   email: string;
+  username?: string;
   role: UserRole;
+  roles?: UserRole[];
   active: boolean;
+  deletedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -311,6 +314,7 @@ export interface StockMovement {
 
 export interface DemoCredential {
   email: string;
+  username?: string;
   password: string;
   profileId: UUID;
 }

@@ -29,8 +29,8 @@ const quickUsers = [
 export default function LoginPage() {
   const router = useRouter();
   const { hydrated, login, profile } = useStore();
-  const [email, setEmail] = useState("dono@mesai.demo");
-  const [password, setPassword] = useState("demo123");
+  const [email, setEmail] = useState(runtimeConfig.dataMode === "demo" ? "dono@mesai.demo" : "");
+  const [password, setPassword] = useState(runtimeConfig.dataMode === "demo" ? "demo123" : "");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -39,12 +39,18 @@ export default function LoginPage() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const authenticatedProfile = await login(email, password);
-    if (!authenticatedProfile) {
-      setError("Email ou senha incorretos");
-      return;
+    setError("");
+    try {
+      const identifier = runtimeConfig.dataMode === "supabase" && !email.includes("@") ? await resolveLogin(email) : email;
+      const authenticatedProfile = await login(identifier, password);
+      if (!authenticatedProfile) {
+        setError("Email, login ou senha inválidos.");
+        return;
+      }
+      router.replace(rolePath[authenticatedProfile.role]);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Não foi possível entrar. Tente novamente.");
     }
-    router.replace(rolePath[authenticatedProfile.role]);
   }
 
   return (
@@ -66,13 +72,13 @@ export default function LoginPage() {
           ) : null}
           <form className="grid gap-4" onSubmit={submit}>
             <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
-              Email
+              Email ou login
               <input
                 className="h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 outline-none transition focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-400/20"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                type="email"
-                autoComplete="email"
+                type="text"
+                autoComplete="username"
               />
             </label>
             <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
@@ -124,4 +130,15 @@ export default function LoginPage() {
       </div>
     </main>
   );
+}
+
+async function resolveLogin(username: string) {
+  const response = await fetch("/api/auth/resolve-login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username })
+  });
+  const result = await response.json() as { email?: string; error?: string };
+  if (!response.ok || !result.email) throw new Error(result.error ?? "Login não encontrado.");
+  return result.email;
 }

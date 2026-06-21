@@ -76,7 +76,7 @@ export function getPreparationItems(
     .filter(
       (item) =>
         item.restaurantId === restaurantId &&
-        item.preparationSector === sector &&
+        (item.preparationSector === sector || item.preparationSector === "both") &&
         activeStatuses.includes(item.status)
     )
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -295,6 +295,7 @@ export function sectorLabel(sector: PreparationSector) {
   const labels: Record<PreparationSector, string> = {
     kitchen: "Cozinha",
     bar: "Bar",
+    both: "Cozinha e bar",
     none: "Não prepara"
   };
   return labels[sector];
