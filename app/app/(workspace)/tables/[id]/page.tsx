@@ -51,7 +51,7 @@ export default function TableDetailPage() {
   }
 
   return (
-    <RoleGuard allowed={["owner", "waiter"]}>
+    <RoleGuard allowed={["owner", "manager", "waiter"]}>
       <section className="grid gap-4 xl:grid-cols-[1fr_360px]">
         <div className="grid gap-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">

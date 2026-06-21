@@ -37,3 +37,27 @@ export function subscribePreparationItems(
     void client.removeChannel(channel);
   };
 }
+
+export function subscribeRestaurantOperation(restaurantId: UUID, onChange: (table: string) => void) {
+  if (!supabase) {
+    const handler = (event: Event) => onChange((event as CustomEvent<{ topic?: string }>).detail?.topic ?? "state");
+    window.addEventListener("hyoc:realtime", handler);
+    return () => window.removeEventListener("hyoc:realtime", handler);
+  }
+
+  const client = supabase;
+  const tables = ["orders", "order_items", "tables", "table_alerts"] as const;
+  const channel = client.channel(`operation:${restaurantId}`);
+  for (const table of tables) {
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table, filter: `restaurant_id=eq.${restaurantId}` },
+      () => onChange(table)
+    );
+  }
+  channel.subscribe();
+
+  return () => {
+    void client.removeChannel(channel);
+  };
+}

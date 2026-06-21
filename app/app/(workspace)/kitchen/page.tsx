@@ -33,7 +33,7 @@ export default function KitchenPage() {
   }, [items.length]);
 
   return (
-    <RoleGuard allowed={["owner", "kitchen"]}>
+    <RoleGuard allowed={["owner", "manager", "kitchen"]}>
       <PreparationBoard
         title={preset.dashboardTexts.kitchenQueue}
         subtitle={items.length ? `${items.length} itens agora. Marque como pronto quando terminar.` : "Sem prato esperando agora."}

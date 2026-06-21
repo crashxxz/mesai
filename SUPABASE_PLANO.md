@@ -1,5 +1,7 @@
 # Plano Supabase - Mesaí
 
+> Estado local: migrações, gateway, segurança do QR, RPCs transacionais, seed e testes de contrato foram preparados. A aplicação no banco real depende da criação e das credenciais do projeto Supabase. Ver `supabase/README.md` e `PRODUCTION_READY.md`.
+
 ## Objetivo
 
 Migrar o Mesaí sem remover o modo demo e sem fazer a interface depender diretamente do Supabase.

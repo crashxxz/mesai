@@ -69,7 +69,7 @@ export default function TablesPage() {
   ];
 
   return (
-    <RoleGuard allowed={["owner", "waiter"]}>
+    <RoleGuard allowed={["owner", "manager", "waiter"]}>
       <section className="grid gap-5">
         <header className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

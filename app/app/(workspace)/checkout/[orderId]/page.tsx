@@ -35,7 +35,7 @@ export default function CheckoutPage() {
 
   if (!canCloseAccount(profile, settings?.waiterCanCloseAccount ?? false)) {
     return (
-      <RoleGuard allowed={["owner", "waiter"]}>
+      <RoleGuard allowed={["owner", "manager", "waiter", "cashier"]}>
         <div className="rounded-lg border border-slate-200 bg-white p-5 font-black text-slate-700 shadow-soft">
           Fechamento bloqueado
         </div>
@@ -44,7 +44,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <RoleGuard allowed={["owner", "waiter"]}>
+    <RoleGuard allowed={["owner", "manager", "waiter", "cashier"]}>
       <section className="mx-auto grid max-w-3xl gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

@@ -11,9 +11,11 @@ import type { UserRole } from "@/lib/types";
 
 const rolePath: Record<UserRole, string> = {
   owner: "/app/dashboard",
+  manager: "/app/dashboard",
   waiter: "/app/tables",
   kitchen: "/app/kitchen",
-  bar: "/app/bar"
+  bar: "/app/bar",
+  cashier: "/app/cash"
 };
 
 const quickUsers = [

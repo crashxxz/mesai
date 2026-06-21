@@ -87,7 +87,7 @@ export default function ProductsPage() {
   }
 
   return (
-    <RoleGuard allowed={["owner"]}>
+    <RoleGuard allowed={["owner", "manager"]}>
       <section className="grid gap-5">
         <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft">
           <p className="text-xs font-black uppercase tracking-wide text-amber-700">Cardápio do boteco</p>

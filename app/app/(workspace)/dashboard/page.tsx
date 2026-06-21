@@ -69,7 +69,7 @@ export default function DashboardPage() {
   });
 
   return (
-    <RoleGuard allowed={["owner"]}>
+    <RoleGuard allowed={["owner", "manager"]}>
       <section className="grid gap-5">
         <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

@@ -171,12 +171,12 @@ O acesso ao `localStorage` fica isolado por `lib/storage-adapter.ts`. A interfac
 
 ## Falta para Supabase real
 
-- trocar store demo por serviços Supabase reais
-- Auth real
-- Realtime cozinha/bar
-- QR Code com pedido real multiaparelho
-- políticas anon seguras para QR por mesa
-- deploy com variáveis reais
+- criar o projeto Supabase e aplicar `schema.sql`, migrações e seed
+- criar usuários reais e vinculá-los a `profiles`
+- preencher as variáveis reais
+- validar Auth, Realtime, QR e RPCs entre aparelhos
+- ativar definitivamente o gateway Supabase na store
+- fazer deploy com domínio e backup
 
 ## Próximas etapas
 

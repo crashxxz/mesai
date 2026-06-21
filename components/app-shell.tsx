@@ -26,13 +26,13 @@ import { cn } from "@/lib/utils";
 type NavKey = "dashboard" | "tables" | "kitchen" | "bar" | "cash" | "products" | "finance" | "settings";
 
 const navItems: Array<NavItem & { key: NavKey; roles: UserRole[]; section: "operation" | "admin" }> = [
-  { key: "dashboard", href: "/app/dashboard", label: "Agora", icon: LayoutDashboard, roles: ["owner"], section: "operation" },
-  { key: "tables", href: "/app/tables", label: "Mesas", icon: Table2, roles: ["owner", "waiter"], section: "operation" },
-  { key: "kitchen", href: "/app/kitchen", label: "Cozinha", icon: ChefHat, roles: ["owner", "kitchen"], section: "operation" },
-  { key: "bar", href: "/app/bar", label: "Bar", icon: Martini, roles: ["owner", "bar"], section: "operation" },
-  { key: "cash", href: "/app/cash", label: "Caixa", icon: ClipboardList, roles: ["owner"], section: "operation" },
-  { key: "products", href: "/app/products", label: "Cardápio", icon: Package, roles: ["owner"], section: "admin" },
-  { key: "finance", href: "/app/finance", label: "Financeiro", icon: WalletCards, roles: ["owner"], section: "admin" },
+  { key: "dashboard", href: "/app/dashboard", label: "Agora", icon: LayoutDashboard, roles: ["owner", "manager"], section: "operation" },
+  { key: "tables", href: "/app/tables", label: "Mesas", icon: Table2, roles: ["owner", "manager", "waiter"], section: "operation" },
+  { key: "kitchen", href: "/app/kitchen", label: "Cozinha", icon: ChefHat, roles: ["owner", "manager", "kitchen"], section: "operation" },
+  { key: "bar", href: "/app/bar", label: "Bar", icon: Martini, roles: ["owner", "manager", "bar"], section: "operation" },
+  { key: "cash", href: "/app/cash", label: "Caixa", icon: ClipboardList, roles: ["owner", "manager", "cashier"], section: "operation" },
+  { key: "products", href: "/app/products", label: "Cardápio", icon: Package, roles: ["owner", "manager"], section: "admin" },
+  { key: "finance", href: "/app/finance", label: "Financeiro", icon: WalletCards, roles: ["owner", "manager"], section: "admin" },
   { key: "settings", href: "/app/settings", label: "Ajustes", icon: Settings, roles: ["owner"], section: "admin" }
 ];
 

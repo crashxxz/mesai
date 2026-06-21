@@ -33,7 +33,7 @@ export default function BarPage() {
   }, [items.length]);
 
   return (
-    <RoleGuard allowed={["owner", "bar"]}>
+    <RoleGuard allowed={["owner", "manager", "bar"]}>
       <PreparationBoard
         title={preset.dashboardTexts.barQueue}
         subtitle={items.length ? `Bebidas aparecem aqui. ${items.length} na fila agora.` : "Bebidas aparecem aqui. Nenhuma esperando agora."}

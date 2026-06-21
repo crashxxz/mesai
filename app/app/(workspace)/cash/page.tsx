@@ -19,7 +19,7 @@ export default function CashPage() {
   const supplies = movements.filter((movement) => movement.type === "supply").reduce((sum, movement) => sum + movement.amount, 0);
 
   return (
-    <RoleGuard allowed={["owner"]}>
+    <RoleGuard allowed={["owner", "manager", "cashier"]}>
       <section className="grid gap-5">
         <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft">
           <p className="text-xs font-black uppercase tracking-wide text-emerald-700">Caixa do turno</p>

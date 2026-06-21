@@ -44,9 +44,11 @@ export default function UsersSettingsPage() {
               onChange={(event) => setForm((current) => ({ ...current, role: event.target.value as UserRole }))}
             >
               <option value="owner">Dono</option>
+              <option value="manager">Gerente</option>
               <option value="waiter">Garçom</option>
               <option value="kitchen">Cozinha</option>
               <option value="bar">Bar</option>
+              <option value="cashier">Caixa</option>
             </select>
             <Button variant="amber" type="submit">
               <UserPlus className="h-4 w-4" aria-hidden="true" />
@@ -74,9 +76,11 @@ export default function UsersSettingsPage() {
                   onChange={(event) => updateProfile(profile.id, { role: event.target.value as UserRole })}
                 >
                   <option value="owner">{roleLabel("owner")}</option>
+                  <option value="manager">{roleLabel("manager")}</option>
                   <option value="waiter">{roleLabel("waiter")}</option>
                   <option value="kitchen">{roleLabel("kitchen")}</option>
                   <option value="bar">{roleLabel("bar")}</option>
+                  <option value="cashier">{roleLabel("cashier")}</option>
                 </select>
                 <Button
                   variant={profile.active ? "outline" : "green"}

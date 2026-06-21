@@ -1,6 +1,6 @@
 export type UUID = string;
 
-export type UserRole = "owner" | "waiter" | "kitchen" | "bar";
+export type UserRole = "owner" | "manager" | "waiter" | "kitchen" | "bar" | "cashier";
 export type TableStatus = "free" | "occupied" | "closing" | "reserved";
 export type TabStatus = "open" | "closed" | "cancelled";
 export type PreparationSector = "kitchen" | "bar" | "none";

@@ -39,7 +39,7 @@ export default function OrderPage() {
   }
 
   return (
-    <RoleGuard allowed={["owner", "waiter"]}>
+    <RoleGuard allowed={["owner", "manager", "waiter"]}>
       <section className="grid gap-4 xl:grid-cols-[1fr_380px]">
         <div className="grid gap-3">
           <header className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">

@@ -73,11 +73,10 @@ O laboratório inicial usa o preset `boteco_popular` com o estabelecimento demo 
 ## Supabase
 
 1. Criar projeto Supabase.
-2. Abrir SQL Editor.
-3. Executar `supabase/schema.sql`.
-4. Ativar Realtime para `orders`, `order_items`, `tables` se desejar realtime real.
-5. Preencher `.env.local`.
-6. Rodar `npm run dev`.
+2. Seguir [`supabase/README.md`](supabase/README.md).
+3. Preencher `.env.local` somente depois de aplicar schema, migrações e seed.
+4. Rodar `npm run check`.
+5. Rodar `npm run dev`.
 
 ## Rotas principais
 
@@ -130,9 +129,8 @@ Implementado:
 
 Pendente técnico:
 
-- Trocar store demo por chamadas Supabase reais.
-- Criar RPCs server-side para regras críticas.
-- Refinar policies anon do QR para token de mesa.
-- Criar testes automatizados.
+- Aplicar e validar o backend preparado em um projeto Supabase real.
+- Ativar o gateway Supabase na store após validar Auth e migrações.
+- Ampliar os testes automatizados com integração contra o Supabase real.
 - Criar impressão ESC/POS futura.
 - Criar ficha técnica, baixa automática de estoque e fiado avançado.

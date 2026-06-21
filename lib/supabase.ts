@@ -1,14 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
-
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+import { runtimeConfig } from "@/lib/runtime-config";
 
 export const supabase =
-  url && anonKey
-    ? createClient(url, anonKey, {
+  runtimeConfig.dataMode === "supabase" && runtimeConfig.supabaseConfigured
+    ? createClient(runtimeConfig.supabaseUrl, runtimeConfig.supabaseAnonKey, {
         auth: {
           persistSession: true,
-          autoRefreshToken: true
+          autoRefreshToken: true,
+          detectSessionInUrl: true
         },
         realtime: {
           params: {

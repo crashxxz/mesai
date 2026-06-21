@@ -1,0 +1,189 @@
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
+import { requireSupabaseConfiguration } from "@/lib/runtime-config";
+import { supabase } from "@/lib/supabase";
+import type { OrderItemStatus, PaymentMethod, Profile, UUID } from "@/lib/types";
+
+export interface RpcOrderItemInput {
+  productId: UUID;
+  quantity: number;
+  notes?: string;
+  variationId?: UUID;
+  addonIds?: UUID[];
+}
+
+export interface WorkspaceBootstrap {
+  restaurant: Record<string, unknown>;
+  settings: Record<string, unknown> | null;
+  profile: Profile;
+}
+
+function client() {
+  requireSupabaseConfiguration();
+  if (!supabase) throw new Error("Cliente Supabase indisponível.");
+  return supabase;
+}
+
+function unwrap<T>(result: { data: T | null; error: { message: string } | null }, message: string): T {
+  if (result.error) throw new Error(`${message}: ${result.error.message}`);
+  if (result.data === null) throw new Error(message);
+  return result.data;
+}
+
+export const supabaseGateway = {
+  async signIn(email: string, password: string) {
+    const result = await client().auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    if (result.error) throw new Error(`Não foi possível entrar: ${result.error.message}`);
+    if (!result.data.user || !result.data.session) throw new Error("Não foi possível entrar");
+    return result.data;
+  },
+
+  async signOut() {
+    const { error } = await client().auth.signOut();
+    if (error) throw new Error(`Não foi possível sair: ${error.message}`);
+  },
+
+  onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void) {
+    const subscription = client().auth.onAuthStateChange(callback);
+    return () => subscription.data.subscription.unsubscribe();
+  },
+
+  async loadWorkspace(): Promise<WorkspaceBootstrap> {
+    const authResult = await client().auth.getUser();
+    if (authResult.error) throw new Error(`Sessão não encontrada: ${authResult.error.message}`);
+    const user = authResult.data.user;
+    if (!user) throw new Error("Sessão não encontrada");
+    const profileResult = await client()
+      .from("profiles")
+      .select("id,user_id,restaurant_id,name,email,role,active,created_at,updated_at")
+      .eq("user_id", user.id)
+      .eq("active", true)
+      .single();
+    const row = unwrap(profileResult, "Perfil ativo não encontrado");
+    const [restaurantResult, settingsResult] = await Promise.all([
+      client().from("restaurants").select("*").eq("id", row.restaurant_id).single(),
+      client().from("restaurant_settings").select("*").eq("restaurant_id", row.restaurant_id).maybeSingle()
+    ]);
+    const restaurant = unwrap(restaurantResult, "Estabelecimento não encontrado") as Record<string, unknown>;
+    if (settingsResult.error) throw new Error(`Configurações não encontradas: ${settingsResult.error.message}`);
+
+    return {
+      restaurant,
+      settings: settingsResult.data as Record<string, unknown> | null,
+      profile: {
+        id: row.id,
+        userId: row.user_id,
+        restaurantId: row.restaurant_id,
+        name: row.name,
+        email: row.email ?? user.email ?? "",
+        role: row.role,
+        active: row.active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      } as Profile
+    };
+  },
+
+  async createOrder(tableId: UUID | undefined, items: RpcOrderItemInput[], customerName?: string, notes?: string) {
+    const result = await client().rpc("create_order_with_items", {
+      p_table_id: tableId ?? null,
+      p_customer_name: customerName?.trim() || null,
+      p_notes: notes?.trim() || null,
+      p_items: items.map((item) => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+        notes: item.notes?.trim() || null,
+        variation_id: item.variationId ?? null,
+        addon_ids: item.addonIds ?? []
+      }))
+    });
+    return unwrap(result, "Não foi possível criar o pedido") as UUID;
+  },
+
+  async updatePreparationStatus(itemId: UUID, status: OrderItemStatus) {
+    const result = await client().rpc("update_preparation_status", {
+      p_item_id: itemId,
+      p_status: status
+    });
+    return unwrap(result, "Não foi possível atualizar o preparo");
+  },
+
+  async registerPayment(orderId: UUID, method: PaymentMethod, amount: number, cardBrand?: string, changeAmount?: number) {
+    const result = await client().rpc("register_order_payment", {
+      p_order_id: orderId,
+      p_method: method,
+      p_amount: amount,
+      p_card_brand: cardBrand?.trim() || null,
+      p_change_amount: changeAmount ?? null
+    });
+    return unwrap(result, "Não foi possível registrar o pagamento") as UUID;
+  },
+
+  async closeOrder(orderId: UUID) {
+    const result = await client().rpc("close_paid_order", { p_order_id: orderId });
+    return unwrap(result, "Não foi possível fechar a conta") as UUID;
+  },
+
+  async startQrSession(tableToken: string) {
+    const result = await client().rpc("start_qr_session", { p_table_token: tableToken });
+    return unwrap(result, "QR Code inválido ou expirado") as string;
+  },
+
+  async createQrOrder(sessionToken: string, items: RpcOrderItemInput[], customerName?: string) {
+    const result = await client().rpc("create_qr_order", {
+      p_session_token: sessionToken,
+      p_customer_name: customerName?.trim() || null,
+      p_items: items.map((item) => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+        notes: item.notes?.trim() || null,
+        variation_id: item.variationId ?? null,
+        addon_ids: item.addonIds ?? []
+      }))
+    });
+    return unwrap(result, "Não foi possível enviar o pedido pelo QR") as UUID;
+  },
+
+  async getPublicMenu(tableToken: string) {
+    const result = await client().rpc("get_public_menu", { p_table_token: tableToken });
+    return unwrap(result, "Não foi possível carregar o cardápio público") as Record<string, unknown>;
+  },
+
+  async getQrOrder(sessionToken: string, orderId: UUID) {
+    const result = await client().rpc("get_qr_order", { p_session_token: sessionToken, p_order_id: orderId });
+    return unwrap(result, "Não foi possível acompanhar o pedido") as Record<string, unknown>;
+  },
+
+  async requestTableService(sessionToken: string, type: "waiter_call" | "bill_request") {
+    const result = await client().rpc("request_table_service", { p_session_token: sessionToken, p_type: type });
+    return unwrap(result, "Não foi possível chamar o atendimento") as UUID;
+  },
+
+  async openCashSession(openingAmount: number) {
+    const result = await client().rpc("open_cash_session", { p_opening_amount: openingAmount });
+    return unwrap(result, "Não foi possível abrir o caixa") as UUID;
+  },
+
+  async addCashMovement(type: "withdrawal" | "supply" | "adjustment", amount: number, description: string) {
+    const result = await client().rpc("add_cash_movement", {
+      p_type: type,
+      p_amount: amount,
+      p_description: description.trim()
+    });
+    return unwrap(result, "Não foi possível registrar o movimento") as UUID;
+  },
+
+  async closeCashSession(countedAmount: number) {
+    const result = await client().rpc("close_cash_session", { p_counted_amount: countedAmount });
+    return unwrap(result, "Não foi possível fechar o caixa") as UUID;
+  },
+
+  async recordStockMovement(productId: UUID, type: "entry" | "exit" | "adjustment", quantity: number, reason: string) {
+    const result = await client().rpc("record_stock_movement", {
+      p_product_id: productId,
+      p_type: type,
+      p_quantity: quantity,
+      p_reason: reason.trim()
+    });
+    return unwrap(result, "Não foi possível atualizar o estoque") as UUID;
+  }
+};
