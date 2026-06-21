@@ -6,6 +6,7 @@ import { ChefHat, LogIn, Martini, ShieldCheck, UserRound } from "lucide-react";
 import { BrandMark, BrandName } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
 import { brand } from "@/lib/brand";
+import { runtimeConfig } from "@/lib/runtime-config";
 import { useStore } from "@/lib/store";
 import type { UserRole } from "@/lib/types";
 
@@ -36,16 +37,14 @@ export default function LoginPage() {
     if (hydrated && profile) router.replace(rolePath[profile.role]);
   }, [hydrated, profile, router]);
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    const ok = login(email, password);
-    if (!ok) {
+    const authenticatedProfile = await login(email, password);
+    if (!authenticatedProfile) {
       setError("Email ou senha incorretos");
       return;
     }
-    const nextProfile = quickUsers.find((item) => item.email === email.trim().toLowerCase());
-    const role = nextProfile?.role ?? "owner";
-    router.replace(rolePath[role]);
+    router.replace(rolePath[authenticatedProfile.role]);
   }
 
   return (
@@ -60,9 +59,11 @@ export default function LoginPage() {
         </div>
 
         <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-soft-lg">
-          <p className="mb-4 rounded-2xl bg-amber-50 p-3 text-sm font-black text-amber-900">
-            Escolha um perfil para testar o sistema.
-          </p>
+          {runtimeConfig.dataMode === "demo" ? (
+            <p className="mb-4 rounded-2xl bg-amber-50 p-3 text-sm font-black text-amber-900">
+              Escolha um perfil para testar o sistema.
+            </p>
+          ) : null}
           <form className="grid gap-4" onSubmit={submit}>
             <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
               Email
@@ -92,7 +93,7 @@ export default function LoginPage() {
           </form>
         </section>
 
-        <div className="mt-6">
+        {runtimeConfig.dataMode === "demo" ? <div className="mt-6">
           <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">
             Acesso rápido (demo)
           </p>
@@ -104,12 +105,12 @@ export default function LoginPage() {
                   key={user.email}
                   type="button"
                   className={`flex min-h-12 items-center gap-2 rounded-xl border px-3 text-sm font-bold transition active:scale-[0.97] ${user.color}`}
-                  onClick={() => {
+                  onClick={async () => {
                     setEmail(user.email);
                     setPassword("demo123");
-                    const ok = login(user.email, "demo123");
-                    if (ok) {
-                      router.replace(rolePath[user.role]);
+                    const authenticatedProfile = await login(user.email, "demo123");
+                    if (authenticatedProfile) {
+                      router.replace(rolePath[authenticatedProfile.role]);
                     }
                   }}
                 >
@@ -119,7 +120,7 @@ export default function LoginPage() {
               );
             })}
           </div>
-        </div>
+        </div> : null}
       </div>
     </main>
   );

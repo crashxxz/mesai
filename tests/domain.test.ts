@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { canCloseAccount, canManageProducts, canSeeFinance, roleLabel } from "../lib/permissions";
+import { canAccess, canCloseAccount, canManageProducts, canSeeFinance, roleLabel } from "../lib/permissions";
 import { calculateOrderTotals, getBarItems, getFinancialSummary, getKitchenItems } from "../lib/services";
 import { createSeedState } from "../lib/seed";
 import type { Profile, UserRole } from "../lib/types";
@@ -25,6 +25,14 @@ test("gerente e caixa respeitam permissões operacionais", () => {
   assert.equal(canCloseAccount(profile("cashier"), false), true);
   assert.equal(canSeeFinance(profile("cashier")), false);
   assert.equal(canManageProducts(profile("cashier")), false);
+});
+
+test("garçom, cozinha e bar ficam limitados às suas áreas", () => {
+  assert.equal(canSeeFinance(profile("waiter")), false);
+  assert.equal(canAccess(profile("kitchen"), ["owner", "manager", "kitchen"]), true);
+  assert.equal(canAccess(profile("kitchen"), ["owner", "manager", "bar"]), false);
+  assert.equal(canAccess(profile("bar"), ["owner", "manager", "bar"]), true);
+  assert.equal(canAccess(profile("bar"), ["owner", "manager", "kitchen"]), false);
 });
 
 test("totais, financeiro e filas do seed permanecem válidos", () => {

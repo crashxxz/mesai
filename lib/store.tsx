@@ -10,7 +10,10 @@ import {
 } from "react";
 import { createMaricotaCatalog, createSeedState } from "@/lib/seed";
 import { emitDemoRealtime } from "@/lib/realtime";
+import { runtimeConfig } from "@/lib/runtime-config";
 import { createLocalStorageAdapter } from "@/lib/storage-adapter";
+import { supabase } from "@/lib/supabase";
+import { supabaseGateway, type WorkspaceBootstrap } from "@/lib/supabase-gateway";
 import {
   calculateOrderTotals,
   createAuditLog,
@@ -71,7 +74,7 @@ interface StoreContextValue {
   profile?: Profile;
   restaurant?: Restaurant;
   settings?: RestaurantSettings;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<Profile | undefined>;
   logout: () => void;
   resetDemo: () => void;
   reloadMaricotaCatalog: () => void;
@@ -99,7 +102,7 @@ interface StoreContextValue {
   createTable: () => void;
   updateRestaurant: (patch: Partial<Restaurant>) => void;
   updateSettings: (patch: Partial<RestaurantSettings>) => void;
-  createProfile: (name: string, email: string, role: Profile["role"]) => void;
+  createProfile: (name: string, email: string, password: string, role: Profile["role"], active: boolean) => void;
   openCashSession: (openingAmount: number) => UUID;
   addCashMovement: (type: "withdrawal" | "supply" | "adjustment", amount: number, description: string) => void;
   closeCashSession: (countedAmount: number) => void;
@@ -113,8 +116,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setState(loadState());
-    setHydrated(true);
+    let mounted = true;
+    async function hydrate() {
+      let next = loadState();
+      if (runtimeConfig.dataMode === "supabase") {
+        try {
+          const session = await supabase?.auth.getSession();
+          if (session?.data.session) next = mergeWorkspace(next, await supabaseGateway.loadWorkspace());
+          else next = { ...next, currentProfileId: undefined };
+        } catch {
+          next = { ...next, currentProfileId: undefined };
+        }
+      }
+      if (mounted) {
+        setState(next);
+        setHydrated(true);
+      }
+    }
+    void hydrate();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -217,17 +239,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       profile,
       restaurant,
       settings,
-      login(email, password) {
+      async login(email, password) {
+        if (runtimeConfig.dataMode === "supabase") {
+          try {
+            await supabaseGateway.signIn(email, password);
+            const workspace = await supabaseGateway.loadWorkspace();
+            commit(mergeWorkspace(state, workspace), "auth");
+            return workspace.profile;
+          } catch {
+            return undefined;
+          }
+        }
         const normalized = email.trim().toLowerCase();
         const credential = state.credentials.find(
           (item) => item.email === normalized && item.password === password
         );
         const nextProfile = state.profiles.find((item) => item.id === credential?.profileId && item.active);
-        if (!credential || !nextProfile) return false;
+        if (!credential || !nextProfile) return undefined;
         commit({ ...state, currentProfileId: credential.profileId }, "auth");
-        return true;
+        return nextProfile;
       },
       logout() {
+        if (runtimeConfig.dataMode === "supabase") void supabaseGateway.signOut().catch(() => undefined);
         commit({ ...state, currentProfileId: undefined }, "auth");
       },
       resetDemo() {
@@ -981,7 +1014,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           "settings"
         );
       },
-      createProfile(name, email, role) {
+      createProfile(name, email, password, role, active) {
         const now = new Date().toISOString();
         const profileId = uid("profile");
         const normalized = email.trim().toLowerCase();
@@ -997,7 +1030,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 name,
                 email: normalized,
                 role,
-                active: true,
+                active,
                 createdAt: now,
                 updatedAt: now
               }
@@ -1006,7 +1039,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               ...state.credentials,
               {
                 email: normalized,
-                password: "demo123",
+                password,
                 profileId
               }
             ]
@@ -1141,6 +1174,45 @@ export function useStore() {
     throw new Error("useStore must be used inside StoreProvider");
   }
   return value;
+}
+
+function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppState {
+  const row = workspace.restaurant;
+  const id = String(row.id);
+  const now = new Date().toISOString();
+  const restaurant: Restaurant = {
+    id,
+    name: String(row.name ?? "Mesaí"),
+    slug: String(row.slug ?? id),
+    logoUrl: typeof row.logo_url === "string" ? row.logo_url : undefined,
+    city: typeof row.city === "string" ? row.city : undefined,
+    phone: typeof row.phone === "string" ? row.phone : undefined,
+    whatsappUrl: typeof row.whatsapp_url === "string" ? row.whatsapp_url : undefined,
+    mapsUrl: typeof row.maps_url === "string" ? row.maps_url : undefined,
+    address: typeof row.address === "string" ? row.address : undefined,
+    createdAt: String(row.created_at ?? now),
+    updatedAt: String(row.updated_at ?? now)
+  };
+  const settingsRow = workspace.settings;
+  const remoteSettings: RestaurantSettings | undefined = settingsRow
+    ? {
+        restaurantId: id,
+        qrOrdersEnabled: settingsRow.qr_orders_enabled !== false,
+        qrOrdersNeedApproval: settingsRow.qr_orders_need_approval === true,
+        waiterCanCloseAccount: settingsRow.waiter_can_close_account !== false,
+        serviceFeePercent: Number(settingsRow.service_fee_percent ?? 10)
+      }
+    : undefined;
+
+  return {
+    ...current,
+    restaurants: [...current.restaurants.filter((item) => item.id !== id), restaurant],
+    settings: remoteSettings
+      ? [...current.settings.filter((item) => item.restaurantId !== id), remoteSettings]
+      : current.settings,
+    profiles: [...current.profiles.filter((item) => item.userId !== workspace.profile.userId), workspace.profile],
+    currentProfileId: workspace.profile.id
+  };
 }
 
 function loadState() {
