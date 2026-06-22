@@ -27,6 +27,8 @@ export default function ProductsPage() {
   );
   const products = state.products.filter((product) => product.restaurantId === restaurant?.id);
   const trackedProducts = products.filter((product) => product.hasStockControl);
+  const lowStockProducts = trackedProducts.filter((product) => getStockStatus(product) !== "ok");
+  const recentStockMovements = state.stockMovements.filter((movement) => movement.restaurantId === restaurant?.id).slice(-8).reverse();
   const pendingProducts = products.filter((product) => product.price <= 0);
   const [categoryName, setCategoryName] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -48,6 +50,21 @@ export default function ProductsPage() {
     stockMinimum: "",
     stockUnit: "unidade" as StockUnit
   });
+  const [imageError, setImageError] = useState("");
+
+  function handleImageFile(file: File | undefined, apply: (url: string) => void) {
+    if (!file) return;
+    if (!file.type.startsWith("image/") || file.size > 900_000) {
+      setImageError("Use uma imagem de até 900 KB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      apply(String(reader.result));
+      setImageError("");
+    };
+    reader.readAsDataURL(file);
+  }
 
   function submitCategory(event: FormEvent) {
     event.preventDefault();
@@ -105,12 +122,12 @@ export default function ProductsPage() {
           </div>
         </header>
 
-        {runtimeConfig.dataMode === "demo" ? <details className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
+        <details className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
           <summary className="flex cursor-pointer items-center gap-2 text-lg font-black text-slate-950">
             <PackageCheck className="h-5 w-5 text-emerald-600" aria-hidden="true" />
-            Estoque simples · {trackedProducts.length} itens
+            Estoque simples · {trackedProducts.length} itens · {lowStockProducts.length} alerta{lowStockProducts.length === 1 ? "" : "s"}
           </summary>
-          <p className="mt-2 text-sm font-bold text-slate-500">Ajuste rápido. Baixa automática por venda fica para a próxima etapa.</p>
+          <p className="mt-2 text-sm font-bold text-slate-500">Entradas, saídas e baixa automática por venda.</p>
           <div className="mt-4 grid gap-2">
             {trackedProducts.length ? trackedProducts.map((product) => {
               const status = getStockStatus(product);
@@ -150,7 +167,16 @@ export default function ProductsPage() {
               <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm font-bold text-slate-400">Ative o controle de estoque em um produto.</div>
             )}
           </div>
-        </details> : null}
+          <section className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
+            <h3 className="text-sm font-black text-slate-700">Movimentações recentes</h3>
+            <div className="mt-2 grid gap-1 text-xs font-bold text-slate-500">
+              {recentStockMovements.length ? recentStockMovements.map((movement) => {
+                const product = products.find((item) => item.id === movement.productId);
+                return <div key={movement.id} className="flex justify-between gap-3"><span>{product?.name ?? "Produto"} · {movement.reason}</span><strong className={movement.type === "entry" ? "text-emerald-700" : "text-red-700"}>{movement.type === "entry" ? "+" : "-"}{movement.quantity}</strong></div>;
+              }) : <span>Sem movimentações.</span>}
+            </div>
+          </section>
+        </details>
 
         <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <label className="grid gap-1 text-sm font-black text-slate-700">
@@ -294,6 +320,13 @@ export default function ProductsPage() {
                       onChange={(event) => setForm((current) => ({ ...current, imageUrl: event.target.value }))}
                       placeholder="URL da imagem"
                     />
+                    <input
+                      className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={(event) => handleImageFile(event.target.files?.[0], (imageUrl) => setForm((current) => ({ ...current, imageUrl })))}
+                    />
+                    {imageError ? <p className="text-xs font-bold text-red-600">{imageError}</p> : null}
                     <label className="flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium">
                       <input
                         type="checkbox"
@@ -447,6 +480,12 @@ export default function ProductsPage() {
                         value={product.imageUrl ?? ""}
                         onChange={(event) => updateProduct(product.id, { imageUrl: event.target.value })}
                         placeholder="Imagem URL"
+                      />
+                      <input
+                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(event) => handleImageFile(event.target.files?.[0], (imageUrl) => updateProduct(product.id, { imageUrl }))}
                       />
                       {product.imageUrl ? <Button type="button" variant="outline" onClick={() => updateProduct(product.id, { imageUrl: undefined })}>Remover imagem</Button> : null}
                       <label className="flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium">

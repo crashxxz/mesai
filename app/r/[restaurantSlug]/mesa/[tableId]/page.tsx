@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { BellRing, CheckCircle2, MessageCircle, ReceiptText, Send, ShoppingBag, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BrandMark } from "@/components/brand-mark";
@@ -19,6 +19,7 @@ interface CartItem { id: UUID; productId: UUID; quantity: number; notes?: string
 
 export default function PublicQrPage() {
   const params = useParams<{ restaurantSlug: string; tableId: string }>();
+  const searchParams = useSearchParams();
   const { state, createQrOrder, requestTableService } = useStore();
   const stateRef = useRef(state); stateRef.current = state;
   const { preset } = useBusinessPreset();
@@ -31,6 +32,7 @@ export default function PublicQrPage() {
   const [tracked, setTracked] = useState<{ order: Order; items: OrderItem[] }>();
   const [message, setMessage] = useState("");
   const [drinkPicker, setDrinkPicker] = useState(false);
+  const tableToken = searchParams.get("t") ?? "";
   const menuState = remoteState ?? state;
   const restaurant = menuState.restaurants.find((item) => item.slug === params.restaurantSlug);
   const table = remoteState?.tables[0] ?? menuState.tables.find((item) => item.id === params.tableId && item.restaurantId === restaurant?.id);
@@ -41,14 +43,30 @@ export default function PublicQrPage() {
 
   useEffect(() => {
     if (runtimeConfig.dataMode !== "supabase") return;
+    if (!tableToken) {
+      setLoadError("QR inválido. Chame um atendente.");
+      return;
+    }
     let mounted = true;
-    void supabaseGateway.openPublicTable(params.restaurantSlug, params.tableId).then((payload) => {
+    void supabaseGateway.getPublicMenu(tableToken).then(async (payload) => {
       if (!mounted) return;
-      setSessionToken(String(payload.session_token));
+      const payloadRestaurant = payload.restaurant as Record<string, unknown> | undefined;
+      const payloadTable = payload.table as Record<string, unknown> | undefined;
+      if (String(payloadRestaurant?.slug ?? "") !== params.restaurantSlug || String(payloadTable?.id ?? "") !== params.tableId) {
+        throw new Error("QR inválido. Chame um atendente.");
+      }
+      const nextSessionToken = await supabaseGateway.startQrSession(tableToken);
+      if (!mounted) return;
+      setSessionToken(nextSessionToken);
       setRemoteState(mapPublicMenu(stateRef.current, payload));
-    }).catch((error) => { if (mounted) setLoadError(error instanceof Error ? error.message : "Mesa não encontrada"); });
+    }).catch((error) => {
+      if (!mounted) return;
+      setLoadError(error instanceof Error && /Mesa aguardando abertura/i.test(error.message)
+        ? "Aguardando abertura da mesa. Chame um atendente."
+        : "QR inválido. Chame um atendente.");
+    });
     return () => { mounted = false; };
-  }, [params.restaurantSlug, params.tableId]);
+  }, [params.restaurantSlug, params.tableId, tableToken]);
 
   useEffect(() => {
     if (!sessionToken || !orderId) return;

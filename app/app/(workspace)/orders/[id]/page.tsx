@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { ArrowLeft, Send, ShoppingBasket, WalletCards } from "lucide-react";
 import { useState } from "react";
 import { OrderSummary } from "@/components/order-summary";
@@ -16,6 +16,7 @@ import { brl } from "@/lib/utils";
 
 export default function OrderPage() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const {
     state,
     addOrderItem,
@@ -29,6 +30,18 @@ export default function OrderPage() {
   const items = order ? getOrderItems(state, order.id) : [];
   const [cancelItemId, setCancelItemId] = useState<string | undefined>();
   const pendingCount = items.filter((item) => item.status === "pending").length;
+  const quickDrinks = searchParams.get("quick") === "drinks";
+  const drinkCategoryIds = new Set(
+    state.categories
+      .filter((category) => /bebida|cerveja|drink|bar/i.test(category.name))
+      .map((category) => category.id)
+  );
+  const menuProducts = quickDrinks
+    ? state.products.filter((product) => drinkCategoryIds.has(product.categoryId) || product.preparationSector === "bar" || product.preparationSector === "both")
+    : state.products;
+  const menuCategories = quickDrinks
+    ? state.categories.filter((category) => drinkCategoryIds.has(category.id) || menuProducts.some((product) => product.categoryId === category.id))
+    : state.categories;
 
   if (!order) {
     return (
@@ -46,7 +59,7 @@ export default function OrderPage() {
           <header className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-black uppercase tracking-wide text-amber-700">Lançamento rápido</p>
+                <p className="text-xs font-black uppercase tracking-wide text-amber-700">{quickDrinks ? "Bebidas rápidas" : "Lançamento rápido"}</p>
                 <h1 className="mt-1 text-2xl font-black text-slate-950">
                   {table?.name ?? order.customerName ?? "Comanda"}
                 </h1>
@@ -91,11 +104,13 @@ export default function OrderPage() {
           </div>
 
           <ProductGrid
-            categories={state.categories}
-            products={state.products}
+            categories={menuCategories}
+            products={menuProducts}
             variations={state.productVariations}
             addons={state.productAddons}
             allowedAddons={state.productAllowedAddons}
+            title={quickDrinks ? "Bebidas" : "Cardápio"}
+            subtitle={quickDrinks ? "Escolha uma bebida para esta mesa." : "Escolha os itens para adicionar."}
             onAdd={(productId, input) => addOrderItem(order.id, productId, input)}
           />
         </div>

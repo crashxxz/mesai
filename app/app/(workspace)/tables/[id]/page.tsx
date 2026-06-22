@@ -24,6 +24,7 @@ export default function TableDetailPage() {
     updateOrderItemStatus,
     transferOrderTable,
     mergeOrders,
+    closeTable,
     resolveTableAlerts
   } = useStore();
   const { preset } = useBusinessPreset();
@@ -37,6 +38,7 @@ export default function TableDetailPage() {
   const [targetTableId, setTargetTableId] = useState("");
   const [mergeOrderId, setMergeOrderId] = useState("");
   const [cancelItemId, setCancelItemId] = useState<string | undefined>();
+  const [closeError, setCloseError] = useState("");
 
   const otherTables = useMemo(
     () => state.tables.filter((item) => item.id !== table?.id && item.active).sort((a, b) => a.number - b.number),
@@ -105,6 +107,17 @@ export default function TableDetailPage() {
                       {preset.quickActions.closeAccount}
                     </Link>
                   </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (!window.confirm("Fechar esta mesa? Todas as comandas precisam estar pagas.")) return;
+                      setCloseError("");
+                      void closeTable(table.id).catch((error) => setCloseError(error instanceof Error ? error.message : "Não foi possível fechar a mesa."));
+                    }}
+                  >
+                    <ReceiptText className="h-4 w-4" aria-hidden="true" />
+                    Fechar mesa
+                  </Button>
                   {hasWaiterCall ? (
                     <Button variant="outline" onClick={() => resolveTableAlerts(table.id, "waiter_call")}>
                       <BellRing className="h-4 w-4" aria-hidden="true" />
@@ -125,6 +138,7 @@ export default function TableDetailPage() {
                 </Button>
               )}
             </div>
+            {closeError ? <p className="mt-3 text-sm font-bold text-red-600">{closeError}</p> : null}
           </div>
 
           {order ? (

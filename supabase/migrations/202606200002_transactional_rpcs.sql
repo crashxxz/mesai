@@ -38,7 +38,7 @@ create or replace function public.create_order_with_items(
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_profile public.profiles%rowtype;
@@ -132,7 +132,7 @@ create or replace function public.create_qr_order(
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_session public.qr_sessions%rowtype;
@@ -197,7 +197,7 @@ create or replace function public.get_qr_order(p_session_token text, p_order_id 
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_session public.qr_sessions%rowtype;
@@ -219,7 +219,7 @@ create or replace function public.update_preparation_status(p_item_id uuid, p_st
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_profile public.profiles%rowtype;
@@ -260,7 +260,7 @@ create or replace function public.register_order_payment(
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_profile public.profiles%rowtype;
@@ -287,7 +287,7 @@ create or replace function public.close_paid_order(p_order_id uuid)
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_profile public.profiles%rowtype;
@@ -318,7 +318,7 @@ create or replace function public.record_stock_movement(p_product_id uuid, p_typ
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_profile public.profiles%rowtype;

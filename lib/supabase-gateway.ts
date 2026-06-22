@@ -20,6 +20,8 @@ export interface WorkspaceBootstrap {
   tables: Record<string, unknown>[];
   orders: Record<string, unknown>[];
   orderItems: Record<string, unknown>[];
+  payments: Record<string, unknown>[];
+  stockMovements: Record<string, unknown>[];
   tableAlerts: Record<string, unknown>[];
 }
 
@@ -70,7 +72,7 @@ export const supabaseGateway = {
       .eq("active", true)
       .single();
     const row = unwrap(profileResult, "Perfil ativo não encontrado");
-    const [restaurantResult, settingsResult, categoriesResult, productsResult, tablesResult, ordersResult, orderItemsResult, alertsResult] = await Promise.all([
+    const [restaurantResult, settingsResult, categoriesResult, productsResult, tablesResult, ordersResult, orderItemsResult, paymentsResult, stockMovementsResult, alertsResult] = await Promise.all([
       client().from("restaurants").select("*").eq("id", row.restaurant_id).single(),
       client().from("restaurant_settings").select("*").eq("restaurant_id", row.restaurant_id).maybeSingle(),
       client().from("categories").select("*").eq("restaurant_id", row.restaurant_id),
@@ -78,12 +80,16 @@ export const supabaseGateway = {
       client().from("tables").select("*").eq("restaurant_id", row.restaurant_id),
       client().from("orders").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(200),
       client().from("order_items").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(500),
+      client().from("payments").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(500),
+      client().from("stock_movements").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(500),
       client().from("table_alerts").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(100)
     ]);
     const restaurant = unwrap(restaurantResult, "Estabelecimento não encontrado") as Record<string, unknown>;
     if (settingsResult.error) throw new Error(`Configurações não encontradas: ${settingsResult.error.message}`);
 
     if (categoriesResult.error || productsResult.error || tablesResult.error || ordersResult.error || orderItemsResult.error || alertsResult.error) throw new Error("Dados do estabelecimento não encontrados.");
+
+    if (paymentsResult.error || stockMovementsResult.error) throw new Error("Dados complementares indisponiveis.");
 
     return {
       restaurant,
@@ -93,6 +99,8 @@ export const supabaseGateway = {
       tables: tablesResult.data as Record<string, unknown>[],
       orders: ordersResult.data as Record<string, unknown>[],
       orderItems: orderItemsResult.data as Record<string, unknown>[],
+      payments: paymentsResult.data as Record<string, unknown>[],
+      stockMovements: stockMovementsResult.data as Record<string, unknown>[],
       tableAlerts: alertsResult.data as Record<string, unknown>[],
       profile: {
         id: row.id,
@@ -168,6 +176,16 @@ export const supabaseGateway = {
   async closeOrder(orderId: UUID) {
     const result = await client().rpc("close_paid_order", { p_order_id: orderId });
     return unwrap(result, "Não foi possível fechar a conta") as UUID;
+  },
+
+  async closeTable(tableId: UUID) {
+    const result = await client().rpc("close_table", { p_table_id: tableId });
+    return unwrap(result, "Nao foi possivel fechar a mesa") as UUID;
+  },
+
+  async rotateTableQrToken(tableId: UUID) {
+    const result = await client().rpc("rotate_table_qr_token", { p_table_id: tableId });
+    return unwrap(result, "Nao foi possivel gerar o QR Code") as string;
   },
 
   async startQrSession(tableToken: string) {

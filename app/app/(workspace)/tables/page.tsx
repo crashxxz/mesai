@@ -54,10 +54,18 @@ export default function TablesPage() {
     void openOrderFor(table.id);
   }
 
-  function openFastOrder() {
-    const table = tables.find((item) => item.status === "occupied") ?? tables.find((item) => item.status === "free") ?? tables[0];
+  async function openFastOrder(drinksOnly = false) {
+    const occupiedTables = tables.filter((item) => item.status === "occupied");
+    if (drinksOnly && occupiedTables.length !== 1) {
+      setFilter("occupied");
+      return;
+    }
+    const table = drinksOnly
+      ? occupiedTables[0]
+      : occupiedTables[0] ?? tables.find((item) => item.status === "free") ?? tables[0];
     if (!table) return;
-    void openOrderFor(table.id);
+    const orderId = await ensureOpenOrderForTable(table.id);
+    router.push(`/app/orders/${orderId}${drinksOnly ? "?quick=drinks" : ""}`);
   }
 
   const actionCards = [
@@ -84,11 +92,11 @@ export default function TablesPage() {
                 <DoorOpen className="h-5 w-5" aria-hidden="true" />
                 {preset.quickActions.openTable}
               </Button>
-              <Button variant="amber" size="lg" onClick={openFastOrder}>
+              <Button variant="amber" size="lg" onClick={() => void openFastOrder()}>
                 <Plus className="h-5 w-5" aria-hidden="true" />
                 {preset.quickActions.addOrder}
               </Button>
-              <Button variant="outline" size="lg" onClick={openFastOrder}>
+              <Button variant="outline" size="lg" onClick={() => void openFastOrder(true)}>
                 <Plus className="h-5 w-5" aria-hidden="true" />
                 {preset.quickActions.addDrink}
               </Button>

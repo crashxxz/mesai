@@ -123,11 +123,11 @@ create or replace function public.rotate_table_qr_token(p_table_id uuid)
 returns text
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_restaurant_id uuid;
-  v_token text := encode(gen_random_bytes(24), 'hex');
+  v_token text := replace(gen_random_uuid()::text, '-', '');
 begin
   select restaurant_id into v_restaurant_id
   from public.tables
@@ -165,7 +165,7 @@ create or replace function public.get_public_menu(p_table_token text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_token public.table_qr_tokens%rowtype;
@@ -195,11 +195,11 @@ create or replace function public.start_qr_session(p_table_token text)
 returns text
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_token public.table_qr_tokens%rowtype;
-  v_session text := encode(gen_random_bytes(24), 'hex');
+  v_session text := replace(gen_random_uuid()::text, '-', '');
 begin
   select * into v_token
   from public.table_qr_tokens
@@ -219,7 +219,7 @@ create or replace function public.request_table_service(p_session_token text, p_
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_session public.qr_sessions%rowtype;

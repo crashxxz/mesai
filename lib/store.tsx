@@ -28,6 +28,7 @@ import type {
   OrderItemAddon,
   OrderItemStatus,
   OrderSource,
+  Payment,
   PaymentMethod,
   Product,
   Profile,
@@ -36,6 +37,7 @@ import type {
   RestaurantTable,
   TableAlert,
   TableAlertType,
+  StockMovement,
   UUID
 } from "@/lib/types";
 import { uid } from "@/lib/utils";
@@ -90,15 +92,16 @@ interface StoreContextValue {
   updateOrderDiscount: (orderId: UUID, discount: number) => void;
   transferOrderTable: (orderId: UUID, newTableId: UUID) => void;
   mergeOrders: (sourceOrderId: UUID, targetOrderId: UUID) => void;
-  closeOrder: (orderId: UUID) => void;
+  closeOrder: (orderId: UUID) => Promise<void>;
+  closeTable: (tableId: UUID) => Promise<void>;
   reopenOrder: (orderId: UUID, reason: string) => void;
-  registerPayment: (orderId: UUID, input: RegisterPaymentInput) => void;
+  registerPayment: (orderId: UUID, input: RegisterPaymentInput) => Promise<void>;
   createExpense: (input: CreateExpenseInput) => void;
   createCategory: (name: string) => void;
   createProduct: (input: Partial<Product> & Pick<Product, "name" | "categoryId" | "price" | "preparationSector">) => void;
   updateProduct: (productId: UUID, patch: Partial<Product>) => void;
   removeProduct: (productId: UUID) => Promise<"deleted" | "inactivated">;
-  recordStockMovement: (productId: UUID, type: "entry" | "exit", quantity: number, reason: string) => void;
+  recordStockMovement: (productId: UUID, type: "entry" | "exit", quantity: number, reason: string) => Promise<void>;
   updateTable: (tableId: UUID, patch: Partial<RestaurantTable>) => void;
   requestTableService: (tableId: UUID, type: TableAlertType) => void;
   resolveTableAlerts: (tableId: UUID, type?: TableAlertType) => void;
@@ -329,6 +332,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
 
         if (!orderItems.length) return undefined;
+        const stockDeductions = new Map<string, number>();
+        for (const item of orderItems) {
+          const product = state.products.find((entry) => entry.id === item.productId);
+          if (product?.hasStockControl) stockDeductions.set(item.productId, (stockDeductions.get(item.productId) ?? 0) + item.quantity);
+        }
 
         let next: AppState = {
           ...state,
@@ -365,6 +373,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ],
           orderItems: [...state.orderItems, ...orderItems],
           orderItemAddons: [...state.orderItemAddons, ...orderAddons],
+          products: state.products.map((product) => {
+            const quantity = stockDeductions.get(product.id);
+            return quantity ? { ...product, stockQuantity: Math.max(0, (product.stockQuantity ?? 0) - quantity), updatedAt: now } : product;
+          }),
+          stockMovements: [
+            ...(state.stockMovements ?? []),
+            ...[...stockDeductions.entries()].map(([productId, quantity]) => ({
+              id: uid("stock"), restaurantId, productId, type: "exit" as const, quantity,
+              reason: "Baixa automática por venda", createdAt: now
+            }))
+          ],
           tables: state.tables.map((table) =>
             table.id === tableId ? { ...table, status: "occupied", updatedAt: now } : table
           )
@@ -434,10 +453,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           updatedAt: now
         };
 
+        const stockQuantity = product.hasStockControl ? Math.max(0, (product.stockQuantity ?? 0) - item.quantity) : undefined;
         let next: AppState = {
           ...state,
           orderItems: [...state.orderItems, item],
-          orderItemAddons: [...state.orderItemAddons, ...addons]
+          orderItemAddons: [...state.orderItemAddons, ...addons],
+          products: product.hasStockControl
+            ? state.products.map((entry) => entry.id === product.id ? { ...entry, stockQuantity, updatedAt: now } : entry)
+            : state.products,
+          stockMovements: product.hasStockControl
+            ? [...(state.stockMovements ?? []), { id: uid("stock"), restaurantId: product.restaurantId, productId: product.id, type: "exit", quantity: item.quantity, reason: "Baixa automática por venda", createdBy: profile?.id, createdAt: now }]
+            : state.stockMovements
         };
         next = withTotals(next, orderId);
         next = {
@@ -642,7 +668,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         };
         commit(next, "order");
       },
-      closeOrder(orderId) {
+      async closeOrder(orderId) {
+        if (runtimeConfig.dataMode === "supabase") {
+          await supabaseGateway.closeOrder(orderId);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return;
+        }
         const now = new Date().toISOString();
         const order = state.orders.find((item) => item.id === orderId);
         if (!order) return;
@@ -685,6 +717,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         };
         commit(next, "order");
       },
+      async closeTable(tableId) {
+        if (runtimeConfig.dataMode === "supabase") {
+          await supabaseGateway.closeTable(tableId);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return;
+        }
+        const table = state.tables.find((item) => item.id === tableId);
+        if (!table) return;
+        const now = new Date().toISOString();
+        const openOrders = state.orders.filter((item) => item.tableId === tableId && !["closed", "cancelled"].includes(item.status));
+        if (openOrders.some((item) => getPaidTotal(state, item.id) + 0.001 < item.total)) return;
+        const openOrderIds = new Set(openOrders.map((item) => item.id));
+        const next: AppState = {
+          ...state,
+          orders: state.orders.map((item) => openOrderIds.has(item.id) ? { ...item, status: "closed", closedBy: profile?.id, closedAt: now, updatedAt: now } : item),
+          tabs: state.tabs.map((tab) => tab.tableId === tableId && tab.status === "open" ? { ...tab, status: "closed", closedBy: profile?.id, closedAt: now } : tab),
+          tables: state.tables.map((item) => item.id === tableId ? { ...item, status: "free", updatedAt: now } : item),
+          tableAlerts: (state.tableAlerts ?? []).map((alert) => alert.tableId === tableId && alert.active ? { ...alert, active: false, resolvedAt: now } : alert)
+        };
+        commit({ ...next, auditLogs: [...next.auditLogs, createAuditLog(next, "table_closed", "tables", tableId)] }, "tables");
+      },
       reopenOrder(orderId, reason) {
         const now = new Date().toISOString();
         const order = state.orders.find((item) => item.id === orderId);
@@ -713,7 +767,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         };
         commit(next, "order");
       },
-      registerPayment(orderId, input) {
+      async registerPayment(orderId, input) {
+        if (runtimeConfig.dataMode === "supabase") {
+          await supabaseGateway.registerPayment(orderId, input.method, input.amount, input.cardBrand, input.changeAmount);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return;
+        }
         const now = new Date().toISOString();
         const order = state.orders.find((item) => item.id === orderId);
         if (!order || input.amount <= 0) return;
@@ -923,7 +983,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         commit({ ...state, products: state.products.filter((item) => item.id !== productId) }, "catalog");
         return "deleted";
       },
-      recordStockMovement(productId, type, quantity, reason) {
+      async recordStockMovement(productId, type, quantity, reason) {
+        if (runtimeConfig.dataMode === "supabase") {
+          await supabaseGateway.recordStockMovement(productId, type, quantity, reason);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return;
+        }
         const product = state.products.find((item) => item.id === productId);
         const amount = Math.abs(quantity);
         if (!product || amount <= 0 || !reason.trim()) return;
@@ -1285,6 +1351,8 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
   const remoteTables: RestaurantTable[] = workspace.tables.map((item) => ({ id: String(item.id), restaurantId: id, number: Number(item.number), name: typeof item.name === "string" ? item.name : undefined, status: item.status as RestaurantTable["status"], active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) }));
   const remoteOrders: Order[] = workspace.orders.map((item) => ({ id: String(item.id), restaurantId: id, tableId: item.table_id ? String(item.table_id) : undefined, tabId: item.tab_id ? String(item.tab_id) : undefined, customerName: typeof item.customer_name === "string" ? item.customer_name : undefined, source: item.source as Order["source"], status: item.status as Order["status"], createdBy: item.created_by ? String(item.created_by) : undefined, closedBy: item.closed_by ? String(item.closed_by) : undefined, subtotal: Number(item.subtotal ?? 0), discount: Number(item.discount ?? 0), serviceFee: Number(item.service_fee ?? 0), deliveryFee: Number(item.delivery_fee ?? 0), total: Number(item.total ?? 0), notes: typeof item.notes === "string" ? item.notes : undefined, cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), closedAt: item.closed_at ? String(item.closed_at) : undefined }));
   const remoteOrderItems: OrderItem[] = workspace.orderItems.map((item) => ({ id: String(item.id), orderId: String(item.order_id), restaurantId: id, productId: String(item.product_id), productNameSnapshot: String(item.product_name_snapshot), unitPriceSnapshot: Number(item.unit_price_snapshot), quantity: Number(item.quantity), variationName: typeof item.variation_name === "string" ? item.variation_name : undefined, variationPriceDelta: item.variation_price_delta === null ? undefined : Number(item.variation_price_delta), notes: typeof item.notes === "string" ? item.notes : undefined, preparationSector: item.preparation_sector as OrderItem["preparationSector"], status: item.status as OrderItem["status"], cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined, createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), sentAt: item.sent_at ? String(item.sent_at) : undefined, preparingAt: item.preparing_at ? String(item.preparing_at) : undefined, readyAt: item.ready_at ? String(item.ready_at) : undefined, deliveredAt: item.delivered_at ? String(item.delivered_at) : undefined }));
+  const remotePayments: Payment[] = workspace.payments.map((item) => ({ id: String(item.id), restaurantId: id, orderId: String(item.order_id), method: item.method as Payment["method"], amount: Number(item.amount ?? 0), cardBrand: typeof item.card_brand === "string" ? item.card_brand : undefined, changeAmount: item.change_amount === null ? undefined : Number(item.change_amount), createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now) }));
+  const remoteStockMovements: StockMovement[] = workspace.stockMovements.map((item) => ({ id: String(item.id), restaurantId: id, productId: String(item.product_id), type: item.type as StockMovement["type"], quantity: Number(item.quantity ?? 0), reason: String(item.reason ?? ""), createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now) }));
   const remoteAlerts: TableAlert[] = workspace.tableAlerts.map((item) => ({ id: String(item.id), restaurantId: id, tableId: String(item.table_id), type: item.type as TableAlert["type"], active: item.active === true, createdAt: String(item.created_at ?? now), resolvedAt: item.resolved_at ? String(item.resolved_at) : undefined }));
 
   return {
@@ -1299,6 +1367,8 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
     tables: [...current.tables.filter((item) => item.restaurantId !== id), ...remoteTables],
     orders: [...current.orders.filter((item) => item.restaurantId !== id), ...remoteOrders],
     orderItems: [...current.orderItems.filter((item) => item.restaurantId !== id), ...remoteOrderItems],
+    payments: [...current.payments.filter((item) => item.restaurantId !== id), ...remotePayments],
+    stockMovements: [...current.stockMovements.filter((item) => item.restaurantId !== id), ...remoteStockMovements],
     tableAlerts: [...current.tableAlerts.filter((item) => item.restaurantId !== id), ...remoteAlerts],
     currentProfileId: workspace.profile.id
   };

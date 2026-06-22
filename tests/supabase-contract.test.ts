@@ -29,3 +29,11 @@ test("operações críticas possuem RPC transacional", async () => {
   assert.match(cash, /function public\.open_cash_session/);
   assert.match(cash, /function public\.close_cash_session/);
 });
+
+test("migration de correção pode ser aplicada em projeto já existente", async () => {
+  const fix = await readFile(new URL("202606220001_secure_qr_close_table.sql", migrationRoot), "utf8");
+  assert.match(fix, /replace\(gen_random_uuid\(\)::text/);
+  assert.match(fix, /revoke all on function public\.open_public_table/);
+  assert.match(fix, /function public\.close_table/);
+  assert.match(fix, /trg_deduct_stock_on_order_item_insert/);
+});
