@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { Trash2, UserPlus } from "lucide-react";
+import { Pencil, Trash2, UserPlus, X } from "lucide-react";
 import { RoleGuard } from "@/components/role-guard";
 import { Button } from "@/components/ui/button";
 import { effectiveRoles, roleLabel } from "@/lib/permissions";
@@ -19,6 +19,7 @@ export default function UsersSettingsPage() {
   const [remoteProfiles, setRemoteProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(runtimeConfig.dataMode === "supabase");
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const actorRoles = effectiveRoles(actor);
@@ -66,13 +67,15 @@ export default function UsersSettingsPage() {
     try {
       const payload = { ...form, username: normalizeUsername(form.username) };
       if (runtimeConfig.dataMode === "supabase") {
-        const result = await request("POST", payload);
-        if (result.profile) setRemoteProfiles((current) => [...current, mapProfile(result.profile!)].sort(sortByName));
+        const result = await request(editingId ? "PATCH" : "POST", editingId ? { profileId: editingId, name: payload.name, username: payload.username, email: payload.email, roles: payload.roles, active: payload.active } : payload);
+        if (result.profile) setRemoteProfiles((current) => editingId ? current.map((item) => item.id === editingId ? mapProfile(result.profile!) : item) : [...current, mapProfile(result.profile!)].sort(sortByName));
       } else {
-        createProfile(payload.name.trim(), payload.username, payload.email.trim(), payload.password, payload.roles, payload.active);
+        if (editingId) updateProfile(editingId, { name: payload.name.trim(), username: payload.username, email: payload.email.trim(), roles: payload.roles, role: payload.roles.includes("manager") ? "manager" : payload.roles[0], active: payload.active });
+        else createProfile(payload.name.trim(), payload.username, payload.email.trim(), payload.password, payload.roles, payload.active);
       }
       setForm(emptyForm);
-      setMessage("Funcionário criado.");
+      setEditingId("");
+      setMessage(editingId ? "Funcionário atualizado." : "Funcionário criado.");
     } catch (caught) {
       setError(errorMessage(caught));
     } finally {
@@ -107,12 +110,12 @@ export default function UsersSettingsPage() {
     <RoleGuard allowed={["owner", "manager"]}>
       <section className="grid gap-4 xl:grid-cols-[360px_1fr]">
         <form className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft" onSubmit={submit}>
-          <h1 className="mb-3 text-xl font-black text-slate-950">Novo colaborador</h1>
+          <div className="mb-3 flex items-center justify-between"><h1 className="text-xl font-black text-slate-950">{editingId ? "Editar colaborador" : "Novo colaborador"}</h1>{editingId ? <Button type="button" variant="ghost" size="icon" onClick={() => { setEditingId(""); setForm(emptyForm); }}><X className="h-4 w-4" /></Button> : null}</div>
           <div className="grid gap-2">
             <Field label="Nome"><input className={inputClass} value={form.name} onChange={(e) => setForm((v) => ({ ...v, name: e.target.value }))} required /></Field>
             <Field label="Login/apelido"><input className={inputClass} value={form.username} onBlur={() => setForm((v) => ({ ...v, username: normalizeUsername(v.username) }))} onChange={(e) => setForm((v) => ({ ...v, username: e.target.value }))} placeholder="joao" minLength={3} required /></Field>
             <Field label="Email (opcional)"><input className={inputClass} type="email" value={form.email} onChange={(e) => setForm((v) => ({ ...v, email: e.target.value }))} /></Field>
-            <Field label="Senha provisória"><input className={inputClass} type="password" minLength={8} autoComplete="new-password" value={form.password} onChange={(e) => setForm((v) => ({ ...v, password: e.target.value }))} required /></Field>
+            {!editingId ? <Field label="Senha provisória"><input className={inputClass} type="password" minLength={8} autoComplete="new-password" value={form.password} onChange={(e) => setForm((v) => ({ ...v, password: e.target.value }))} required /></Field> : null}
             <fieldset className="grid gap-2 rounded-lg border border-slate-200 p-3">
               <legend className="px-1 text-sm font-bold text-slate-700">Funções</legend>
               <div className="grid grid-cols-2 gap-2">
@@ -120,7 +123,7 @@ export default function UsersSettingsPage() {
               </div>
             </fieldset>
             <label className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 px-3 text-sm font-bold"><input type="checkbox" checked={form.active} onChange={(e) => setForm((v) => ({ ...v, active: e.target.checked }))} />Ativo</label>
-            <Button variant="amber" type="submit" disabled={saving || !form.roles.length}><UserPlus className="h-4 w-4" />{saving ? "Criando..." : "Criar"}</Button>
+            <Button variant="amber" type="submit" disabled={saving || !form.roles.length}>{editingId ? <Pencil className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}{saving ? "Salvando..." : editingId ? "Salvar alterações" : "Criar"}</Button>
             {error ? <p className="text-sm font-bold text-red-700">{error}</p> : null}
             {message ? <p className="text-sm font-bold text-emerald-700">{message}</p> : null}
           </div>
@@ -135,7 +138,7 @@ export default function UsersSettingsPage() {
             return <article key={member.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div><div className="font-black text-slate-950">{member.name}</div><p className="text-xs font-bold text-slate-500">@{member.username || "sem-login"}{member.email ? ` · ${member.email}` : ""}</p><div className="mt-2 flex flex-wrap gap-1">{memberRoles.map((role) => <span key={role} className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-black">{roleLabel(role)}</span>)}</div></div>
-                <div className="flex gap-2"><Button variant={member.active ? "outline" : "green"} disabled={!allowed} onClick={() => void toggleActive(member)}>{member.active ? "Inativar" : "Ativar"}</Button><Button variant="danger" size="icon" title="Excluir" disabled={!allowed} onClick={() => void remove(member)}><Trash2 className="h-4 w-4" /></Button></div>
+                <div className="flex gap-2"><Button variant="outline" size="icon" title="Editar" disabled={!allowed && member.id !== actor?.id} onClick={() => { setEditingId(member.id); setForm({ name: member.name, username: member.username ?? "", email: member.email, password: "", roles: member.roles?.length ? member.roles : [member.role], active: member.active }); window.scrollTo({ top: 0, behavior: "smooth" }); }}><Pencil className="h-4 w-4" /></Button><Button variant={member.active ? "outline" : "green"} disabled={!allowed} onClick={() => void toggleActive(member)}>{member.active ? "Inativar" : "Ativar"}</Button><Button variant="danger" size="icon" title="Excluir" disabled={!allowed} onClick={() => void remove(member)}><Trash2 className="h-4 w-4" /></Button></div>
               </div>
             </article>;
           })}

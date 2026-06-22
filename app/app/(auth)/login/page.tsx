@@ -32,15 +32,27 @@ export default function LoginPage() {
   const [email, setEmail] = useState(runtimeConfig.dataMode === "demo" ? "dono@mesai.demo" : "");
   const [password, setPassword] = useState(runtimeConfig.dataMode === "demo" ? "demo123" : "");
   const [error, setError] = useState("");
+  const [remember, setRemember] = useState(true);
 
   useEffect(() => {
     if (hydrated && profile) router.replace(rolePath[profile.role]);
   }, [hydrated, profile, router]);
 
+  useEffect(() => {
+    if (runtimeConfig.dataMode !== "supabase") return;
+    const saved = localStorage.getItem("mesai-login-identifier");
+    const shouldRemember = localStorage.getItem("mesai-remember-access") !== "0";
+    setRemember(shouldRemember);
+    if (saved && shouldRemember) setEmail(saved);
+  }, []);
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError("");
     try {
+      localStorage.setItem("mesai-remember-access", remember ? "1" : "0");
+      if (remember) localStorage.setItem("mesai-login-identifier", email.trim());
+      else localStorage.removeItem("mesai-login-identifier");
       const identifier = runtimeConfig.dataMode === "supabase" && !email.includes("@") ? await resolveLogin(email) : email;
       const authenticatedProfile = await login(identifier, password);
       if (!authenticatedProfile) {
@@ -81,6 +93,7 @@ export default function LoginPage() {
                 autoComplete="username"
               />
             </label>
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-600"><input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />Lembrar acesso neste dispositivo</label>
             <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
               Senha
               <input

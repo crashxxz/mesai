@@ -82,10 +82,10 @@ interface StoreContextValue {
   reloadMaricotaCatalog: () => void;
   createOrder: (tableId?: UUID, source?: OrderSource, customerName?: string, notes?: string) => UUID;
   createQrOrder: (tableId: UUID, customerName: string | undefined, items: CartItemInput[]) => UUID | undefined;
-  ensureOpenOrderForTable: (tableId: UUID) => UUID;
-  addOrderItem: (orderId: UUID, productId: UUID, input: AddOrderItemInput) => UUID | undefined;
-  sendItemsToPreparation: (orderId: UUID) => void;
-  updateOrderItemStatus: (itemId: UUID, status: OrderItemStatus) => void;
+  ensureOpenOrderForTable: (tableId: UUID) => Promise<UUID>;
+  addOrderItem: (orderId: UUID, productId: UUID, input: AddOrderItemInput) => Promise<UUID | undefined>;
+  sendItemsToPreparation: (orderId: UUID) => Promise<void>;
+  updateOrderItemStatus: (itemId: UUID, status: OrderItemStatus) => Promise<void>;
   cancelOrderItem: (itemId: UUID, reason: string) => void;
   updateOrderDiscount: (orderId: UUID, discount: number) => void;
   transferOrderTable: (orderId: UUID, newTableId: UUID) => void;
@@ -97,6 +97,7 @@ interface StoreContextValue {
   createCategory: (name: string) => void;
   createProduct: (input: Partial<Product> & Pick<Product, "name" | "categoryId" | "price" | "preparationSector">) => void;
   updateProduct: (productId: UUID, patch: Partial<Product>) => void;
+  removeProduct: (productId: UUID) => Promise<"deleted" | "inactivated">;
   recordStockMovement: (productId: UUID, type: "entry" | "exit", quantity: number, reason: string) => void;
   updateTable: (tableId: UUID, patch: Partial<RestaurantTable>) => void;
   requestTableService: (tableId: UUID, type: TableAlertType) => void;
@@ -376,12 +377,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         commit(next, "preparation");
         return orderId;
       },
-      ensureOpenOrderForTable(tableId) {
+      async ensureOpenOrderForTable(tableId) {
+        if (runtimeConfig.dataMode === "supabase") {
+          const orderId = await supabaseGateway.ensureOpenTableOrder(tableId);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return orderId;
+        }
         const existing = getOpenOrderForTable(state, tableId);
         if (existing) return existing.id;
         return createOrderAction(tableId, "waiter");
       },
-      addOrderItem(orderId, productId, input) {
+      async addOrderItem(orderId, productId, input) {
+        if (runtimeConfig.dataMode === "supabase") {
+          const itemId = await supabaseGateway.addOrderItem(orderId, productId, input.quantity, input.notes);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return itemId;
+        }
         const product = state.products.find((item) => item.id === productId && item.active && item.available);
         const order = state.orders.find((item) => item.id === orderId);
         if (!product || !order) return undefined;
@@ -434,7 +447,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         commit(next, "order_item");
         return itemId;
       },
-      sendItemsToPreparation(orderId) {
+      async sendItemsToPreparation(orderId) {
+        if (runtimeConfig.dataMode === "supabase") {
+          await supabaseGateway.sendOrderItems(orderId);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return;
+        }
         const now = new Date().toISOString();
         let hasPrepItem = false;
         const nextItems = state.orderItems.map((item) => {
@@ -463,7 +482,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         };
         commit(next, "preparation");
       },
-      updateOrderItemStatus(itemId, status) {
+      async updateOrderItemStatus(itemId, status) {
+        if (runtimeConfig.dataMode === "supabase") {
+          await supabaseGateway.updatePreparationStatus(itemId, status);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return;
+        }
         const now = new Date().toISOString();
         const oldItem = state.orderItems.find((item) => item.id === itemId);
         if (!oldItem) return;
@@ -837,7 +862,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           createdAt: now,
           updatedAt: now
         };
-        if (runtimeConfig.dataMode === "supabase") void supabase?.from("categories").insert({ id: category.id, restaurant_id: restaurantId, name, sort_order: category.sortOrder, active: true });
+        if (runtimeConfig.dataMode === "supabase" && supabase) void supabase.from("categories").insert({ id: category.id, restaurant_id: restaurantId, name, sort_order: category.sortOrder, active: true }).then(() => undefined);
         commit({ ...state, categories: [...state.categories, category] }, "catalog");
       },
       createProduct(input) {
@@ -861,13 +886,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           createdAt: now,
           updatedAt: now
         };
-        if (runtimeConfig.dataMode === "supabase") void supabase?.from("products").insert(toProductRow(product));
+        if (runtimeConfig.dataMode === "supabase" && supabase) void supabase.from("products").insert(toProductRow(product)).then(() => undefined);
         commit({ ...state, products: [...state.products, product] }, "catalog");
       },
       updateProduct(productId, patch) {
         const oldProduct = state.products.find((item) => item.id === productId);
         const now = new Date().toISOString();
-        if (runtimeConfig.dataMode === "supabase") void supabase?.from("products").update(toProductPatch(patch)).eq("id", productId);
+        if (runtimeConfig.dataMode === "supabase" && supabase) void supabase.from("products").update(toProductPatch(patch)).eq("id", productId).then(() => undefined);
         let next: AppState = {
           ...state,
           products: state.products.map((product) =>
@@ -882,6 +907,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ]
         };
         commit(next, "catalog");
+      },
+      async removeProduct(productId) {
+        if (runtimeConfig.dataMode === "supabase") {
+          const result = await supabaseGateway.removeProduct(productId);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return result;
+        }
+        const hasHistory = state.orderItems.some((item) => item.productId === productId);
+        if (hasHistory) {
+          commit({ ...state, products: state.products.map((item) => item.id === productId ? { ...item, active: false, available: false } : item) }, "catalog");
+          return "inactivated";
+        }
+        commit({ ...state, products: state.products.filter((item) => item.id !== productId) }, "catalog");
+        return "deleted";
       },
       recordStockMovement(productId, type, quantity, reason) {
         const product = state.products.find((item) => item.id === productId);
@@ -922,6 +962,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
       updateTable(tableId, patch) {
         const now = new Date().toISOString();
+        if (runtimeConfig.dataMode === "supabase") {
+          const row: Record<string, unknown> = {};
+          if ("name" in patch) row.name = patch.name ?? null;
+          if ("number" in patch) row.number = patch.number;
+          if ("status" in patch) row.status = patch.status;
+          if ("active" in patch) row.active = patch.active;
+          if (supabase) void supabase.from("tables").update(row).eq("id", tableId).then(() => undefined);
+        }
         commit(
           {
             ...state,
@@ -967,6 +1015,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
       resolveTableAlerts(tableId, type) {
         const now = new Date().toISOString();
+        if (runtimeConfig.dataMode === "supabase") {
+          let query = supabase!.from("table_alerts").update({ active: false, resolved_at: now }).eq("table_id", tableId).eq("active", true);
+          if (type) query = query.eq("type", type);
+          void query.then(() => undefined);
+        }
         commit(
           {
             ...state,
@@ -1016,6 +1069,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
       },
       updateSettings(patch) {
+        if (runtimeConfig.dataMode === "supabase" && restaurant?.id) {
+          const row: Record<string, unknown> = {};
+          if ("qrOrdersEnabled" in patch) row.qr_orders_enabled = patch.qrOrdersEnabled;
+          if ("qrOrdersNeedApproval" in patch) row.qr_orders_need_approval = patch.qrOrdersNeedApproval;
+          if ("waiterCanCloseAccount" in patch) row.waiter_can_close_account = patch.waiterCanCloseAccount;
+          if ("serviceFeePercent" in patch) row.service_fee_percent = patch.serviceFeePercent;
+          if (supabase) void supabase.from("restaurant_settings").update(row).eq("restaurant_id", restaurant.id).then(() => undefined);
+        }
         commit(
           {
             ...state,

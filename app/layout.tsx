@@ -13,8 +13,8 @@ export const metadata: Metadata = {
   description: `${brand.slogan} ${brand.description}`,
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [{ url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" }],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
+    icon: [{ url: "/favicon.png?v=4", sizes: "32x32", type: "image/png" }],
+    apple: [{ url: "/apple-touch-icon.png?v=4", sizes: "180x180", type: "image/png" }]
   },
   appleWebApp: {
     capable: true,

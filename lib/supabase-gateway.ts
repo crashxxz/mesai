@@ -36,6 +36,11 @@ function unwrap<T>(result: { data: T | null; error: { message: string } | null }
 }
 
 export const supabaseGateway = {
+  async openPublicTable(restaurantSlug: string, tableRef: string) {
+    const result = await client().rpc("open_public_table", { p_slug: restaurantSlug, p_table_ref: tableRef });
+    return unwrap(result, "Não foi possível abrir a mesa") as Record<string, unknown>;
+  },
+
   async signIn(email: string, password: string) {
     const result = await client().auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     if (result.error) throw new Error(`Não foi possível entrar: ${result.error.message}`);
@@ -119,6 +124,26 @@ export const supabaseGateway = {
       }))
     });
     return unwrap(result, "Não foi possível criar o pedido") as UUID;
+  },
+
+  async ensureOpenTableOrder(tableId: UUID) {
+    const result = await client().rpc("ensure_open_table_order", { p_table_id: tableId });
+    return unwrap(result, "Não foi possível abrir a mesa") as UUID;
+  },
+
+  async addOrderItem(orderId: UUID, productId: UUID, quantity: number, notes?: string) {
+    const result = await client().rpc("add_order_item", { p_order_id: orderId, p_product_id: productId, p_quantity: quantity, p_notes: notes?.trim() || null });
+    return unwrap(result, "Não foi possível adicionar o item") as UUID;
+  },
+
+  async sendOrderItems(orderId: UUID) {
+    const result = await client().rpc("send_order_items", { p_order_id: orderId });
+    return unwrap(result, "Não foi possível enviar o pedido") as UUID;
+  },
+
+  async removeProduct(productId: UUID) {
+    const result = await client().rpc("remove_product", { p_product_id: productId });
+    return unwrap(result, "Não foi possível excluir o produto") as "deleted" | "inactivated";
   },
 
   async updatePreparationStatus(itemId: UUID, status: OrderItemStatus) {

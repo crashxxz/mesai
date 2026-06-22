@@ -110,16 +110,29 @@ export async function PATCH(request: NextRequest) {
     if ("error" in auth) return auth.error;
     const body = (await request.json()) as Record<string, unknown>;
     const profileId = typeof body.profileId === "string" ? body.profileId : "";
-    if (!profileId || typeof body.active !== "boolean") return response("Alteração inválida.", 400);
+    if (!profileId) return response("Alteração inválida.", 400);
     const target = await getTarget(auth.admin, auth.actor.restaurant_id, profileId);
     if (!target) return response("Funcionário não encontrado.", 404);
-    if (target.user_id === auth.authUserId) return response("Você não pode alterar o próprio acesso.", 400);
+    const isSelf = target.user_id === auth.authUserId;
+    const editing = typeof body.name === "string" || typeof body.username === "string" || Array.isArray(body.roles) || typeof body.email === "string";
+    const roles = Array.isArray(body.roles) ? [...new Set(body.roles.filter(isUserRole))] : effectiveDbRoles(target);
+    if (isSelf && (body.active === false || (Array.isArray(body.roles) && !roles.includes("owner") && !roles.includes("manager")))) return response("Você não pode remover o próprio acesso.", 400);
     if (!canAssignRoles(auth.actorRoles, effectiveDbRoles(target))) return response("Sem permissão para alterar esse funcionário.", 403);
+    if (!canAssignRoles(auth.actorRoles, roles)) return response("Você não pode atribuir essas funções.", 403);
+    const name = typeof body.name === "string" ? body.name.trim() : target.name;
+    const username = typeof body.username === "string" ? normalizeUsername(body.username) : target.username;
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : target.email ?? "";
+    if (editing && (!name || !username || username.length < 3 || !roles.length || (email && !email.includes("@")))) return response("Dados do funcionário inválidos.", 400);
+    const restaurant = await auth.admin.from("restaurants").select("slug").eq("id", auth.actor.restaurant_id).single();
+    const technicalEmail = `${username}.${normalizeUsername(String(restaurant.data?.slug ?? "mesai"))}@interno.mesai.local`;
+    const active = typeof body.active === "boolean" ? body.active : target.active;
     const authUpdate = await auth.admin.auth.admin.updateUserById(target.user_id, {
-      ban_duration: body.active ? "none" : "876000h"
+      email: email || technicalEmail,
+      ban_duration: active ? "none" : "876000h",
+      user_metadata: { name, username }
     });
     if (authUpdate.error) return response("Não foi possível alterar o acesso no Auth.", 500);
-    const updated = await auth.admin.from("profiles").update({ active: body.active }).eq("id", profileId)
+    const updated = await auth.admin.from("profiles").update({ name, username, email: email || null, technical_email: technicalEmail, roles, role: primaryRole(roles), active }).eq("id", profileId)
       .eq("restaurant_id", auth.actor.restaurant_id).select(profileColumns).single();
     if (updated.error) return response("Não foi possível alterar o funcionário.", 500);
     return NextResponse.json({ profile: updated.data });
@@ -150,9 +163,9 @@ export async function DELETE(request: NextRequest) {
 }
 
 async function getTarget(admin: ReturnType<typeof adminClient>, restaurantId: string, profileId: string) {
-  const result = await admin.from("profiles").select("id,user_id,role,roles").eq("id", profileId)
+  const result = await admin.from("profiles").select("id,user_id,name,email,username,role,roles,active,technical_email").eq("id", profileId)
     .eq("restaurant_id", restaurantId).is("deleted_at", null).single();
-  return result.error ? null : result.data as { id: string; user_id: string; role: UserRole; roles: UserRole[] };
+  return result.error ? null : result.data as { id: string; user_id: string; name: string; email: string | null; username: string; role: UserRole; roles: UserRole[]; active: boolean; technical_email: string };
 }
 
 function effectiveDbRoles(profile: { role: UserRole; roles?: UserRole[] | null }) {

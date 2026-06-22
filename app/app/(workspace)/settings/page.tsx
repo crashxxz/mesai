@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { businessPresetOptions, type BusinessProfile } from "@/lib/business-presets";
 import { useStore } from "@/lib/store";
 import { useBusinessPreset } from "@/lib/use-business-preset";
+import { runtimeConfig } from "@/lib/runtime-config";
 
 export default function SettingsPage() {
   const { restaurant, settings, updateRestaurant, updateSettings, resetDemo } = useStore();
@@ -148,10 +149,10 @@ export default function SettingsPage() {
               Mesas e QR Codes
             </Link>
           </Button>
-          <Button variant="danger" onClick={resetDemo}>
+          {runtimeConfig.dataMode === "demo" ? <Button variant="danger" onClick={() => { if (window.confirm("Resetar todos os dados locais de demonstração?")) resetDemo(); }}>
             <RefreshCcw className="h-4 w-4" aria-hidden="true" />
             Resetar dados demo
-          </Button>
+          </Button> : null}
         </div>
       </section>
     </RoleGuard>

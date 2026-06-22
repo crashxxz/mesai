@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/brand-mark";
 import { Button } from "@/components/ui/button";
+import { runtimeConfig } from "@/lib/runtime-config";
 import { useStore } from "@/lib/store";
+import { supabase } from "@/lib/supabase";
 
 interface PublicTable { id: string; number: number; name?: string }
 
@@ -13,9 +15,18 @@ export default function RestaurantQrPage() {
   const { restaurantSlug } = useParams<{ restaurantSlug: string }>();
   const { state } = useStore();
   const localRestaurant = state.restaurants.find((item) => item.slug === restaurantSlug);
-  const restaurantName = localRestaurant?.name ?? "";
-  const tables: PublicTable[] = state.tables.filter((item) => item.restaurantId === localRestaurant?.id && item.active);
+  const [restaurantName, setRestaurantName] = useState(localRestaurant?.name ?? "");
+  const [tables, setTables] = useState<PublicTable[]>(() => state.tables.filter((item) => item.restaurantId === localRestaurant?.id && item.active));
   const [tableId, setTableId] = useState("");
+
+  useEffect(() => {
+    if (runtimeConfig.dataMode !== "supabase" || !supabase) return;
+    void supabase.rpc("get_public_restaurant_tables", { p_slug: restaurantSlug }).then(({ data }) => {
+      const payload = data as { restaurant?: { name?: string }; tables?: PublicTable[] } | null;
+      if (payload?.restaurant?.name) setRestaurantName(payload.restaurant.name);
+      if (payload?.tables) setTables(payload.tables);
+    });
+  }, [restaurantSlug]);
 
   return <main className="grid min-h-screen place-items-center bg-orange-50 px-4 py-8">
     <section className="w-full max-w-sm rounded-2xl border border-amber-200 bg-white p-6 shadow-soft-lg">

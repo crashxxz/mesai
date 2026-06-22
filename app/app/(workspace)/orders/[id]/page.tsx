@@ -33,7 +33,8 @@ export default function OrderPage() {
   if (!order) {
     return (
       <div className="rounded-2xl bg-white p-8 text-center shadow-soft">
-        <p className="font-bold text-slate-500">Pedido não encontrado</p>
+        <p className="font-bold text-slate-500">Esta comanda não está mais aberta.</p>
+        <Button asChild variant="amber" className="mt-4"><Link href="/app/tables">Ver mesas e abrir pedido</Link></Button>
       </div>
     );
   }

@@ -115,8 +115,8 @@ export default function TableDetailPage() {
               ) : (
                 <Button
                   variant="amber"
-                  onClick={() => {
-                    const orderId = ensureOpenOrderForTable(table.id);
+                  onClick={async () => {
+                    const orderId = await ensureOpenOrderForTable(table.id);
                     router.push(`/app/orders/${orderId}`);
                   }}
                 >

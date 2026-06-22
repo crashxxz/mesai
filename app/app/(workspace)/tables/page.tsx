@@ -43,21 +43,21 @@ export default function TablesPage() {
     return true;
   });
 
-  function openOrderFor(tableId: string) {
-    const orderId = ensureOpenOrderForTable(tableId);
+  async function openOrderFor(tableId: string) {
+    const orderId = await ensureOpenOrderForTable(tableId);
     router.push(`/app/orders/${orderId}`);
   }
 
   function openFirstFreeTable() {
     const table = tables.find((item) => item.status === "free") ?? tables[0];
     if (!table) return;
-    openOrderFor(table.id);
+    void openOrderFor(table.id);
   }
 
   function openFastOrder() {
     const table = tables.find((item) => item.status === "occupied") ?? tables.find((item) => item.status === "free") ?? tables[0];
     if (!table) return;
-    openOrderFor(table.id);
+    void openOrderFor(table.id);
   }
 
   const actionCards = [
@@ -105,7 +105,7 @@ export default function TablesPage() {
                 key={card.key}
                 type="button"
                 className={`card-lift min-h-24 rounded-2xl border p-4 text-left shadow-soft transition ${card.tone} ${active ? "ring-2 ring-slate-950/10" : ""}`}
-                onClick={() => setFilter(active ? "all" : card.key)}
+                onClick={() => setFilter(card.key === "occupied" ? "all" : active ? "all" : card.key)}
               >
                 <div className="flex items-start justify-between gap-2">
                   <Icon className="h-6 w-6" aria-hidden="true" />
@@ -137,7 +137,7 @@ export default function TablesPage() {
             orders={state.orders}
             orderItems={state.orderItems}
             alerts={activeAlerts}
-            onOpen={openOrderFor}
+            onOpen={(tableId) => void openOrderFor(tableId)}
             onResolveAlert={(tableId, type) => resolveTableAlerts(tableId, type)}
           />
         ) : (

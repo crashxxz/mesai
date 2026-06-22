@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Martini, Minus, PackageCheck, Plus, Search, Utensils, X } from "lucide-react";
+import Image from "next/image";
+import { Martini, Minus, PackageCheck, Plus, Search, Utensils, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { sectorLabel } from "@/lib/services";
 import type {
@@ -41,7 +42,16 @@ export function ProductGrid({
   addLabel?: string;
   onAdd: (productId: string, input: AddInput) => void;
 }) {
-  const firstCategory = categories.find((category) => category.active)?.id ?? "all";
+  const uniqueCategories = useMemo(() => {
+    const seen = new Set<string>();
+    return categories.filter((category) => {
+      const key = category.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [categories]);
+  const firstCategory = uniqueCategories.find((category) => category.active)?.id ?? "all";
   const [activeCategory, setActiveCategory] = useState(firstCategory);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Product | undefined>();
@@ -50,8 +60,8 @@ export function ProductGrid({
   const [variationId, setVariationId] = useState<string | undefined>();
   const [addonIds, setAddonIds] = useState<string[]>([]);
   const categoryById = useMemo(
-    () => new Map(categories.map((category) => [category.id, category])),
-    [categories]
+    () => new Map(uniqueCategories.map((category) => [category.id, category])),
+    [uniqueCategories]
   );
 
   const filteredProducts = useMemo(() => {
@@ -127,7 +137,7 @@ export function ProductGrid({
           >
             Todos
           </button>
-          {categories
+          {uniqueCategories
             .filter((category) => category.active)
             .sort((a, b) => a.sortOrder - b.sortOrder)
             .map((category) => (
@@ -164,12 +174,7 @@ export function ProductGrid({
                   setAddonIds([]);
                 }}
               >
-                <span
-                  className="grid h-full min-h-24 place-items-center rounded-2xl bg-slate-100 bg-cover bg-center text-slate-400"
-                  style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}
-                >
-                  {!product.imageUrl ? <SectorIcon className="h-8 w-8" aria-hidden="true" /> : null}
-                </span>
+                <ProductImage url={product.imageUrl} name={product.name} icon={SectorIcon} />
                 <span className="flex min-w-0 flex-col">
                   <span className="line-clamp-2 text-base font-black leading-tight text-slate-950">{product.name}</span>
                   <span className="mt-2 self-start rounded-xl bg-emerald-50 px-2.5 py-1 text-sm font-black text-emerald-700">
@@ -300,7 +305,7 @@ export function ProductGrid({
                   className="min-h-24 rounded-xl border border-slate-200 bg-slate-50 p-3 text-base transition focus:border-amber-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-400/20"
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
-                  placeholder="Ex: sem cebola, bem passado"
+                  placeholder="Observação opcional"
                 />
               </label>
 
@@ -314,4 +319,11 @@ export function ProductGrid({
       ) : null}
     </div>
   );
+}
+
+function ProductImage({ url, name, icon: Icon }: { url?: string; name: string; icon: LucideIcon }) {
+  const [failed, setFailed] = useState(false);
+  return <span className="relative grid h-full min-h-24 overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 text-amber-700">
+    {url && !failed ? <Image src={url} alt={name} fill sizes="72px" className="object-cover" unoptimized onError={() => setFailed(true)} /> : <span className="grid place-items-center"><Icon className="h-8 w-8" aria-hidden="true" /></span>}
+  </span>;
 }

@@ -1,11 +1,12 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { CheckCircle2, EyeOff, Minus, PackageCheck, PackagePlus, Pencil, Plus, RefreshCcw, Tag } from "lucide-react";
+import { CheckCircle2, EyeOff, Minus, PackageCheck, PackagePlus, Pencil, Plus, RefreshCcw, Tag, Trash2 } from "lucide-react";
 import { RoleGuard } from "@/components/role-guard";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getStockStatus, sectorLabel, stockStatusLabel } from "@/lib/services";
+import { runtimeConfig } from "@/lib/runtime-config";
 import { useStore } from "@/lib/store";
 import { useBusinessPreset } from "@/lib/use-business-preset";
 import type { PreparationSector, StockUnit } from "@/lib/types";
@@ -15,7 +16,7 @@ const sectors: PreparationSector[] = ["kitchen", "bar", "both", "none"];
 const stockUnits: StockUnit[] = ["unidade", "lata", "garrafa", "kg", "litro", "porcao"];
 
 export default function ProductsPage() {
-  const { state, restaurant, createCategory, createProduct, updateProduct, recordStockMovement, reloadMaricotaCatalog } = useStore();
+  const { state, restaurant, createCategory, createProduct, updateProduct, removeProduct, recordStockMovement, reloadMaricotaCatalog } = useStore();
   const { preset } = useBusinessPreset();
   const categories = useMemo(
     () =>
@@ -104,7 +105,7 @@ export default function ProductsPage() {
           </div>
         </header>
 
-        <details className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
+        {runtimeConfig.dataMode === "demo" ? <details className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
           <summary className="flex cursor-pointer items-center gap-2 text-lg font-black text-slate-950">
             <PackageCheck className="h-5 w-5 text-emerald-600" aria-hidden="true" />
             Estoque simples · {trackedProducts.length} itens
@@ -149,7 +150,7 @@ export default function ProductsPage() {
               <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm font-bold text-slate-400">Ative o controle de estoque em um produto.</div>
             )}
           </div>
-        </details>
+        </details> : null}
 
         <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <label className="grid gap-1 text-sm font-black text-slate-700">
@@ -165,7 +166,7 @@ export default function ProductsPage() {
               ))}
             </select>
           </label>
-          <details className="rounded-xl border border-slate-200 bg-slate-50 p-3 sm:min-w-64">
+          {runtimeConfig.dataMode === "demo" ? <details className="rounded-xl border border-slate-200 bg-slate-50 p-3 sm:min-w-64">
             <summary className="cursor-pointer text-sm font-black text-slate-700">Mais opções</summary>
             <div className="mt-3 grid gap-2">
               <p className="text-xs font-bold text-slate-500">
@@ -184,7 +185,7 @@ export default function ProductsPage() {
                 Recarregar cardápio da Maricota
               </Button>
             </div>
-          </details>
+          </details> : null}
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
@@ -381,6 +382,11 @@ export default function ProductsPage() {
                         >
                           {product.active ? "Inativar" : "Ativar"}
                         </Button>
+                        <Button size="sm" variant="danger" onClick={async () => {
+                          if (!window.confirm(`Excluir ${product.name}? Se houver histórico, ele será apenas inativado.`)) return;
+                          const result = await removeProduct(product.id);
+                          window.alert(result === "deleted" ? "Produto excluído." : "Produto inativado para preservar o histórico.");
+                        }}><Trash2 className="h-4 w-4" />Excluir</Button>
                       </div>
                     </div>
                   </div>
