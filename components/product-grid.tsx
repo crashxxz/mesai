@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Martini, Minus, PackageCheck, Plus, Search, Utensils, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { sectorLabel } from "@/lib/services";
+import { resolveProductImage } from "@/lib/product-image";
 import type {
   Category,
   Product,
@@ -179,7 +180,7 @@ export function ProductGrid({
                   setAddonIds([]);
                 }}
               >
-                <ProductImage url={product.imageUrl} name={product.name} icon={SectorIcon} />
+                <ProductImage url={resolveProductImage(product, category?.name)} name={product.name} icon={SectorIcon} />
                 <span className="flex min-w-0 flex-col">
                   <span className="line-clamp-2 text-base font-black leading-tight text-slate-950">{product.name}</span>
                   <span className="mt-2 self-start rounded-xl bg-emerald-50 px-2.5 py-1 text-sm font-black text-emerald-700">
@@ -314,7 +315,7 @@ export function ProductGrid({
                 />
               </label>
 
-              {selected.imageUrl ? <ProductImage url={selected.imageUrl} name={selected.name} icon={selected.preparationSector === "bar" ? Martini : selected.preparationSector === "kitchen" ? Utensils : PackageCheck} /> : null}
+              <ProductImage url={resolveProductImage(selected, categoryById.get(selected.categoryId)?.name)} name={selected.name} icon={selected.preparationSector === "bar" ? Martini : selected.preparationSector === "kitchen" ? Utensils : PackageCheck} />
               {addError ? <p className="text-sm font-bold text-red-600">{addError}</p> : null}
               <Button variant="amber" size="lg" className="text-base" disabled={adding} onClick={() => void addSelected()}>
                 <Plus className="h-5 w-5" aria-hidden="true" />

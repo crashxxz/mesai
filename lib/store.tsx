@@ -14,6 +14,7 @@ import { runtimeConfig } from "@/lib/runtime-config";
 import { createLocalStorageAdapter } from "@/lib/storage-adapter";
 import { supabase } from "@/lib/supabase";
 import { supabaseGateway, type WorkspaceBootstrap } from "@/lib/supabase-gateway";
+import { resolveProductImage } from "@/lib/product-image";
 import {
   calculateOrderTotals,
   createAuditLog,
@@ -119,13 +120,13 @@ interface StoreContextValue {
 const StoreContext = createContext<StoreContextValue | undefined>(undefined);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AppState>(() => createSeedState());
+  const [state, setState] = useState<AppState>(() => runtimeConfig.dataMode === "supabase" ? createSupabaseState() : loadState());
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     async function hydrate() {
-      let next = loadState();
+      let next = runtimeConfig.dataMode === "supabase" ? createSupabaseState() : loadState();
       if (runtimeConfig.dataMode === "supabase") {
         try {
           const session = await supabase?.auth.getSession();
@@ -1404,7 +1405,7 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
       }
     : undefined;
   const remoteCategories: Category[] = workspace.categories.map((item) => ({ id: String(item.id), restaurantId: id, name: String(item.name), sortOrder: Number(item.sort_order ?? 0), active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) }));
-  const remoteProducts: Product[] = workspace.products.map((item) => ({ id: String(item.id), restaurantId: id, categoryId: String(item.category_id), name: String(item.name), description: typeof item.description === "string" ? item.description : undefined, price: Number(item.price), preparationSector: item.preparation_sector as Product["preparationSector"], estimatedTimeMinutes: item.estimated_time_minutes ? Number(item.estimated_time_minutes) : undefined, available: item.available !== false, hasStockControl: item.has_stock_control === true, stockQuantity: item.stock_quantity === null ? undefined : Number(item.stock_quantity), stockMinimum: item.stock_minimum === null ? undefined : Number(item.stock_minimum), stockUnit: item.stock_unit as Product["stockUnit"], imageUrl: productImageUrl(item), active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) }));
+  const remoteProducts: Product[] = workspace.products.map((item) => ({ id: String(item.id), restaurantId: id, categoryId: String(item.category_id), name: String(item.name), description: typeof item.description === "string" ? item.description : undefined, price: Number(item.price), preparationSector: item.preparation_sector as Product["preparationSector"], estimatedTimeMinutes: item.estimated_time_minutes ? Number(item.estimated_time_minutes) : undefined, available: item.available !== false, hasStockControl: item.has_stock_control === true, stockQuantity: item.stock_quantity === null ? undefined : Number(item.stock_quantity), stockMinimum: item.stock_minimum === null ? undefined : Number(item.stock_minimum), stockUnit: item.stock_unit as Product["stockUnit"], imageUrl: resolveProductImage(item, workspace.categories.find((category) => String(category.id) === String(item.category_id))?.name as string | undefined), active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) }));
   const remoteTables: RestaurantTable[] = workspace.tables.map((item) => ({ id: String(item.id), restaurantId: id, number: Number(item.number), name: typeof item.name === "string" ? item.name : undefined, status: item.status as RestaurantTable["status"], active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) }));
   const remoteOrders: Order[] = workspace.orders.map((item) => ({ id: String(item.id), restaurantId: id, tableId: item.table_id ? String(item.table_id) : undefined, tabId: item.tab_id ? String(item.tab_id) : undefined, customerName: typeof item.customer_name === "string" ? item.customer_name : undefined, source: item.source as Order["source"], status: item.status as Order["status"], createdBy: item.created_by ? String(item.created_by) : undefined, closedBy: item.closed_by ? String(item.closed_by) : undefined, subtotal: Number(item.subtotal ?? 0), discount: Number(item.discount ?? 0), serviceFee: Number(item.service_fee ?? 0), serviceFeeEnabled: Number(item.service_fee ?? 0) > 0, deliveryFee: Number(item.delivery_fee ?? 0), total: Number(item.total ?? 0), notes: typeof item.notes === "string" ? item.notes : undefined, cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), closedAt: item.closed_at ? String(item.closed_at) : undefined }));
   const remoteOrderItems: OrderItem[] = workspace.orderItems.map((item) => ({ id: String(item.id), orderId: String(item.order_id), restaurantId: id, productId: String(item.product_id), productNameSnapshot: String(item.product_name_snapshot), unitPriceSnapshot: Number(item.unit_price_snapshot), quantity: Number(item.quantity), variationName: typeof item.variation_name === "string" ? item.variation_name : undefined, variationPriceDelta: item.variation_price_delta === null ? undefined : Number(item.variation_price_delta), notes: typeof item.notes === "string" ? item.notes : undefined, preparationSector: item.preparation_sector as OrderItem["preparationSector"], status: item.status as OrderItem["status"], cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined, createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), sentAt: item.sent_at ? String(item.sent_at) : undefined, preparingAt: item.preparing_at ? String(item.preparing_at) : undefined, readyAt: item.ready_at ? String(item.ready_at) : undefined, deliveredAt: item.delivered_at ? String(item.delivered_at) : undefined }));
@@ -1435,11 +1436,6 @@ function toProductRow(product: Product) {
   return { id: product.id, restaurant_id: product.restaurantId, category_id: product.categoryId, name: product.name, description: product.description ?? null, price: product.price, preparation_sector: product.preparationSector, estimated_time_minutes: product.estimatedTimeMinutes ?? null, available: product.available, has_stock_control: product.hasStockControl, stock_quantity: product.stockQuantity ?? null, stock_minimum: product.stockMinimum ?? null, stock_unit: product.stockUnit ?? null, image_url: product.imageUrl ?? null, active: product.active };
 }
 
-function productImageUrl(product: Record<string, unknown>) {
-  return [product.image_url, product.image_path, product.product_image]
-    .find((value): value is string => typeof value === "string" && value.trim().length > 0);
-}
-
 function toProductPatch(patch: Partial<Product>) {
   const row: Record<string, unknown> = {};
   const fields: Array<[keyof Product, string]> = [["categoryId", "category_id"], ["name", "name"], ["description", "description"], ["price", "price"], ["preparationSector", "preparation_sector"], ["estimatedTimeMinutes", "estimated_time_minutes"], ["available", "available"], ["hasStockControl", "has_stock_control"], ["stockQuantity", "stock_quantity"], ["stockMinimum", "stock_minimum"], ["stockUnit", "stock_unit"], ["imageUrl", "image_url"], ["active", "active"]];
@@ -1458,6 +1454,18 @@ function loadState() {
   } catch {
     return createSeedState();
   }
+}
+
+function createSupabaseState(): AppState {
+  const seed = createSeedState();
+  return {
+    ...seed,
+    restaurants: [], settings: [], profiles: [], tables: [], tableAlerts: [], tabs: [],
+    categories: [], products: [], productVariations: [], productAddons: [], productAllowedAddons: [],
+    orders: [], orderItems: [], orderItemAddons: [], payments: [], cashSessions: [], cashMovements: [],
+    financialEntries: [], stockMovements: [], customers: [], customerDebts: [], auditLogs: [],
+    credentials: [], currentProfileId: undefined
+  };
 }
 
 function migrateDemoText(state: AppState): AppState {

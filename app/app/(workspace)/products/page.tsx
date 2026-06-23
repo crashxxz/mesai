@@ -1,12 +1,14 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import Image from "next/image";
 import { CheckCircle2, EyeOff, Minus, PackageCheck, PackagePlus, Pencil, Plus, RefreshCcw, Tag, Trash2 } from "lucide-react";
 import { RoleGuard } from "@/components/role-guard";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getStockStatus, sectorLabel, stockStatusLabel } from "@/lib/services";
 import { runtimeConfig } from "@/lib/runtime-config";
+import { resolveProductImage } from "@/lib/product-image";
 import { useStore } from "@/lib/store";
 import { useBusinessPreset } from "@/lib/use-business-preset";
 import type { PreparationSector, StockUnit } from "@/lib/types";
@@ -384,7 +386,11 @@ export default function ProductsPage() {
               return (
                 <article key={product.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 flex-1 gap-3">
+                      <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-amber-50">
+                        <Image src={resolveProductImage(product, category?.name)} alt={product.name} fill sizes="64px" className="object-cover" unoptimized />
+                      </span>
+                      <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-lg font-black text-slate-950">{product.name}</h2>
                         <StatusBadge tone={pricePending ? "amber" : product.available ? "green" : "red"}>
@@ -394,6 +400,7 @@ export default function ProductsPage() {
                       <p className="mt-1 text-sm font-bold text-slate-500">
                         {category?.name} · {sectorLabel(product.preparationSector)}
                       </p>
+                      </div>
                     </div>
                     <div className="text-left sm:text-right">
                       <div className={`text-2xl font-black ${pricePending ? "text-amber-700" : "text-emerald-700"}`}>

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
+import { resolveProductImage } from "../lib/product-image";
 
 test("QR válido abre a mesa ocupada e aguarda a mesa livre", () => {
   const migration = readFileSync("supabase/migrations/202606220002_qr_open_table_status.sql", "utf8");
@@ -39,10 +40,34 @@ test("marca visual usa Peça sem alterar identificadores técnicos", () => {
 test("imagem cadastrada é reutilizada no card e no modal", () => {
   const grid = readFileSync("components/product-grid.tsx", "utf8");
   const store = readFileSync("lib/store.tsx", "utf8");
-  assert.match(grid, /ProductImage url=\{product\.imageUrl\}/);
-  assert.match(grid, /selected\.imageUrl/);
+  assert.match(grid, /resolveProductImage\(product, category\?\.name\)/);
+  assert.match(grid, /resolveProductImage\(selected, categoryById/);
   assert.match(grid, /setFailed\(false\), \[url\]/);
-  assert.match(store, /product\.image_path, product\.product_image/);
+  assert.match(store, /resolveProductImage\(item/);
+});
+
+test("biblioteca local resolve imagens por produto, categoria e fallback", () => {
+  assert.equal(resolveProductImage({ name: "Pastelzinho" }), "/menu-images/petiscos/pastelzinho.webp");
+  assert.equal(resolveProductImage({ name: "Cerveja gelada" }), "/menu-images/cervejas/default-cerveja.webp");
+  assert.equal(resolveProductImage({ name: "Item novo" }, "Pizzas"), "/menu-images/pizzas/default-pizza.webp");
+  assert.equal(resolveProductImage({ name: "Item novo" }), "/menu-images/default/default-food.webp");
+  assert.equal(existsSync("public/menu-images/petiscos/pastelzinho.webp"), true);
+});
+
+test("Supabase mantém UUIDs e não envia IDs do seed às RPCs", () => {
+  const schema = readFileSync("supabase/schema.sql", "utf8");
+  const gateway = readFileSync("lib/supabase-gateway.ts", "utf8");
+  const store = readFileSync("lib/store.tsx", "utf8");
+  assert.match(schema, /product_id uuid not null references public\.products\(id\)/);
+  assert.match(gateway, /requireDatabaseUuid\(productId, "O produto"\)/);
+  assert.match(store, /runtimeConfig\.dataMode === "supabase" \? createSupabaseState\(\) : loadState\(\)/);
+});
+
+test("abrir mesa restaura status ocupado antes da sessão QR", () => {
+  const migration = readFileSync("supabase/migrations/202606230001_qr_open_table_repair.sql", "utf8");
+  assert.match(migration, /if v_order_id is not null then\s+update public\.tables set status = 'occupied'/);
+  assert.match(migration, /Mesa aguardando abertura/);
+  assert.match(migration, /update public\.qr_sessions set active = false/);
 });
 
 test("QR geral não permite escolher mesa", () => {
@@ -92,7 +117,7 @@ test("PWA possui ícones PNG para Android e iOS", () => {
 
 test("produto sem imagem recebe placeholder e indisponível some do QR", () => {
   const grid = readFileSync("components/product-grid.tsx", "utf8");
-  assert.match(grid, /ProductImage url=\{product\.imageUrl\}/);
+  assert.match(grid, /resolveProductImage\(product, category\?\.name\)/);
   assert.match(grid, /url && !failed/);
   assert.match(grid, /!product\.active \|\| !product\.available/);
 });

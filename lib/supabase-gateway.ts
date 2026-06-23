@@ -37,6 +37,14 @@ function unwrap<T>(result: { data: T | null; error: { message: string } | null }
   return result.data;
 }
 
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function requireDatabaseUuid(value: UUID, label: string) {
+  if (!uuidPattern.test(value)) {
+    throw new Error(`${label} ainda não foi sincronizado com o Supabase. Reabra a tela e tente novamente.`);
+  }
+}
+
 export const supabaseGateway = {
   async openPublicTable(restaurantSlug: string, tableRef: string) {
     const result = await client().rpc("open_public_table", { p_slug: restaurantSlug, p_table_ref: tableRef });
@@ -135,11 +143,14 @@ export const supabaseGateway = {
   },
 
   async ensureOpenTableOrder(tableId: UUID) {
+    requireDatabaseUuid(tableId, "A mesa");
     const result = await client().rpc("ensure_open_table_order", { p_table_id: tableId });
     return unwrap(result, "Não foi possível abrir a mesa") as UUID;
   },
 
   async addOrderItem(orderId: UUID, productId: UUID, quantity: number, notes?: string) {
+    requireDatabaseUuid(orderId, "A comanda");
+    requireDatabaseUuid(productId, "O produto");
     const result = await client().rpc("add_order_item", { p_order_id: orderId, p_product_id: productId, p_quantity: quantity, p_notes: notes?.trim() || null });
     return unwrap(result, "Não foi possível adicionar o item") as UUID;
   },
