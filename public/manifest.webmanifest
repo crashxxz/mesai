@@ -1,6 +1,6 @@
 {
-  "name": "Mesaí",
-  "short_name": "Mesaí",
+  "name": "Peça",
+  "short_name": "Peça",
   "description": "Pedido, mesa e caixa no jeito.",
   "start_url": "/app/login",
   "id": "/app/login",

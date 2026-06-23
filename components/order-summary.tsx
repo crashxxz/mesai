@@ -14,7 +14,8 @@ export function OrderSummary({
   addons,
   onSend,
   onCancel,
-  onDeliver
+  onDeliver,
+  onApplyServiceFee
 }: {
   order: Order;
   items: OrderItem[];
@@ -22,6 +23,7 @@ export function OrderSummary({
   onSend: () => void;
   onCancel: (itemId: string) => void;
   onDeliver: (itemId: string) => void;
+  onApplyServiceFee?: () => void;
 }) {
   const { preset } = useBusinessPreset();
   const hasPending = items.some((item) => item.status === "pending");
@@ -135,6 +137,11 @@ export function OrderSummary({
               <span>Taxa de serviço</span>
               <span className="font-semibold">{brl(order.serviceFee)}</span>
             </div>
+          ) : null}
+          {order.serviceFee <= 0 && items.length && onApplyServiceFee ? (
+            <Button variant="outline" size="sm" className="mt-2 w-full" onClick={onApplyServiceFee}>
+              Adicionar taxa de serviço
+            </Button>
           ) : null}
         </div>
         <div className="mt-2 flex items-center justify-between rounded-xl bg-slate-900 px-4 py-2.5">

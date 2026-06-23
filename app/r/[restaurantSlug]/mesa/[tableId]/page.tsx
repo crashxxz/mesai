@@ -1,13 +1,14 @@
 "use client";
 
 import { useParams, useSearchParams } from "next/navigation";
-import { BellRing, CheckCircle2, MessageCircle, ReceiptText, Send, ShoppingBag, X } from "lucide-react";
+import { BellRing, CheckCircle2, MessageCircle, ReceiptText, RefreshCcw, Send, ShoppingBag, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BrandMark } from "@/components/brand-mark";
+import { BrandLogo, BrandMark } from "@/components/brand-mark";
 import { ProductGrid } from "@/components/product-grid";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { runtimeConfig } from "@/lib/runtime-config";
+import { brand } from "@/lib/brand";
 import { orderItemStatusLabel, orderStatusLabel } from "@/lib/services";
 import { useStore } from "@/lib/store";
 import { supabaseGateway } from "@/lib/supabase-gateway";
@@ -34,6 +35,7 @@ export default function PublicQrPage() {
   const [drinkPicker, setDrinkPicker] = useState(false);
   const tableToken = searchParams.get("t") ?? "";
   const menuState = remoteState ?? state;
+  const knownRestaurant = state.restaurants.find((item) => item.slug === params.restaurantSlug);
   const restaurant = menuState.restaurants.find((item) => item.slug === params.restaurantSlug);
   const table = remoteState?.tables[0] ?? menuState.tables.find((item) => item.id === params.tableId && item.restaurantId === restaurant?.id);
   const restaurantSettings = menuState.settings.find((item) => item.restaurantId === restaurant?.id);
@@ -82,9 +84,9 @@ export default function PublicQrPage() {
   const drinkProducts = useMemo(() => menuState.products.filter((product) => product.active && product.available && (product.preparationSector === "bar" || product.preparationSector === "both") && /cerveja|long neck|bebida|refrigerante/i.test(`${product.name} ${menuState.categories.find((category) => category.id === product.categoryId)?.name ?? ""}`)).slice(0, 20), [menuState]);
   const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + cartItemTotal(item, menuState), 0), [cart, menuState]);
 
-  if (runtimeConfig.dataMode === "supabase" && !remoteState) return <main className="grid min-h-screen place-items-center p-4 font-black text-slate-700">{loadError || "Carregando cardápio..."}</main>;
-  if (!restaurant || !table) return <main className="grid min-h-screen place-items-center p-4 font-black text-slate-700">Mesa não encontrada</main>;
-  if (!restaurantSettings?.qrOrdersEnabled) return <main className="grid min-h-screen place-items-center p-4 font-black text-slate-700">Pedido por QR indisponível</main>;
+  if (runtimeConfig.dataMode === "supabase" && !remoteState) return <PublicQrUnavailable restaurant={knownRestaurant} message={loadError || "Carregando cardápio..."} loading={!loadError} />;
+  if (!restaurant || !table) return <PublicQrUnavailable restaurant={knownRestaurant} message="QR inválido. Chame um atendente." />;
+  if (!restaurantSettings?.qrOrdersEnabled) return <PublicQrUnavailable restaurant={restaurant} message="Pedido por QR indisponível no momento." />;
 
   async function sendOrder() {
     if (!table || !cart.length) return;
@@ -125,10 +127,10 @@ export default function PublicQrPage() {
 function mapPublicMenu(base: AppState, payload: Record<string, unknown>): AppState {
   const r = payload.restaurant as Record<string, unknown>; const t = payload.table as Record<string, unknown>; const s = payload.settings as Record<string, unknown>; const restaurantId = String(r.id); const now = new Date().toISOString();
   const restaurant: Restaurant = { id: restaurantId, name: String(r.name), slug: String(r.slug), phone: r.phone ? String(r.phone) : undefined, whatsappUrl: r.whatsapp_url ? String(r.whatsapp_url) : undefined, mapsUrl: r.maps_url ? String(r.maps_url) : undefined, createdAt: now, updatedAt: now };
-  const table: RestaurantTable = { id: String(t.id), restaurantId, number: Number(t.number), name: t.name ? String(t.name) : undefined, status: "free", active: true, createdAt: now, updatedAt: now };
+  const table: RestaurantTable = { id: String(t.id), restaurantId, number: Number(t.number), name: t.name ? String(t.name) : undefined, status: "occupied", active: true, createdAt: now, updatedAt: now };
   const settings: RestaurantSettings = { restaurantId, qrOrdersEnabled: s.qr_orders_enabled !== false, qrOrdersNeedApproval: s.qr_orders_need_approval === true, waiterCanCloseAccount: s.waiter_can_close_account !== false, serviceFeePercent: Number(s.service_fee_percent ?? 10) };
   const categories = ((payload.categories ?? []) as Record<string, unknown>[]).map((c): Category => ({ id: String(c.id), restaurantId, name: String(c.name), sortOrder: Number(c.sort_order ?? 0), active: c.active !== false, createdAt: String(c.created_at ?? now), updatedAt: String(c.updated_at ?? now) }));
-  const products = ((payload.products ?? []) as Record<string, unknown>[]).map((p): Product => ({ id: String(p.id), restaurantId, categoryId: String(p.category_id), name: String(p.name), description: p.description ? String(p.description) : undefined, price: Number(p.price), preparationSector: p.preparation_sector as Product["preparationSector"], estimatedTimeMinutes: p.estimated_time_minutes ? Number(p.estimated_time_minutes) : undefined, available: p.available !== false, hasStockControl: false, imageUrl: p.image_url ? String(p.image_url) : undefined, active: p.active !== false, createdAt: String(p.created_at ?? now), updatedAt: String(p.updated_at ?? now) }));
+  const products = ((payload.products ?? []) as Record<string, unknown>[]).map((p): Product => ({ id: String(p.id), restaurantId, categoryId: String(p.category_id), name: String(p.name), description: p.description ? String(p.description) : undefined, price: Number(p.price), preparationSector: p.preparation_sector as Product["preparationSector"], estimatedTimeMinutes: p.estimated_time_minutes ? Number(p.estimated_time_minutes) : undefined, available: p.available !== false, hasStockControl: false, imageUrl: productImageUrl(p), active: p.active !== false, createdAt: String(p.created_at ?? now), updatedAt: String(p.updated_at ?? now) }));
   const variations = ((payload.variations ?? []) as Record<string, unknown>[]).map((v): ProductVariation => ({ id: String(v.id), productId: String(v.product_id), name: String(v.name), priceDelta: Number(v.price_delta ?? 0), active: v.active !== false }));
   const addons = ((payload.addons ?? []) as Record<string, unknown>[]).map((a): ProductAddon => ({ id: String(a.id), restaurantId, name: String(a.name), price: Number(a.price), active: a.active !== false }));
   const allowed = ((payload.allowed_addons ?? []) as Record<string, unknown>[]).map((a): ProductAllowedAddon => ({ id: String(a.id), productId: String(a.product_id), addonId: String(a.addon_id) }));
@@ -139,3 +141,5 @@ function mapTrackedOrder(payload: Record<string, unknown>) { const o = payload.o
 function dedupeCategories(categories: Category[]) { const seen = new Set<string>(); return categories.filter((category) => { const key = category.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase(); if (seen.has(key)) return false; seen.add(key); return true; }); }
 function phoneToWhatsapp(phone?: string) { const digits = phone?.replace(/\D/g, ""); return digits ? `https://wa.me/${digits}` : "https://wa.me/558896298276"; }
 function cartItemTotal(item: CartItem, state: AppState) { const product = state.products.find((entry) => entry.id === item.productId); const variation = state.productVariations.find((entry) => entry.id === item.variationId); const addons = (item.addonIds ?? []).map((id) => state.productAddons.find((entry) => entry.id === id && entry.active)).reduce((sum, addon) => sum + (addon?.price ?? 0), 0); return ((product?.price ?? 0) + (variation?.priceDelta ?? 0) + addons) * item.quantity; }
+function productImageUrl(product: Record<string, unknown>) { return [product.image_url, product.image_path, product.product_image].find((value): value is string => typeof value === "string" && value.trim().length > 0); }
+function PublicQrUnavailable({ restaurant, message, loading = false }: { restaurant?: Restaurant; message: string; loading?: boolean }) { return <main className="grid min-h-screen place-items-center bg-orange-50 px-4 py-8"><section className="w-full max-w-sm rounded-3xl border border-amber-200 bg-white p-6 text-center shadow-soft-lg"><BrandLogo className="justify-center" markClassName="h-14 w-14" /><p className="mt-4 text-sm font-bold text-slate-500">{restaurant?.name ?? brand.name}</p><h1 className="mt-2 text-2xl font-black text-slate-950">{loading ? "Preparando seu cardápio" : "Não foi possível abrir a mesa"}</h1><p className="mt-3 text-sm font-bold leading-6 text-slate-600">{message}</p><div className="mt-6 grid gap-2">{!loading ? <Button variant="amber" onClick={() => window.location.reload()}><RefreshCcw className="h-4 w-4" />Tentar novamente</Button> : null}{restaurant?.whatsappUrl || restaurant?.phone ? <Button asChild variant="outline"><a href={restaurant.whatsappUrl ?? phoneToWhatsapp(restaurant.phone)} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4" />Chamar atendimento</a></Button> : null}</div></section></main>; }

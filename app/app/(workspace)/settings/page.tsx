@@ -16,7 +16,7 @@ export default function SettingsPage() {
   if (!restaurant || !settings) return null;
 
   return (
-    <RoleGuard allowed={["owner"]}>
+    <RoleGuard allowed={["owner", "manager"]}>
       <section className="mx-auto grid max-w-4xl gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-950">Ajustes</h1>

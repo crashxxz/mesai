@@ -16,7 +16,7 @@ export default function TablesSettingsPage() {
   if (!restaurant) return null;
 
   return (
-    <RoleGuard allowed={["owner"]}>
+    <RoleGuard allowed={["owner", "manager"]}>
       <section className="grid gap-4">
         <div className="flex items-center justify-between gap-3">
           <div>

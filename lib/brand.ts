@@ -1,5 +1,5 @@
 export const brand = {
-  name: "Mesaí",
+  name: "Peça",
   slogan: "Pedido, mesa e caixa no jeito.",
   description: "Sistema simples para organizar pedidos, mesas e caixa.",
   colors: {

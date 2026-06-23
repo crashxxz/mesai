@@ -22,7 +22,8 @@ export default function OrderPage() {
     addOrderItem,
     sendItemsToPreparation,
     cancelOrderItem,
-    updateOrderItemStatus
+    updateOrderItemStatus,
+    applyOrderServiceFee
   } = useStore();
   const { preset } = useBusinessPreset();
   const order = state.orders.find((item) => item.id === params.id);
@@ -123,6 +124,7 @@ export default function OrderPage() {
             onSend={() => sendItemsToPreparation(order.id)}
             onCancel={setCancelItemId}
             onDeliver={(itemId) => updateOrderItemStatus(itemId, "delivered")}
+            onApplyServiceFee={() => void applyOrderServiceFee(order.id)}
           />
         </aside>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { Martini, Minus, PackageCheck, Plus, Search, Utensils, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ export function ProductGrid({
   title?: string;
   subtitle?: string;
   addLabel?: string;
-  onAdd: (productId: string, input: AddInput) => void;
+  onAdd: (productId: string, input: AddInput) => void | Promise<unknown>;
 }) {
   const uniqueCategories = useMemo(() => {
     const seen = new Set<string>();
@@ -59,6 +59,8 @@ export function ProductGrid({
   const [notes, setNotes] = useState("");
   const [variationId, setVariationId] = useState<string | undefined>();
   const [addonIds, setAddonIds] = useState<string[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState("");
   const categoryById = useMemo(
     () => new Map(uniqueCategories.map((category) => [category.id, category])),
     [uniqueCategories]
@@ -92,15 +94,18 @@ export function ProductGrid({
     setAddonIds([]);
   }
 
-  function addSelected() {
-    if (!selected) return;
-    onAdd(selected.id, {
-      quantity,
-      notes,
-      variationId,
-      addonIds
-    });
-    resetSelection();
+  async function addSelected() {
+    if (!selected || adding) return;
+    setAdding(true);
+    setAddError("");
+    try {
+      await onAdd(selected.id, { quantity, notes, variationId, addonIds });
+      resetSelection();
+    } catch (error) {
+      setAddError(error instanceof Error ? error.message : "Não foi possível adicionar o item.");
+    } finally {
+      setAdding(false);
+    }
   }
 
   return (
@@ -309,9 +314,11 @@ export function ProductGrid({
                 />
               </label>
 
-              <Button variant="amber" size="lg" className="text-base" onClick={addSelected}>
+              {selected.imageUrl ? <ProductImage url={selected.imageUrl} name={selected.name} icon={selected.preparationSector === "bar" ? Martini : selected.preparationSector === "kitchen" ? Utensils : PackageCheck} /> : null}
+              {addError ? <p className="text-sm font-bold text-red-600">{addError}</p> : null}
+              <Button variant="amber" size="lg" className="text-base" disabled={adding} onClick={() => void addSelected()}>
                 <Plus className="h-5 w-5" aria-hidden="true" />
-                {addLabel} · {brl(selected.price * quantity)}
+                {adding ? "Adicionando..." : `${addLabel} · ${brl(selected.price * quantity)}`}
               </Button>
             </div>
           </section>
@@ -323,6 +330,7 @@ export function ProductGrid({
 
 function ProductImage({ url, name, icon: Icon }: { url?: string; name: string; icon: LucideIcon }) {
   const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [url]);
   return <span className="relative grid h-full min-h-24 overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 text-amber-700">
     {url && !failed ? <Image src={url} alt={name} fill sizes="72px" className="object-cover" unoptimized onError={() => setFailed(true)} /> : <span className="grid place-items-center"><Icon className="h-8 w-8" aria-hidden="true" /></span>}
   </span>;

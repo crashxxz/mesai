@@ -2,6 +2,49 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
+test("QR válido abre a mesa ocupada e aguarda a mesa livre", () => {
+  const migration = readFileSync("supabase/migrations/202606220002_qr_open_table_status.sql", "utf8");
+  assert.match(migration, /v_table\.status not in \('occupied', 'closing'\)/);
+  assert.match(migration, /Mesa aguardando abertura/);
+  assert.match(migration, /insert into public\.qr_sessions/);
+});
+
+test("item é incluído no consumo sem recarregar", () => {
+  const store = readFileSync("lib/store.tsx", "utf8");
+  const grid = readFileSync("components/product-grid.tsx", "utf8");
+  assert.match(store, /const optimisticId = `pending_\$\{crypto\.randomUUID\(\)\}`/);
+  assert.match(store, /return withTotals\(next, orderId\)/);
+  assert.match(grid, /await onAdd\(selected\.id/);
+});
+
+test("gerente acessa ajustes e taxa pode ser aplicada", () => {
+  const settings = readFileSync("app/app/(workspace)/settings/page.tsx", "utf8");
+  const shell = readFileSync("components/app-shell.tsx", "utf8");
+  const summary = readFileSync("components/order-summary.tsx", "utf8");
+  const migration = readFileSync("supabase/migrations/202606220003_order_service_fee.sql", "utf8");
+  assert.match(settings, /allowed=\{\["owner", "manager"\]\}/);
+  assert.match(shell, /key: "settings".*roles: \["owner", "manager"\]/);
+  assert.match(summary, /Adicionar taxa de serviço/);
+  assert.match(migration, /function public\.apply_order_service_fee/);
+  assert.match(migration, /coalesce\(v_order\.service_fee, 0\) > 0/);
+});
+
+test("marca visual usa Peça sem alterar identificadores técnicos", () => {
+  const brand = readFileSync("lib/brand.ts", "utf8");
+  const manifest = readFileSync("public/manifest.webmanifest", "utf8");
+  assert.match(brand, /name: "Peça"/);
+  assert.match(manifest, /"short_name": "Peça"/);
+});
+
+test("imagem cadastrada é reutilizada no card e no modal", () => {
+  const grid = readFileSync("components/product-grid.tsx", "utf8");
+  const store = readFileSync("lib/store.tsx", "utf8");
+  assert.match(grid, /ProductImage url=\{product\.imageUrl\}/);
+  assert.match(grid, /selected\.imageUrl/);
+  assert.match(grid, /setFailed\(false\), \[url\]/);
+  assert.match(store, /product\.image_path, product\.product_image/);
+});
+
 test("QR geral não permite escolher mesa", () => {
   const page = readFileSync("app/r/[restaurantSlug]/page.tsx", "utf8");
   assert.match(page, /Use o QR da sua mesa/);

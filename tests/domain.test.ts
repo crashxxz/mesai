@@ -5,6 +5,17 @@ import { calculateOrderTotals, getBarItems, getFinancialSummary, getKitchenItems
 import { createSeedState } from "../lib/seed";
 import type { Profile, UserRole } from "../lib/types";
 
+test("taxa de serviço só entra no total após ser aplicada", () => {
+  const state = createSeedState();
+  const base = state.orders.find((entry) => entry.id === "order_open_2");
+  assert.ok(base);
+  const withoutFee = calculateOrderTotals(state, { ...base, serviceFee: 0, serviceFeeEnabled: false });
+  const withFee = calculateOrderTotals(state, { ...base, serviceFee: 0, serviceFeeEnabled: true });
+  assert.equal(withoutFee.serviceFee, 0);
+  assert.ok(withFee.serviceFee > 0);
+  assert.ok(withFee.total > withoutFee.total);
+});
+
 function profile(role: UserRole): Profile {
   return {
     id: `profile_${role}`,

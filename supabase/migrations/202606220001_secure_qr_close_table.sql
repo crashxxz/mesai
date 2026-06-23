@@ -59,12 +59,14 @@ set search_path = public, extensions
 as $$
 declare
   v_token public.table_qr_tokens%rowtype;
+  v_table public.tables%rowtype;
   v_session text := replace(gen_random_uuid()::text, '-', '');
 begin
   select * into v_token from public.table_qr_tokens
   where token_hash = digest(p_table_token, 'sha256') and active and (expires_at is null or expires_at > now());
   if v_token.id is null then raise exception 'QR invalido ou expirado'; end if;
-  if not exists (select 1 from public.orders where table_id = v_token.table_id and restaurant_id = v_token.restaurant_id and status not in ('closed', 'cancelled')) then
+  select * into v_table from public.tables where id = v_token.table_id and restaurant_id = v_token.restaurant_id and active;
+  if v_table.id is null or v_table.status not in ('occupied', 'closing') then
     raise exception 'Mesa aguardando abertura';
   end if;
   insert into public.qr_sessions (restaurant_id, table_id, session_hash, active, expires_at)

@@ -178,6 +178,11 @@ export const supabaseGateway = {
     return unwrap(result, "Não foi possível fechar a conta") as UUID;
   },
 
+  async applyOrderServiceFee(orderId: UUID) {
+    const result = await client().rpc("apply_order_service_fee", { p_order_id: orderId });
+    return unwrap(result, "Não foi possível adicionar a taxa de serviço") as UUID;
+  },
+
   async closeTable(tableId: UUID) {
     const result = await client().rpc("close_table", { p_table_id: tableId });
     return unwrap(result, "Nao foi possivel fechar a mesa") as UUID;

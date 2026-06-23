@@ -37,7 +37,7 @@ const navItems: Array<NavItem & { key: NavKey; roles: UserRole[]; section: "oper
   { key: "products", href: "/app/products", label: "Cardápio", icon: Package, roles: ["owner", "manager"], section: "admin" },
   { key: "finance", href: "/app/finance", label: "Financeiro", icon: WalletCards, roles: ["owner", "manager"], section: "admin" },
   { key: "team", href: "/app/settings/users", label: "Equipe", icon: UsersRound, roles: ["manager"], section: "admin" },
-  { key: "settings", href: "/app/settings", label: "Ajustes", icon: Settings, roles: ["owner"], section: "admin" },
+  { key: "settings", href: "/app/settings", label: "Ajustes", icon: Settings, roles: ["owner", "manager"], section: "admin" },
   { key: "help", href: "/app/help", label: "Como usar", icon: CircleHelp, roles: ["owner", "manager", "waiter", "kitchen", "bar", "cashier"], section: "admin" }
 ];
 

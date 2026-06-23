@@ -170,6 +170,7 @@ export interface Order {
   subtotal: number;
   discount: number;
   serviceFee: number;
+  serviceFeeEnabled?: boolean;
   deliveryFee: number;
   total: number;
   notes?: string;
