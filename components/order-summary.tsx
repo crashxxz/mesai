@@ -15,7 +15,8 @@ export function OrderSummary({
   onSend,
   onCancel,
   onDeliver,
-  onApplyServiceFee
+  onApplyServiceFee,
+  onSetServiceFeeEnabled
 }: {
   order: Order;
   items: OrderItem[];
@@ -24,6 +25,7 @@ export function OrderSummary({
   onCancel: (itemId: string) => void;
   onDeliver: (itemId: string) => void;
   onApplyServiceFee?: () => void;
+  onSetServiceFeeEnabled?: (enabled: boolean) => void;
 }) {
   const { preset } = useBusinessPreset();
   const hasPending = items.some((item) => item.status === "pending");
@@ -138,7 +140,12 @@ export function OrderSummary({
               <span className="font-semibold">{brl(order.serviceFee)}</span>
             </div>
           ) : null}
-          {order.serviceFee <= 0 && items.length && onApplyServiceFee ? (
+          {items.length && onSetServiceFeeEnabled ? (
+            <Button variant="outline" size="sm" className="mt-2 w-full" onClick={() => onSetServiceFeeEnabled(!(order.serviceFeeEnabled ?? order.serviceFee > 0))}>
+              {order.serviceFeeEnabled ?? order.serviceFee > 0 ? "Remover taxa de serviço" : "Aplicar taxa de serviço"}
+            </Button>
+          ) : null}
+          {order.serviceFee <= 0 && items.length && onApplyServiceFee && !onSetServiceFeeEnabled ? (
             <Button variant="outline" size="sm" className="mt-2 w-full" onClick={onApplyServiceFee}>
               Adicionar taxa de serviço
             </Button>

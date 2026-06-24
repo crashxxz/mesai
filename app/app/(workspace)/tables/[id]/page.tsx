@@ -23,6 +23,7 @@ export default function TableDetailPage() {
     cancelOrderItem,
     updateOrderItemStatus,
     applyOrderServiceFee,
+    setOrderServiceFeeEnabled,
     transferOrderTable,
     mergeOrders,
     closeTable,
@@ -151,6 +152,7 @@ export default function TableDetailPage() {
               onCancel={setCancelItemId}
               onDeliver={(itemId) => updateOrderItemStatus(itemId, "delivered")}
               onApplyServiceFee={() => void applyOrderServiceFee(order.id)}
+              onSetServiceFeeEnabled={(enabled) => void setOrderServiceFeeEnabled(order.id, enabled)}
             />
           ) : null}
         </div>

@@ -22,6 +22,7 @@ export function PaymentForm({
   payments,
   accountName,
   onDiscount,
+  onSetServiceFeeEnabled,
   onPay,
   onClose,
   onReopen
@@ -31,6 +32,7 @@ export function PaymentForm({
   payments: Payment[];
   accountName: string;
   onDiscount: (value: number) => void;
+  onSetServiceFeeEnabled: (enabled: boolean) => void;
   onPay: (input: { method: PaymentMethod; amount: number; cardBrand?: string; changeAmount?: number }) => void;
   onClose: () => void;
   onReopen: () => void;
@@ -98,9 +100,14 @@ export function PaymentForm({
               onChange={(event) => onDiscount(Number(event.target.value) || 0)}
             />
           </label>
-          <div className="flex justify-between">
+          <div className="flex items-center justify-between gap-3">
             <span>Taxa de serviço</span>
-            <strong>{brl(order.serviceFee)}</strong>
+            <div className="flex items-center gap-2">
+              <strong>{brl(order.serviceFee)}</strong>
+              <Button type="button" size="sm" variant="outline" onClick={() => onSetServiceFeeEnabled(!(order.serviceFeeEnabled ?? order.serviceFee > 0))}>
+                {order.serviceFeeEnabled ?? order.serviceFee > 0 ? "Remover" : "Aplicar"}
+              </Button>
+            </div>
           </div>
           <div className="flex justify-between text-lg text-slate-950">
             <span>Total</span>

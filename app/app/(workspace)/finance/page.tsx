@@ -6,7 +6,7 @@ import { PeriodFilter } from "@/components/period-filter";
 import { RoleGuard } from "@/components/role-guard";
 import { Button } from "@/components/ui/button";
 import type { PeriodFilterValue } from "@/lib/services";
-import { getDashboardMetrics, getFinancialSummary, paymentMethodLabel } from "@/lib/services";
+import { getDashboardMetrics, getFinancialSummary, getOrderItems, paymentMethodLabel } from "@/lib/services";
 import { useStore } from "@/lib/store";
 import type { PaymentMethod } from "@/lib/types";
 import { useBusinessPreset } from "@/lib/use-business-preset";
@@ -48,6 +48,10 @@ export default function FinancePage() {
   );
   const expenses = financial.entries.filter((entry) => entry.type === "expense");
   const topProduct = metrics.topProducts[0];
+  const closedOrders = useMemo(
+    () => state.orders.filter((order) => order.restaurantId === restaurantId && order.status === "closed").sort((a, b) => new Date(b.closedAt ?? b.updatedAt).getTime() - new Date(a.closedAt ?? a.updatedAt).getTime()),
+    [restaurantId, state.orders]
+  );
 
   function submitExpense(event: FormEvent) {
     event.preventDefault();
@@ -242,6 +246,38 @@ export default function FinancePage() {
             </div>
           </article>
         </div>
+
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
+          <h2 className="text-lg font-black text-slate-950">Histórico de mesas</h2>
+          <p className="mt-1 text-sm font-bold text-slate-500">Comandas fechadas, pagamentos e responsável.</p>
+          <div className="mt-3 grid gap-2">
+            {closedOrders.length ? closedOrders.map((order) => {
+              const table = state.tables.find((entry) => entry.id === order.tableId);
+              const responsible = state.profiles.find((entry) => entry.id === (order.closedBy ?? order.createdBy));
+              const orderItems = getOrderItems(state, order.id).filter((item) => item.status !== "cancelled");
+              const payments = state.payments.filter((payment) => payment.orderId === order.id);
+              return (
+                <details key={order.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <summary className="cursor-pointer list-none">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <strong className="text-slate-950">{table?.name ?? order.customerName ?? "Comanda"}</strong>
+                        <span className="ml-2 text-xs font-bold text-slate-500">{new Date(order.closedAt ?? order.updatedAt).toLocaleString("pt-BR")}</span>
+                      </div>
+                      <strong className="text-emerald-700">{brl(order.total)}</strong>
+                    </div>
+                  </summary>
+                  <div className="mt-3 grid gap-2 border-t border-slate-200 pt-3 text-sm">
+                    <div className="grid grid-cols-2 gap-2 text-slate-600"><span>Aberta: {new Date(order.createdAt).toLocaleString("pt-BR")}</span><span>Responsável: {responsible?.name ?? "Não informado"}</span></div>
+                    <div className="grid grid-cols-2 gap-2 text-slate-600"><span>Subtotal: {brl(order.subtotal)}</span><span>Taxa: {brl(order.serviceFee)}</span><span>Desconto: {brl(order.discount)}</span><strong className="text-slate-950">Total: {brl(order.total)}</strong></div>
+                    <div className="rounded-lg bg-white p-2 text-slate-600">Itens: {orderItems.map((item) => `${item.quantity}x ${item.productNameSnapshot}`).join(", ") || "Sem itens"}</div>
+                    <div className="rounded-lg bg-white p-2 text-slate-600">Pagamentos: {payments.map((payment) => `${paymentMethodLabel(payment.method)} ${brl(payment.amount)}`).join(" · ") || "Não informado"}</div>
+                  </div>
+                </details>
+              );
+            }) : <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm font-bold text-slate-400">Nenhuma mesa fechada ainda.</div>}
+          </div>
+        </article>
       </section>
     </RoleGuard>
   );

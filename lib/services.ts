@@ -55,7 +55,7 @@ export function calculateOrderTotals(state: AppState, order: Order) {
     }, 0);
 
   const settings = state.settings.find((setting) => setting.restaurantId === order.restaurantId);
-  const serviceFeeEnabled = order.serviceFeeEnabled ?? order.serviceFee > 0;
+  const serviceFeeEnabled = order.serviceFeeEnabled ?? (settings?.serviceFeePercent ?? 0) > 0;
   const serviceFee = serviceFeeEnabled
     ? Number(((subtotal - order.discount) * ((settings?.serviceFeePercent ?? 0) / 100)).toFixed(2))
     : 0;

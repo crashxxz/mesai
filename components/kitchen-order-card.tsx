@@ -1,7 +1,9 @@
 "use client";
 
-import { CheckCircle2, Flame, MessageSquareText, Timer, Utensils } from "lucide-react";
+import { CheckCircle2, MessageSquareText, Timer, Utensils, XCircle } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ReasonDialog } from "@/components/reason-dialog";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { minutesSince } from "@/lib/utils";
 import { orderItemStatusLabel } from "@/lib/services";
@@ -15,7 +17,8 @@ export function KitchenOrderCard({
   addons,
   products,
   onStatus,
-  onReceiveOrder
+  onReceiveOrder,
+  onReject
 }: {
   order: Order;
   table?: RestaurantTable;
@@ -25,7 +28,9 @@ export function KitchenOrderCard({
   products: Product[];
   onStatus: (itemId: string, status: "preparing" | "ready") => void;
   onReceiveOrder: (orderId: string) => void;
+  onReject: (itemId: string, reason: string) => void;
 }) {
+  const [rejectItemId, setRejectItemId] = useState<string>();
   const firstTime = items[0]?.sentAt ?? items[0]?.createdAt ?? order.createdAt;
   const elapsed = minutesSince(firstTime);
   const delayed = items.some((item) => {
@@ -101,6 +106,11 @@ export function KitchenOrderCard({
                     Pronto!
                   </Button>
                 ) : null}
+                {item.status !== "ready" ? (
+                  <Button size="sm" variant="outline" className="rounded-xl text-red-700" onClick={() => setRejectItemId(item.id)}>
+                    <XCircle className="h-4 w-4" aria-hidden="true" />Recusar
+                  </Button>
+                ) : null}
                 {item.status === "ready" ? (
                   <div className="flex min-h-9 items-center justify-center rounded-xl bg-emerald-100 px-3 text-xs font-black text-emerald-800 sm:col-span-2">
                     Pronto para entregar
@@ -111,6 +121,7 @@ export function KitchenOrderCard({
           );
         })}
       </div>
+      <ReasonDialog open={Boolean(rejectItemId)} title="Recusar item" label="Motivo obrigatório" confirmLabel="Recusar" suggestions={["Item em falta", "Acabou no estoque", "Cozinha indisponível", "Outro motivo"]} onCancel={() => setRejectItemId(undefined)} onConfirm={(reason) => { if (rejectItemId) onReject(rejectItemId, reason); setRejectItemId(undefined); }} />
     </article>
   );
 }

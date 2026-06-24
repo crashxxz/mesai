@@ -19,6 +19,7 @@ export default function CheckoutPage() {
     profile,
     settings,
     updateOrderDiscount,
+    setOrderServiceFeeEnabled,
     registerPayment,
     closeOrder,
     reopenOrder
@@ -65,6 +66,7 @@ export default function CheckoutPage() {
           payments={payments}
           accountName={table?.name ?? order.customerName ?? "Comanda"}
           onDiscount={(value) => updateOrderDiscount(order.id, value)}
+          onSetServiceFeeEnabled={(enabled) => void setOrderServiceFeeEnabled(order.id, enabled)}
           onPay={(input) => registerPayment(order.id, input)}
           onClose={() => closeOrder(order.id)}
           onReopen={() => setReopenDialogOpen(true)}

@@ -28,7 +28,8 @@ export function PreparationBoard({
   addons,
   products,
   onStatus,
-  onReceiveOrder
+  onReceiveOrder,
+  onReject
 }: {
   title: string;
   subtitle: string;
@@ -42,6 +43,7 @@ export function PreparationBoard({
   products: Product[];
   onStatus: (itemId: string, status: "preparing" | "ready") => void;
   onReceiveOrder: (orderId: string) => void;
+  onReject: (itemId: string, reason: string) => void;
 }) {
   const newItems = items.filter((item) => item.status === "sent" || item.status === "received");
   const preparingItems = items.filter((item) => item.status === "preparing");
@@ -129,6 +131,7 @@ export function PreparationBoard({
                         products={products}
                         onStatus={onStatus}
                         onReceiveOrder={onReceiveOrder}
+                        onReject={onReject}
                       />
                     );
                   })}

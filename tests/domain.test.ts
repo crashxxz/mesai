@@ -5,13 +5,15 @@ import { calculateOrderTotals, getBarItems, getFinancialSummary, getKitchenItems
 import { createSeedState } from "../lib/seed";
 import type { Profile, UserRole } from "../lib/types";
 
-test("taxa de serviço só entra no total após ser aplicada", () => {
+test("taxa de serviço configurada entra automaticamente e pode ser removida", () => {
   const state = createSeedState();
   const base = state.orders.find((entry) => entry.id === "order_open_2");
   assert.ok(base);
+  const automatic = calculateOrderTotals(state, { ...base, serviceFee: 0, serviceFeeEnabled: undefined });
   const withoutFee = calculateOrderTotals(state, { ...base, serviceFee: 0, serviceFeeEnabled: false });
   const withFee = calculateOrderTotals(state, { ...base, serviceFee: 0, serviceFeeEnabled: true });
   assert.equal(withoutFee.serviceFee, 0);
+  assert.ok(automatic.serviceFee > 0);
   assert.ok(withFee.serviceFee > 0);
   assert.ok(withFee.total > withoutFee.total);
 });

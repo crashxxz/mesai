@@ -9,7 +9,7 @@ import { useStore } from "@/lib/store";
 import { useBusinessPreset } from "@/lib/use-business-preset";
 
 export default function KitchenPage() {
-  const { state, restaurant, updateOrderItemStatus } = useStore();
+  const { state, restaurant, updateOrderItemStatus, rejectOrderItem } = useStore();
   const { preset } = useBusinessPreset();
   const countRef = useRef(0);
   const items = useMemo(
@@ -49,6 +49,7 @@ export default function KitchenPage() {
         onReceiveOrder={(orderId) => {
           items.filter((item) => item.orderId === orderId && (item.status === "sent" || item.status === "received")).forEach((item) => void updateOrderItemStatus(item.id, "preparing"));
         }}
+        onReject={(itemId, reason) => void rejectOrderItem(itemId, reason)}
       />
     </RoleGuard>
   );

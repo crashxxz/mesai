@@ -89,9 +89,11 @@ interface StoreContextValue {
   addOrderItem: (orderId: UUID, productId: UUID, input: AddOrderItemInput) => Promise<UUID | undefined>;
   sendItemsToPreparation: (orderId: UUID) => Promise<void>;
   updateOrderItemStatus: (itemId: UUID, status: OrderItemStatus) => Promise<void>;
+  rejectOrderItem: (itemId: UUID, reason: string) => Promise<void>;
   cancelOrderItem: (itemId: UUID, reason: string) => void;
   updateOrderDiscount: (orderId: UUID, discount: number) => void;
   applyOrderServiceFee: (orderId: UUID) => Promise<void>;
+  setOrderServiceFeeEnabled: (orderId: UUID, enabled: boolean) => Promise<void>;
   transferOrderTable: (orderId: UUID, newTableId: UUID) => void;
   mergeOrders: (sourceOrderId: UUID, targetOrderId: UUID) => void;
   closeOrder: (orderId: UUID) => Promise<void>;
@@ -623,6 +625,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         };
         commit(next, "order_item");
       },
+      async rejectOrderItem(itemId, reason) {
+        if (!reason.trim()) return;
+        if (runtimeConfig.dataMode === "supabase") {
+          await supabaseGateway.rejectOrderItem(itemId, reason);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return;
+        }
+        const oldItem = state.orderItems.find((item) => item.id === itemId);
+        if (!oldItem) return;
+        const now = new Date().toISOString();
+        let next: AppState = {
+          ...state,
+          orderItems: state.orderItems.map((item) => item.id === itemId ? { ...item, status: "cancelled", cancelReason: reason.trim(), updatedAt: now } : item)
+        };
+        next = withTotals(next, oldItem.orderId);
+        next = { ...next, auditLogs: [...next.auditLogs, createAuditLog(next, "order_item_rejected", "order_items", itemId, oldItem, { reason })] };
+        commit(next, "order_item");
+      },
       updateOrderDiscount(orderId, discount) {
         let next: AppState = {
           ...state,
@@ -649,6 +670,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const next = withTotals({
           ...state,
           orders: state.orders.map((item) => item.id === orderId ? { ...item, serviceFeeEnabled: true } : item)
+        }, orderId);
+        commit(next, "order");
+      },
+      async setOrderServiceFeeEnabled(orderId, enabled) {
+        if (runtimeConfig.dataMode === "supabase") {
+          await supabaseGateway.setOrderServiceFeeEnabled(orderId, enabled);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return;
+        }
+        const order = state.orders.find((item) => item.id === orderId);
+        if (!order) return;
+        const next = withTotals({
+          ...state,
+          orders: state.orders.map((item) => item.id === orderId ? { ...item, serviceFeeEnabled: enabled } : item)
         }, orderId);
         commit(next, "order");
       },
@@ -1409,7 +1445,7 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
   const remoteCategories: Category[] = workspace.categories.map((item) => ({ id: String(item.id), restaurantId: id, name: String(item.name), sortOrder: Number(item.sort_order ?? 0), active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) }));
   const remoteProducts: Product[] = workspace.products.map((item) => ({ id: String(item.id), restaurantId: id, categoryId: String(item.category_id), name: String(item.name), description: typeof item.description === "string" ? item.description : undefined, price: Number(item.price), preparationSector: item.preparation_sector as Product["preparationSector"], estimatedTimeMinutes: item.estimated_time_minutes ? Number(item.estimated_time_minutes) : undefined, available: item.available !== false, hasStockControl: item.has_stock_control === true, stockQuantity: item.stock_quantity === null ? undefined : Number(item.stock_quantity), stockMinimum: item.stock_minimum === null ? undefined : Number(item.stock_minimum), stockUnit: item.stock_unit as Product["stockUnit"], imageUrl: resolveProductImage(item, workspace.categories.find((category) => String(category.id) === String(item.category_id))?.name as string | undefined), active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) }));
   const remoteTables: RestaurantTable[] = workspace.tables.map((item) => ({ id: String(item.id), restaurantId: id, number: Number(item.number), name: typeof item.name === "string" ? item.name : undefined, status: item.status as RestaurantTable["status"], active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) }));
-  const remoteOrders: Order[] = workspace.orders.map((item) => ({ id: String(item.id), restaurantId: id, tableId: item.table_id ? String(item.table_id) : undefined, tabId: item.tab_id ? String(item.tab_id) : undefined, customerName: typeof item.customer_name === "string" ? item.customer_name : undefined, source: item.source as Order["source"], status: item.status as Order["status"], createdBy: item.created_by ? String(item.created_by) : undefined, closedBy: item.closed_by ? String(item.closed_by) : undefined, subtotal: Number(item.subtotal ?? 0), discount: Number(item.discount ?? 0), serviceFee: Number(item.service_fee ?? 0), serviceFeeEnabled: Number(item.service_fee ?? 0) > 0, deliveryFee: Number(item.delivery_fee ?? 0), total: Number(item.total ?? 0), notes: typeof item.notes === "string" ? item.notes : undefined, cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), closedAt: item.closed_at ? String(item.closed_at) : undefined }));
+  const remoteOrders: Order[] = workspace.orders.map((item) => ({ id: String(item.id), restaurantId: id, tableId: item.table_id ? String(item.table_id) : undefined, tabId: item.tab_id ? String(item.tab_id) : undefined, customerName: typeof item.customer_name === "string" ? item.customer_name : undefined, source: item.source as Order["source"], status: item.status as Order["status"], createdBy: item.created_by ? String(item.created_by) : undefined, closedBy: item.closed_by ? String(item.closed_by) : undefined, subtotal: Number(item.subtotal ?? 0), discount: Number(item.discount ?? 0), serviceFee: Number(item.service_fee ?? 0), serviceFeeEnabled: item.service_fee_enabled !== false, deliveryFee: Number(item.delivery_fee ?? 0), total: Number(item.total ?? 0), notes: typeof item.notes === "string" ? item.notes : undefined, cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), closedAt: item.closed_at ? String(item.closed_at) : undefined }));
   const remoteOrderItems: OrderItem[] = workspace.orderItems.map((item) => ({ id: String(item.id), orderId: String(item.order_id), restaurantId: id, productId: String(item.product_id), productNameSnapshot: String(item.product_name_snapshot), unitPriceSnapshot: Number(item.unit_price_snapshot), quantity: Number(item.quantity), variationName: typeof item.variation_name === "string" ? item.variation_name : undefined, variationPriceDelta: item.variation_price_delta === null ? undefined : Number(item.variation_price_delta), notes: typeof item.notes === "string" ? item.notes : undefined, preparationSector: item.preparation_sector as OrderItem["preparationSector"], status: item.status as OrderItem["status"], cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined, createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), sentAt: item.sent_at ? String(item.sent_at) : undefined, preparingAt: item.preparing_at ? String(item.preparing_at) : undefined, readyAt: item.ready_at ? String(item.ready_at) : undefined, deliveredAt: item.delivered_at ? String(item.delivered_at) : undefined }));
   const remotePayments: Payment[] = workspace.payments.map((item) => ({ id: String(item.id), restaurantId: id, orderId: String(item.order_id), method: item.method as Payment["method"], amount: Number(item.amount ?? 0), cardBrand: typeof item.card_brand === "string" ? item.card_brand : undefined, changeAmount: item.change_amount === null ? undefined : Number(item.change_amount), createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now) }));
   const remoteStockMovements: StockMovement[] = workspace.stockMovements.map((item) => ({ id: String(item.id), restaurantId: id, productId: String(item.product_id), type: item.type as StockMovement["type"], quantity: Number(item.quantity ?? 0), reason: String(item.reason ?? ""), createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now) }));

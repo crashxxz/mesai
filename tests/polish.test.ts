@@ -18,16 +18,16 @@ test("item é incluído no consumo sem recarregar", () => {
   assert.match(grid, /await onAdd\(selected\.id/);
 });
 
-test("gerente acessa ajustes e taxa pode ser aplicada", () => {
+test("gerente acessa ajustes e taxa pode ser removida por comanda", () => {
   const settings = readFileSync("app/app/(workspace)/settings/page.tsx", "utf8");
   const shell = readFileSync("components/app-shell.tsx", "utf8");
   const summary = readFileSync("components/order-summary.tsx", "utf8");
-  const migration = readFileSync("supabase/migrations/202606220003_order_service_fee.sql", "utf8");
+  const migration = readFileSync("supabase/migrations/202606230004_automatic_service_fee.sql", "utf8");
   assert.match(settings, /allowed=\{\["owner", "manager"\]\}/);
   assert.match(shell, /key: "settings".*roles: \["owner", "manager"\]/);
-  assert.match(summary, /Adicionar taxa de serviço/);
-  assert.match(migration, /function public\.apply_order_service_fee/);
-  assert.match(migration, /coalesce\(v_order\.service_fee, 0\) > 0/);
+  assert.match(summary, /Remover taxa de serviço/);
+  assert.match(migration, /function public\.set_order_service_fee_enabled/);
+  assert.match(migration, /service_fee_enabled boolean/);
 });
 
 test("marca visual usa MesaY sem alterar identificadores técnicos", () => {

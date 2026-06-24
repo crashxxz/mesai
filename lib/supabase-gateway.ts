@@ -173,6 +173,11 @@ export const supabaseGateway = {
     return unwrap(result, "Não foi possível atualizar o preparo");
   },
 
+  async rejectOrderItem(itemId: UUID, reason: string) {
+    const result = await client().rpc("reject_order_item", { p_item_id: itemId, p_reason: reason.trim() });
+    return unwrap(result, "Não foi possível recusar o item") as UUID;
+  },
+
   async registerPayment(orderId: UUID, method: PaymentMethod, amount: number, cardBrand?: string, changeAmount?: number) {
     const result = await client().rpc("register_order_payment", {
       p_order_id: orderId,
@@ -192,6 +197,11 @@ export const supabaseGateway = {
   async applyOrderServiceFee(orderId: UUID) {
     const result = await client().rpc("apply_order_service_fee", { p_order_id: orderId });
     return unwrap(result, "Não foi possível adicionar a taxa de serviço") as UUID;
+  },
+
+  async setOrderServiceFeeEnabled(orderId: UUID, enabled: boolean) {
+    const result = await client().rpc("set_order_service_fee_enabled", { p_order_id: orderId, p_enabled: enabled });
+    return unwrap(result, "NÃ£o foi possÃ­vel atualizar a taxa de serviÃ§o") as UUID;
   },
 
   async closeTable(tableId: UUID) {

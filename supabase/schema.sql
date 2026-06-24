@@ -132,6 +132,7 @@ create table public.orders (
   subtotal numeric(12,2) not null default 0,
   discount numeric(12,2) not null default 0,
   service_fee numeric(12,2) not null default 0,
+  service_fee_enabled boolean not null default true,
   delivery_fee numeric(12,2) not null default 0,
   total numeric(12,2) not null default 0,
   notes text,
