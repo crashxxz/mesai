@@ -575,11 +575,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             : item
         );
         const orderItems = nextItems.filter((item) => item.orderId === oldItem.orderId && item.status !== "cancelled");
-        const orderStatus = orderItems.some((item) => item.status === "preparing")
-          ? "preparing"
-          : orderItems.length > 0 && orderItems.every((item) => item.status === "ready" || item.status === "delivered")
-            ? "ready"
-            : "sent";
+        const orderStatus = orderItems.length > 0 && orderItems.every((item) => item.status === "delivered")
+          ? "delivered"
+          : orderItems.some((item) => item.status === "preparing")
+            ? "preparing"
+            : orderItems.length > 0 && orderItems.every((item) => item.status === "ready" || item.status === "delivered")
+              ? "ready"
+              : "sent";
 
         let next: AppState = {
           ...state,
@@ -1383,7 +1385,7 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
   const now = new Date().toISOString();
   const restaurant: Restaurant = {
     id,
-    name: String(row.name ?? "Peça"),
+    name: String(row.name ?? "MesaY"),
     slug: String(row.slug ?? id),
     logoUrl: typeof row.logo_url === "string" ? row.logo_url : undefined,
     city: typeof row.city === "string" ? row.city : undefined,

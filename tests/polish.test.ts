@@ -30,11 +30,11 @@ test("gerente acessa ajustes e taxa pode ser aplicada", () => {
   assert.match(migration, /coalesce\(v_order\.service_fee, 0\) > 0/);
 });
 
-test("marca visual usa Peça sem alterar identificadores técnicos", () => {
+test("marca visual usa MesaY sem alterar identificadores técnicos", () => {
   const brand = readFileSync("lib/brand.ts", "utf8");
   const manifest = readFileSync("public/manifest.webmanifest", "utf8");
-  assert.match(brand, /name: "Peça"/);
-  assert.match(manifest, /"short_name": "Peça"/);
+  assert.match(brand, /name: "MesaY"/);
+  assert.match(manifest, /"short_name": "MesaY"/);
 });
 
 test("imagem cadastrada é reutilizada no card e no modal", () => {

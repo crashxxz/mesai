@@ -14,7 +14,8 @@ export function KitchenOrderCard({
   items,
   addons,
   products,
-  onStatus
+  onStatus,
+  onReceiveOrder
 }: {
   order: Order;
   table?: RestaurantTable;
@@ -22,7 +23,8 @@ export function KitchenOrderCard({
   items: OrderItem[];
   addons: OrderItemAddon[];
   products: Product[];
-  onStatus: (itemId: string, status: "received" | "preparing" | "ready") => void;
+  onStatus: (itemId: string, status: "preparing" | "ready") => void;
+  onReceiveOrder: (orderId: string) => void;
 }) {
   const firstTime = items[0]?.sentAt ?? items[0]?.createdAt ?? order.createdAt;
   const elapsed = minutesSince(firstTime);
@@ -48,6 +50,12 @@ export function KitchenOrderCard({
       </div>
 
       <div className="grid gap-2">
+        {items.some((item) => item.status === "sent" || item.status === "received") ? (
+          <Button size="sm" variant="amber" className="rounded-xl" onClick={() => onReceiveOrder(order.id)}>
+            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+            Receber pedido completo
+          </Button>
+        ) : null}
         {items.map((item) => {
           const itemAddons = addons.filter((addon) => addon.orderItemId === item.id);
           return (
@@ -81,16 +89,10 @@ export function KitchenOrderCard({
                 </StatusBadge>
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {item.status === "sent" ? (
-                  <Button size="sm" variant="outline" className="rounded-xl" onClick={() => onStatus(item.id, "received")}>
+                {item.status === "sent" || item.status === "received" ? (
+                  <Button size="sm" variant="amber" className="rounded-xl" onClick={() => onStatus(item.id, "preparing")}>
                     <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                     Receber
-                  </Button>
-                ) : null}
-                {item.status === "received" ? (
-                  <Button size="sm" variant="amber" className="rounded-xl" onClick={() => onStatus(item.id, "preparing")}>
-                    <Flame className="h-4 w-4" aria-hidden="true" />
-                    Preparar
                   </Button>
                 ) : null}
                 {item.status === "preparing" ? (

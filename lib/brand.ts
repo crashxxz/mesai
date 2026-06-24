@@ -1,6 +1,6 @@
 export const brand = {
-  name: "Peça",
-  slogan: "Pedido, mesa e caixa no jeito.",
+  name: "MesaY",
+  slogan: "Escaneou, pediu, chegou.",
   description: "Sistema simples para organizar pedidos, mesas e caixa.",
   colors: {
     charcoal: "#111827",

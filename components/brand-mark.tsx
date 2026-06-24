@@ -21,27 +21,16 @@ export function BrandMark({ className, decorative = false, tone = "dark" }: Bran
     >
       <svg viewBox="0 0 64 64" className="h-full w-full" aria-hidden="true">
         <rect x="2" y="2" width="60" height="60" rx="16" fill={colors.background} />
+        <path d="M15 24v-7a5 5 0 0 1 5-5h7M42 12h2a5 5 0 0 1 5 5v7M49 40v7a5 5 0 0 1-5 5h-7M27 52h-7a5 5 0 0 1-5-5v-7" fill="none" stroke={colors.monogram} strokeWidth="3.5" strokeLinecap="round" />
+        <path d="M20 18h5M39 18h5M20 46h5M39 46h5" fill="none" stroke={colors.table} strokeWidth="4" strokeLinecap="round" />
+        <path d="M20 38h24M25 37c0-8 4-14 9-14s9 6 9 14" fill={colors.monogram} stroke={colors.monogram} strokeWidth="2" strokeLinejoin="round" />
+        <path d="M23 40h22" fill="none" stroke={colors.table} strokeWidth="4" strokeLinecap="round" />
+        <path d="M34 20v3" fill="none" stroke={colors.monogram} strokeWidth="3" strokeLinecap="round" />
         <path
-          d="M27 10h10M27 54h10M10 27v10M54 27v10"
-          fill="none"
-          stroke={colors.table}
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        <rect x="16" y="16" width="32" height="32" rx="9" fill="none" stroke={colors.table} strokeWidth="4" />
-        <path
-          d="M21 39V26l11 9 7-6"
-          fill="none"
-          stroke={colors.monogram}
-          strokeWidth="4.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="m37 37 5 5 9-12"
+          d="m28 43 4 5 7-8"
           fill="none"
           stroke={colors.confirmation}
-          strokeWidth="5"
+          strokeWidth="3.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />

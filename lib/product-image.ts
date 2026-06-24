@@ -10,7 +10,9 @@ type ProductImageCandidate = Partial<Product> & {
 
 const keywordImages: Array<{ words: string[]; path: string }> = [
   { words: ["pastel", "pastelzinho"], path: "/menu-images/petiscos/pastelzinho.webp" },
-  { words: ["batata", "fritas", "mandioca", "macaxeira"], path: "/menu-images/petiscos/batata-rustica.webp" },
+  { words: ["macaxeira", "mandioca", "aipim"], path: "/menu-images/petiscos/macaxeira.webp" },
+  { words: ["batata", "fritas"], path: "/menu-images/petiscos/batata-rustica.webp" },
+  { words: ["feijao", "feijão", "baiao", "baião"], path: "/menu-images/pratos/feijao-verde.webp" },
   { words: ["torresmo", "calabresa", "bolinho", "porcao", "porção", "queijo", "frango", "isca"], path: "/menu-images/petiscos/torresmo.webp" },
   { words: ["cerveja", "heineken", "skol", "brahma", "antarctica", "long neck"], path: "/menu-images/cervejas/default-cerveja.webp" },
   { words: ["caipirinha", "gin", "vodka", "whisky", "drink", "cocktail"], path: "/menu-images/drinks/default-drink.webp" },

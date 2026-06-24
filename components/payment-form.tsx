@@ -41,7 +41,7 @@ export function PaymentForm({
   const [amount, setAmount] = useState(remaining.toFixed(2));
   const [cardBrand, setCardBrand] = useState("");
   const [cashReceived, setCashReceived] = useState("");
-  const [splitMode, setSplitMode] = useState<"equal" | "value" | "items">("equal");
+  const [splitMode, setSplitMode] = useState<"equal" | "value" | "items">("value");
   const [people, setPeople] = useState(2);
   const [splitValue, setSplitValue] = useState(remaining.toFixed(2));
   const [confirmClose, setConfirmClose] = useState(false);

@@ -46,6 +46,9 @@ export default function KitchenPage() {
         addons={state.orderItemAddons}
         products={state.products}
         onStatus={updateOrderItemStatus}
+        onReceiveOrder={(orderId) => {
+          items.filter((item) => item.orderId === orderId && (item.status === "sent" || item.status === "received")).forEach((item) => void updateOrderItemStatus(item.id, "preparing"));
+        }}
       />
     </RoleGuard>
   );
