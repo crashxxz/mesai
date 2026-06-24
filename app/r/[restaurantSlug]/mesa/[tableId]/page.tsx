@@ -87,6 +87,7 @@ export default function PublicQrPage() {
 
   if (runtimeConfig.dataMode === "supabase" && !remoteState) return <PublicQrUnavailable restaurant={knownRestaurant} message={loadError || "Carregando cardápio..."} loading={!loadError} />;
   if (!restaurant || !table) return <PublicQrUnavailable restaurant={knownRestaurant} message="QR inválido. Chame um atendente." />;
+  if (runtimeConfig.dataMode === "demo" && table.status === "free") return <PublicQrUnavailable restaurant={restaurant} message="Aguardando abertura da mesa. Chame um atendente." />;
   if (!restaurantSettings?.qrOrdersEnabled) return <PublicQrUnavailable restaurant={restaurant} message="Pedido por QR indisponível no momento." />;
 
   async function sendOrder() {
@@ -131,7 +132,11 @@ function mapPublicMenu(base: AppState, payload: Record<string, unknown>): AppSta
   const table: RestaurantTable = { id: String(t.id), restaurantId, number: Number(t.number), name: t.name ? String(t.name) : undefined, status: "occupied", active: true, createdAt: now, updatedAt: now };
   const settings: RestaurantSettings = { restaurantId, qrOrdersEnabled: s.qr_orders_enabled !== false, qrOrdersNeedApproval: s.qr_orders_need_approval === true, waiterCanCloseAccount: s.waiter_can_close_account !== false, serviceFeePercent: Number(s.service_fee_percent ?? 10) };
   const categories = ((payload.categories ?? []) as Record<string, unknown>[]).map((c): Category => ({ id: String(c.id), restaurantId, name: String(c.name), sortOrder: Number(c.sort_order ?? 0), active: c.active !== false, createdAt: String(c.created_at ?? now), updatedAt: String(c.updated_at ?? now) }));
-  const products = ((payload.products ?? []) as Record<string, unknown>[]).map((p): Product => ({ id: String(p.id), restaurantId, categoryId: String(p.category_id), name: String(p.name), description: p.description ? String(p.description) : undefined, price: Number(p.price), preparationSector: p.preparation_sector as Product["preparationSector"], estimatedTimeMinutes: p.estimated_time_minutes ? Number(p.estimated_time_minutes) : undefined, available: p.available !== false, hasStockControl: false, imageUrl: resolveProductImage(p, categories.find((category) => category.id === String(p.category_id))?.name), active: p.active !== false, createdAt: String(p.created_at ?? now), updatedAt: String(p.updated_at ?? now) }));
+  const products = ((payload.products ?? []) as Record<string, unknown>[]).map((p): Product => {
+    const categoryName = categories.find((category) => category.id === String(p.category_id))?.name;
+    const manualImageUrl = typeof p.image_url === "string" ? p.image_url : undefined;
+    return { id: String(p.id), restaurantId, categoryId: String(p.category_id), name: String(p.name), description: p.description ? String(p.description) : undefined, price: Number(p.price), preparationSector: p.preparation_sector as Product["preparationSector"], estimatedTimeMinutes: p.estimated_time_minutes ? Number(p.estimated_time_minutes) : undefined, available: p.available !== false, hasStockControl: false, imageUrl: manualImageUrl, generatedImageUrl: typeof p.generated_image_url === "string" ? p.generated_image_url : manualImageUrl ? undefined : resolveProductImage(p, categoryName), active: p.active !== false, createdAt: String(p.created_at ?? now), updatedAt: String(p.updated_at ?? now) };
+  });
   const variations = ((payload.variations ?? []) as Record<string, unknown>[]).map((v): ProductVariation => ({ id: String(v.id), productId: String(v.product_id), name: String(v.name), priceDelta: Number(v.price_delta ?? 0), active: v.active !== false }));
   const addons = ((payload.addons ?? []) as Record<string, unknown>[]).map((a): ProductAddon => ({ id: String(a.id), restaurantId, name: String(a.name), price: Number(a.price), active: a.active !== false }));
   const allowed = ((payload.allowed_addons ?? []) as Record<string, unknown>[]).map((a): ProductAllowedAddon => ({ id: String(a.id), productId: String(a.product_id), addonId: String(a.addon_id) }));

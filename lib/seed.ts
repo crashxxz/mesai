@@ -205,7 +205,7 @@ export function createSeedState(): AppState {
     pixKey: "",
     pixRecipientName: "Boteco da Maricota",
     pixCity: "Iguatu",
-    strongFont: false
+    systemTheme: "system"
   };
 
   const profiles: Profile[] = [

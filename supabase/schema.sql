@@ -32,8 +32,8 @@ create table public.restaurant_settings (
   service_fee_percent numeric(5,2) not null default 10,
   pix_key text,
   pix_recipient_name text,
-  pix_city text,
-  strong_font boolean not null default false
+    pix_city text,
+    system_theme text not null default 'system' check (system_theme in ('light', 'dark', 'system'))
 );
 
 create table public.profiles (
@@ -95,6 +95,7 @@ create table public.products (
   stock_quantity numeric(12,3),
   stock_minimum numeric(12,3),
   image_url text,
+  generated_image_url text,
   active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

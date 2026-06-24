@@ -58,7 +58,7 @@ export interface RestaurantSettings {
   pixKey?: string;
   pixRecipientName?: string;
   pixCity?: string;
-  strongFont?: boolean;
+  systemTheme?: "light" | "dark" | "system";
 }
 
 export interface Profile {
@@ -134,6 +134,7 @@ export interface Product {
   stockMinimum?: number;
   stockUnit?: StockUnit;
   imageUrl?: string;
+  generatedImageUrl?: string;
   active: boolean;
   createdAt: string;
   updatedAt: string;

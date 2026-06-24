@@ -28,8 +28,50 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-html[data-strong-font="true"] body :is(p, span, label, input, textarea, select, button) {
-  font-weight: 600;
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --background: 11 18 32;
+  --foreground: 241 245 249;
+}
+
+html[data-theme="dark"] body,
+html[data-theme="dark"] .login-bg {
+  background: #0b1220;
+  color: #f1f5f9;
+}
+
+html[data-theme="dark"] :is(.bg-white, .bg-slate-50, .bg-slate-100) {
+  background-color: #111827 !important;
+}
+
+html[data-theme="dark"] :is(.border-slate-100, .border-slate-200, .border-slate-300) {
+  border-color: #334155 !important;
+}
+
+html[data-theme="dark"] :is(.text-slate-950, .text-slate-900, .text-slate-800, .text-slate-700, .text-slate-600) {
+  color: #f1f5f9 !important;
+}
+
+html[data-theme="dark"] :is(.text-slate-500, .text-slate-400) {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] :is(input, textarea, select) {
+  background-color: #0f172a !important;
+  border-color: #475569 !important;
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] :is(.bg-amber-50, .bg-amber-100) {
+  background-color: #3b2b0a !important;
+}
+
+html[data-theme="dark"] :is(.bg-emerald-50, .bg-emerald-100) {
+  background-color: #07382b !important;
+}
+
+html[data-theme="dark"] :is(.bg-red-50, .bg-red-100) {
+  background-color: #3a1015 !important;
 }
 
 button,

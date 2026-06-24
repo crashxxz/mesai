@@ -142,7 +142,14 @@ export default function SettingsPage() {
             <label className="grid gap-1 text-sm font-bold text-slate-700">Chave Pix<input className="h-12 rounded-lg border border-slate-200 px-3" value={settings.pixKey ?? ""} onChange={(event) => updateSettings({ pixKey: event.target.value })} placeholder="CPF, e-mail, telefone ou chave aleatória" /></label>
             <label className="grid gap-1 text-sm font-bold text-slate-700">Nome do recebedor<input className="h-12 rounded-lg border border-slate-200 px-3" value={settings.pixRecipientName ?? ""} onChange={(event) => updateSettings({ pixRecipientName: event.target.value })} placeholder={restaurant.name} /></label>
             <label className="grid gap-1 text-sm font-bold text-slate-700">Cidade Pix<input className="h-12 rounded-lg border border-slate-200 px-3" value={settings.pixCity ?? ""} onChange={(event) => updateSettings({ pixCity: event.target.value })} placeholder={restaurant.city ?? "Cidade"} /></label>
-            <label className="flex min-h-12 items-center gap-3 rounded-lg border border-slate-200 px-3 text-sm font-bold"><input type="checkbox" checked={settings.strongFont === true} onChange={(event) => updateSettings({ strongFont: event.target.checked })} />Usar fonte mais forte/negrito</label>
+            <label className="grid gap-1 text-sm font-bold text-slate-700">
+              Tema do sistema
+              <select className="h-12 rounded-lg border border-slate-200 px-3" value={settings.systemTheme ?? "system"} onChange={(event) => updateSettings({ systemTheme: event.target.value as "light" | "dark" | "system" })}>
+                <option value="light">Claro</option>
+                <option value="dark">Escuro</option>
+                <option value="system">Automático</option>
+              </select>
+            </label>
           </div>
           <p className="mt-3 text-xs font-bold text-slate-500">Cartões são registrados manualmente após pagamento na maquininha. Nenhuma cobrança online é simulada.</p>
         </article>

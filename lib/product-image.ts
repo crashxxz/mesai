@@ -2,6 +2,8 @@ import type { Product } from "@/lib/types";
 
 type ProductImageCandidate = Partial<Product> & {
   image_url?: unknown;
+  generatedImageUrl?: unknown;
+  generated_image_url?: unknown;
   imagePath?: unknown;
   image_path?: unknown;
   image?: unknown;
@@ -52,10 +54,14 @@ function normalized(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
-function firstImage(product: ProductImageCandidate) {
+function firstManualImage(product: ProductImageCandidate) {
   return [product.imageUrl, product.image_url, product.imagePath, product.image_path, product.image]
     .map(text)
     .find(Boolean);
+}
+
+function generatedImage(product: ProductImageCandidate) {
+  return [product.generatedImageUrl, product.generated_image_url].map(text).find(Boolean);
 }
 
 function match(textValue: string, entries: Array<{ words: string[]; path: string }>) {
@@ -64,8 +70,11 @@ function match(textValue: string, entries: Array<{ words: string[]; path: string
 
 /** Resolves the same image everywhere: own image, product name, category, then local fallback. */
 export function resolveProductImage(product: ProductImageCandidate, categoryName = "") {
-  const ownImage = firstImage(product);
-  if (ownImage) return ownImage;
+  const manualImage = firstManualImage(product);
+  if (manualImage) return manualImage;
+
+  const savedGeneratedImage = generatedImage(product);
+  if (savedGeneratedImage) return savedGeneratedImage;
 
   const productMatch = match(normalized(`${text(product.name)} ${text(product.slug)}`), keywordImages);
   if (productMatch) return productMatch;

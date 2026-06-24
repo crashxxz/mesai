@@ -4,7 +4,7 @@ import Link from "next/link";
 import { BellRing, CheckCircle2, Clock3, Eye, Plus, ReceiptText, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { tableStatusLabel } from "@/lib/services";
+import { getOrderOverallStatus, orderStatusLabel, tableStatusLabel } from "@/lib/services";
 import type { Order, OrderItem, RestaurantTable, TableAlert } from "@/lib/types";
 import { useBusinessPreset } from "@/lib/use-business-preset";
 import { brl, cn, minutesSince } from "@/lib/utils";
@@ -43,6 +43,7 @@ export function TableCard({
     ? orderItems.filter((item) => item.orderId === order.id && item.status !== "cancelled").length
     : 0;
   const elapsed = order ? minutesSince(order.createdAt) : undefined;
+  const overallStatus = order ? getOrderOverallStatus(order, orderItems.filter((item) => item.orderId === order.id)) : undefined;
 
   return (
     <article className={cn("card-lift rounded-2xl border-2 p-4 shadow-soft", meta.accent)}>
@@ -54,6 +55,7 @@ export function TableCard({
         </div>
         <div className="grid justify-items-end gap-1.5">
           <StatusBadge tone={meta.tone}>{tableStatusLabel(table.status)}</StatusBadge>
+          {overallStatus ? <span className="text-xs font-black text-slate-500">{orderStatusLabel(overallStatus)}</span> : null}
           {readyCount ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-black text-emerald-800">
               <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />

@@ -227,6 +227,11 @@ export const supabaseGateway = {
     return unwrap(result, "Nao foi possivel fechar a mesa") as UUID;
   },
 
+  async resetTestTable(tableId: UUID) {
+    const result = await client().rpc("reset_test_table", { p_table_id: tableId });
+    return unwrap(result, "Nao foi possivel resetar a mesa") as UUID;
+  },
+
   async rotateTableQrToken(tableId: UUID) {
     const result = await client().rpc("rotate_table_qr_token", { p_table_id: tableId });
     return unwrap(result, "Nao foi possivel gerar o QR Code") as string;

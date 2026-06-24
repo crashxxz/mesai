@@ -18,7 +18,7 @@ export default function RestaurantQrPage() {
         <QrCode className="mx-auto mt-5 h-10 w-10 text-amber-600" aria-hidden="true" />
         <h1 className="mt-3 text-2xl font-black text-slate-950">Use o QR da sua mesa</h1>
         <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
-          Cada QR abre somente a mesa correta. Pe\u00e7a ajuda ao atendimento se precisar.
+          Cada QR abre somente a mesa correta. Peça ajuda ao atendimento se precisar.
         </p>
       </section>
     </main>

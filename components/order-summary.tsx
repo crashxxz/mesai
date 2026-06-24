@@ -3,7 +3,7 @@
 import { Ban, CheckCircle2, MessageSquareText, Send, ShoppingBasket, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { orderItemStatusLabel, orderStatusLabel } from "@/lib/services";
+import { getOrderOverallStatus, orderItemStatusLabel, orderStatusLabel } from "@/lib/services";
 import type { Order, OrderItem, OrderItemAddon } from "@/lib/types";
 import { useBusinessPreset } from "@/lib/use-business-preset";
 import { brl } from "@/lib/utils";
@@ -32,6 +32,7 @@ export function OrderSummary({
   const { preset } = useBusinessPreset();
   const hasPending = items.some((item) => item.status === "pending");
   const pendingCount = items.filter((item) => item.status === "pending").length;
+  const overallStatus = getOrderOverallStatus(order, items);
 
   return (
     <article className="rounded-2xl border border-slate-200 bg-white shadow-soft">
@@ -40,7 +41,7 @@ export function OrderSummary({
           <h2 className="text-base font-black text-slate-950">Consumo da mesa</h2>
           <span className="text-sm font-bold text-slate-500">{items.length} itens</span>
         </div>
-        <StatusBadge tone={order.status === "closed" ? "green" : "amber"}>{orderStatusLabel(order.status)}</StatusBadge>
+        <StatusBadge tone={overallStatus === "closed" || overallStatus === "delivered" ? "green" : overallStatus === "cancelled" ? "red" : "amber"}>{orderStatusLabel(overallStatus)}</StatusBadge>
       </div>
 
       <div className="max-h-[45vh] overflow-y-auto p-3">

@@ -18,7 +18,7 @@ export function BrandMark({ className, decorative = false }: BrandMarkProps) {
       aria-label={decorative ? undefined : brand.name}
       role={decorative ? undefined : "img"}
     >
-      <Image src="/icon-192.png?v=6" alt="" width={192} height={192} className="h-full w-full rounded-[22%] object-cover" priority />
+      <Image src="/icon-192.png" alt="" width={192} height={192} className="h-full w-full rounded-[22%] object-cover" priority />
     </span>
   );
 }

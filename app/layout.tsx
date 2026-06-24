@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { StoreProvider } from "@/lib/store";
 import { PwaRegister } from "@/components/pwa-register";
+import { ThemeSync } from "@/components/theme-sync";
 import { brand } from "@/lib/brand";
 import "./globals.css";
 
@@ -13,8 +14,8 @@ export const metadata: Metadata = {
   description: `${brand.slogan} ${brand.description}`,
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [{ url: "/favicon.png?v=6", sizes: "64x64", type: "image/png" }],
-    apple: [{ url: "/apple-touch-icon.png?v=6", sizes: "180x180", type: "image/png" }]
+    icon: [{ url: "/favicon.png?v=7", sizes: "64x64", type: "image/png" }],
+    apple: [{ url: "/apple-touch-icon.png?v=7", sizes: "180x180", type: "image/png" }]
   },
   appleWebApp: {
     capable: true,
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <StoreProvider>
           <PwaRegister />
+          <ThemeSync />
           {children}
         </StoreProvider>
       </body>

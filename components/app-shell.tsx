@@ -44,17 +44,12 @@ const navItems: Array<NavItem & { key: NavKey; roles: UserRole[]; section: "oper
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { hydrated, profile, restaurant, settings, logout } = useStore();
+  const { hydrated, profile, restaurant, logout } = useStore();
   const { preset } = useBusinessPreset();
 
   useEffect(() => {
     if (hydrated && !profile) router.replace("/app/login");
   }, [hydrated, profile, router]);
-
-  useEffect(() => {
-    document.documentElement.dataset.strongFont = settings?.strongFont ? "true" : "false";
-    return () => { delete document.documentElement.dataset.strongFont; };
-  }, [settings?.strongFont]);
 
   if (!hydrated || !profile) return null;
 

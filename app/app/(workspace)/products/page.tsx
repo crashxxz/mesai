@@ -1,17 +1,18 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { CheckCircle2, EyeOff, Minus, PackageCheck, PackagePlus, Pencil, Plus, RefreshCcw, Tag, Trash2 } from "lucide-react";
+import { CheckCircle2, EyeOff, Minus, PackageCheck, PackagePlus, Pencil, Plus, RefreshCcw, Tag, Trash2, WandSparkles } from "lucide-react";
 import { RoleGuard } from "@/components/role-guard";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getStockStatus, sectorLabel, stockStatusLabel } from "@/lib/services";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { resolveProductImage } from "@/lib/product-image";
+import { saveGeneratedProductImage } from "@/lib/product-image-generation";
 import { useStore } from "@/lib/store";
 import { useBusinessPreset } from "@/lib/use-business-preset";
-import type { PreparationSector, StockUnit } from "@/lib/types";
+import type { PreparationSector, Product, StockUnit } from "@/lib/types";
 import { brl } from "@/lib/utils";
 
 const sectors: PreparationSector[] = ["kitchen", "bar", "both", "none"];
@@ -47,12 +48,14 @@ export default function ProductsPage() {
     description: "",
     estimatedTimeMinutes: "",
     imageUrl: "",
+    generatedImageUrl: "",
     hasStockControl: false,
     stockQuantity: "",
     stockMinimum: "",
     stockUnit: "unidade" as StockUnit
   });
   const [imageError, setImageError] = useState("");
+  const [generatingImageFor, setGeneratingImageFor] = useState<string | undefined>();
 
   function handleImageFile(file: File | undefined, apply: (url: string) => void) {
     if (!file) return;
@@ -88,6 +91,7 @@ export default function ProductsPage() {
       description: form.description.trim() || undefined,
       estimatedTimeMinutes: Number(form.estimatedTimeMinutes) || undefined,
       imageUrl: form.imageUrl.trim() || undefined,
+      generatedImageUrl: form.generatedImageUrl || undefined,
       hasStockControl: form.hasStockControl,
       stockQuantity: Number(form.stockQuantity) || 0,
       stockMinimum: Number(form.stockMinimum) || 0,
@@ -100,10 +104,44 @@ export default function ProductsPage() {
       description: "",
       estimatedTimeMinutes: "",
       imageUrl: "",
+      generatedImageUrl: "",
       hasStockControl: false,
       stockQuantity: "",
       stockMinimum: ""
     }));
+  }
+
+  async function generateQuickImage() {
+    const category = categories.find((item) => item.id === (form.categoryId || categories[0]?.id));
+    if (!form.name.trim()) {
+      setImageError("Informe o nome do produto antes de gerar a imagem.");
+      return;
+    }
+    setGeneratingImageFor("new");
+    try {
+      await saveGeneratedProductImage(
+        { name: form.name.trim(), description: form.description, preparationSector: form.preparationSector },
+        category?.name ?? "",
+        (generatedImageUrl) => setForm((current) => ({ ...current, generatedImageUrl }))
+      );
+      setImageError("");
+    } catch {
+      setImageError("Nao foi possivel gerar uma imagem agora. Tente novamente.");
+    } finally {
+      setGeneratingImageFor(undefined);
+    }
+  }
+
+  async function generateSavedProductImage(product: (typeof products)[number], categoryName: string) {
+    setGeneratingImageFor(product.id);
+    try {
+      await saveGeneratedProductImage(product, categoryName, (generatedImageUrl) => updateProduct(product.id, { generatedImageUrl }));
+      setImageError("");
+    } catch {
+      setImageError("Nao foi possivel gerar uma imagem agora. Tente novamente.");
+    } finally {
+      setGeneratingImageFor(undefined);
+    }
   }
 
   return (
@@ -322,6 +360,15 @@ export default function ProductsPage() {
                       onChange={(event) => setForm((current) => ({ ...current, imageUrl: event.target.value }))}
                       placeholder="URL da imagem"
                     />
+                    <Button type="button" variant="outline" disabled={generatingImageFor === "new" || !form.name.trim()} onClick={() => void generateQuickImage()}>
+                      <WandSparkles className="h-4 w-4" aria-hidden="true" />
+                      {generatingImageFor === "new" ? "Gerando imagem..." : "Gerar imagem"}
+                    </Button>
+                    {form.imageUrl || form.generatedImageUrl ? (
+                      <span className="relative h-24 overflow-hidden rounded-xl border border-slate-200">
+                        <Image src={form.imageUrl || form.generatedImageUrl} alt="Preview do produto" fill sizes="96px" className="object-cover" unoptimized />
+                      </span>
+                    ) : null}
                     <input
                       className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm"
                       type="file"
@@ -388,7 +435,7 @@ export default function ProductsPage() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex min-w-0 flex-1 gap-3">
                       <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-amber-50">
-                        <Image src={resolveProductImage(product, category?.name)} alt={product.name} fill sizes="64px" className="object-cover" unoptimized />
+                        <AdminProductImage product={product} categoryName={category?.name} />
                       </span>
                       <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
@@ -488,13 +535,18 @@ export default function ProductsPage() {
                         onChange={(event) => updateProduct(product.id, { imageUrl: event.target.value })}
                         placeholder="Imagem URL"
                       />
+                      <Button type="button" variant="outline" disabled={generatingImageFor === product.id} onClick={() => void generateSavedProductImage(product, category?.name ?? "")}>
+                        <WandSparkles className="h-4 w-4" aria-hidden="true" />
+                        {generatingImageFor === product.id ? "Gerando..." : "Gerar imagem"}
+                      </Button>
                       <input
                         className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm"
                         type="file"
                         accept="image/png,image/jpeg,image/webp"
                         onChange={(event) => handleImageFile(event.target.files?.[0], (imageUrl) => updateProduct(product.id, { imageUrl }))}
                       />
-                      {product.imageUrl ? <Button type="button" variant="outline" onClick={() => updateProduct(product.id, { imageUrl: undefined })}>Remover imagem</Button> : null}
+                      {product.imageUrl || product.generatedImageUrl ? <Button type="button" variant="outline" onClick={() => updateProduct(product.id, { imageUrl: undefined, generatedImageUrl: undefined })}>Remover imagem</Button> : null}
+                      {product.generatedImageUrl ? <Button type="button" variant="outline" onClick={() => updateProduct(product.id, { generatedImageUrl: undefined })}>Usar imagem padrao</Button> : null}
                       <label className="flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium">
                         <input
                           type="checkbox"
@@ -550,6 +602,14 @@ function Stat({ label, value, tone }: { label: string; value: number; tone: stri
       <div className="mt-1 text-[10px] font-black uppercase leading-none">{label}</div>
     </div>
   );
+}
+
+function AdminProductImage({ product, categoryName }: { product: Product; categoryName?: string }) {
+  const url = resolveProductImage(product, categoryName);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [url]);
+  const fallbackUrl = resolveProductImage({ ...product, imageUrl: undefined, generatedImageUrl: undefined }, categoryName);
+  return <Image src={failed ? fallbackUrl : url} alt={product.name} fill sizes="64px" className="object-cover" unoptimized onError={() => setFailed(true)} />;
 }
 
 function stockUnitLabel(unit: StockUnit | undefined, quantity: number) {

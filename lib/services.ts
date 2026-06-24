@@ -42,6 +42,21 @@ export function getOpenOrderForTable(state: AppState, tableId: UUID) {
   );
 }
 
+/** Derives the customer-facing command status from valid items, not stale order rows. */
+export function getOrderOverallStatus(order: Order, items: OrderItem[]): OrderStatus {
+  if (order.status === "closed") return "closed";
+  if (order.status === "cancelled") return "cancelled";
+  if (!items.length) return order.status === "open" ? "open" : order.status;
+
+  const validItems = items.filter((item) => item.status !== "cancelled");
+  if (!validItems.length) return "cancelled";
+  if (validItems.every((item) => item.status === "delivered")) return "delivered";
+  if (validItems.some((item) => ["pending", "sent", "received"].includes(item.status))) return "sent";
+  if (validItems.some((item) => item.status === "preparing")) return "preparing";
+  if (validItems.some((item) => item.status === "ready")) return "ready";
+  return order.status;
+}
+
 export function calculateOrderTotals(state: AppState, order: Order) {
   const subtotal = getOrderItems(state, order.id)
     .filter((item) => item.status !== "cancelled")
@@ -245,9 +260,9 @@ export function orderStatusLabel(status: OrderStatus) {
     open: "Aberto",
     sent: "Enviado para preparo",
     preparing: "Em preparo",
-    ready: "Pronto para servir",
+    ready: "Pronto para entrega",
     delivered: "Entregue",
-    closed: "Conta fechada",
+    closed: "Comanda fechada",
     cancelled: "Cancelado"
   };
   return labels[status];

@@ -18,6 +18,7 @@ export default function TableDetailPage() {
   const router = useRouter();
   const {
     state,
+    profile,
     ensureOpenOrderForTable,
     sendItemsToPreparation,
     cancelOrderItem,
@@ -28,6 +29,7 @@ export default function TableDetailPage() {
     transferOrderTable,
     mergeOrders,
     closeTable,
+    resetTestTable,
     resolveTableAlerts
   } = useStore();
   const { preset } = useBusinessPreset();
@@ -122,6 +124,17 @@ export default function TableDetailPage() {
                     <ReceiptText className="h-4 w-4" aria-hidden="true" />
                     Fechar mesa
                   </Button>
+                  {profile && ["owner", "manager"].includes(profile.role) ? (
+                    <Button
+                      variant="danger"
+                      onClick={() => {
+                        if (!window.confirm("Resetar esta mesa de teste? A comanda aberta sera zerada, fechada e a mesa sera liberada.")) return;
+                        void resetTestTable(table.id).catch((error) => setCloseError(error instanceof Error ? error.message : "Nao foi possivel resetar a mesa."));
+                      }}
+                    >
+                      Resetar mesa de teste
+                    </Button>
+                  ) : null}
                   {hasWaiterCall ? (
                     <Button variant="outline" onClick={() => resolveTableAlerts(table.id, "waiter_call")}>
                       <BellRing className="h-4 w-4" aria-hidden="true" />
