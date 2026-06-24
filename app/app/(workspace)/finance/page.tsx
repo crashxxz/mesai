@@ -5,6 +5,7 @@ import { Download, MinusCircle, PlusCircle, ReceiptText, Star } from "lucide-rea
 import { PeriodFilter } from "@/components/period-filter";
 import { RoleGuard } from "@/components/role-guard";
 import { Button } from "@/components/ui/button";
+import { ReasonDialog } from "@/components/reason-dialog";
 import type { PeriodFilterValue } from "@/lib/services";
 import { getDashboardMetrics, getFinancialSummary, getOrderItems, paymentMethodLabel } from "@/lib/services";
 import { useStore } from "@/lib/store";
@@ -26,7 +27,7 @@ const expenseCategories = [
 const expensePaymentMethods: PaymentMethod[] = ["pix", "cash", "credit_card", "debit_card"];
 
 export default function FinancePage() {
-  const { state, restaurant, createExpense } = useStore();
+  const { state, restaurant, createExpense, cancelFinancialEntry } = useStore();
   const { preset } = useBusinessPreset();
   const [period, setPeriod] = useState<PeriodFilterValue>({ key: "today" });
   const [expense, setExpense] = useState({
@@ -37,6 +38,7 @@ export default function FinancePage() {
     paymentMethod: "" as PaymentMethod | "",
     notes: ""
   });
+  const [cancelEntryId, setCancelEntryId] = useState<string>();
   const restaurantId = restaurant?.id ?? state.restaurants[0].id;
   const metrics = useMemo(
     () => getDashboardMetrics(state, restaurantId, period),
@@ -134,6 +136,19 @@ export default function FinancePage() {
             <p className="mt-2 text-sm font-bold text-slate-500">Média das contas fechadas no período.</p>
           </article>
         </div>
+
+        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
+          <h2 className="text-lg font-black text-slate-950">Histórico de recebimentos e lançamentos</h2>
+          <p className="mt-1 text-sm font-bold text-slate-500">Somente valores efetivamente recebidos ou pagos.</p>
+          <div className="mt-3 grid gap-2">
+            {financial.entries.length ? financial.entries.map((entry) => (
+              <div key={entry.id} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3 text-sm">
+                <div><strong className="block text-slate-950">{entry.description}</strong><span className="text-xs font-bold text-slate-500">{entry.paymentMethod ? paymentMethodLabel(entry.paymentMethod) : expenseCategoryLabel(entry.category)} · {new Date(`${entry.date}T12:00:00`).toLocaleDateString("pt-BR")}</span></div>
+                <div className="flex items-center gap-2"><strong className={entry.type === "income" ? "text-emerald-700" : "text-red-700"}>{entry.type === "income" ? "+" : "-"}{brl(entry.amount)}</strong><Button size="sm" variant="outline" onClick={() => setCancelEntryId(entry.id)}>Cancelar lançamento</Button></div>
+              </div>
+            )) : <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm font-bold text-slate-400">Nenhum recebimento no período.</div>}
+          </div>
+        </article>
 
         <section className="grid gap-3 lg:grid-cols-[0.9fr_1.1fr]">
           <details className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
@@ -278,6 +293,7 @@ export default function FinancePage() {
             }) : <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm font-bold text-slate-400">Nenhuma mesa fechada ainda.</div>}
           </div>
         </article>
+        <ReasonDialog open={Boolean(cancelEntryId)} title="Cancelar lançamento" label="Motivo obrigatório" confirmLabel="Cancelar lançamento" suggestions={["Lançamento de teste", "Lançado em duplicidade", "Pagamento estornado", "Outro motivo"]} onCancel={() => setCancelEntryId(undefined)} onConfirm={(reason) => { if (cancelEntryId) void cancelFinancialEntry(cancelEntryId, reason); setCancelEntryId(undefined); }} />
       </section>
     </RoleGuard>
   );

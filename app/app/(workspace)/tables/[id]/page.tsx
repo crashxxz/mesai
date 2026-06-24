@@ -21,6 +21,7 @@ export default function TableDetailPage() {
     ensureOpenOrderForTable,
     sendItemsToPreparation,
     cancelOrderItem,
+    cancelOrder,
     updateOrderItemStatus,
     applyOrderServiceFee,
     setOrderServiceFeeEnabled,
@@ -40,6 +41,7 @@ export default function TableDetailPage() {
   const [targetTableId, setTargetTableId] = useState("");
   const [mergeOrderId, setMergeOrderId] = useState("");
   const [cancelItemId, setCancelItemId] = useState<string | undefined>();
+  const [cancelOrderOpen, setCancelOrderOpen] = useState(false);
   const [closeError, setCloseError] = useState("");
 
   const otherTables = useMemo(
@@ -153,6 +155,7 @@ export default function TableDetailPage() {
               onDeliver={(itemId) => updateOrderItemStatus(itemId, "delivered")}
               onApplyServiceFee={() => void applyOrderServiceFee(order.id)}
               onSetServiceFeeEnabled={(enabled) => void setOrderServiceFeeEnabled(order.id, enabled)}
+              onCancelOrder={() => setCancelOrderOpen(true)}
             />
           ) : null}
         </div>
@@ -233,10 +236,11 @@ export default function TableDetailPage() {
           suggestions={["Cliente desistiu", "Lançado errado", "Produto acabou", "Cortesia", "Outro"]}
           onCancel={() => setCancelItemId(undefined)}
           onConfirm={(reason) => {
-            if (cancelItemId) cancelOrderItem(cancelItemId, reason);
+            if (cancelItemId) void cancelOrderItem(cancelItemId, reason);
             setCancelItemId(undefined);
           }}
         />
+        {order ? <ReasonDialog open={cancelOrderOpen} title="Cancelar pedido completo" label="Motivo obrigatório" confirmLabel="Cancelar pedido" suggestions={["Cliente desistiu", "Pedido lançado errado", "Itens indisponíveis", "Outro motivo"]} onCancel={() => setCancelOrderOpen(false)} onConfirm={(reason) => { void cancelOrder(order.id, reason); setCancelOrderOpen(false); }} /> : null}
       </section>
     </RoleGuard>
   );

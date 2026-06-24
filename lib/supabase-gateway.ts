@@ -21,6 +21,7 @@ export interface WorkspaceBootstrap {
   orders: Record<string, unknown>[];
   orderItems: Record<string, unknown>[];
   payments: Record<string, unknown>[];
+  financialEntries: Record<string, unknown>[];
   stockMovements: Record<string, unknown>[];
   tableAlerts: Record<string, unknown>[];
 }
@@ -80,7 +81,7 @@ export const supabaseGateway = {
       .eq("active", true)
       .single();
     const row = unwrap(profileResult, "Perfil ativo não encontrado");
-    const [restaurantResult, settingsResult, categoriesResult, productsResult, tablesResult, ordersResult, orderItemsResult, paymentsResult, stockMovementsResult, alertsResult] = await Promise.all([
+    const [restaurantResult, settingsResult, categoriesResult, productsResult, tablesResult, ordersResult, orderItemsResult, paymentsResult, financialEntriesResult, stockMovementsResult, alertsResult] = await Promise.all([
       client().from("restaurants").select("*").eq("id", row.restaurant_id).single(),
       client().from("restaurant_settings").select("*").eq("restaurant_id", row.restaurant_id).maybeSingle(),
       client().from("categories").select("*").eq("restaurant_id", row.restaurant_id),
@@ -89,6 +90,7 @@ export const supabaseGateway = {
       client().from("orders").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(200),
       client().from("order_items").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(500),
       client().from("payments").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(500),
+      client().from("financial_entries").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(500),
       client().from("stock_movements").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(500),
       client().from("table_alerts").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(100)
     ]);
@@ -97,7 +99,7 @@ export const supabaseGateway = {
 
     if (categoriesResult.error || productsResult.error || tablesResult.error || ordersResult.error || orderItemsResult.error || alertsResult.error) throw new Error("Dados do estabelecimento não encontrados.");
 
-    if (paymentsResult.error || stockMovementsResult.error) throw new Error("Dados complementares indisponiveis.");
+    if (paymentsResult.error || financialEntriesResult.error || stockMovementsResult.error) throw new Error("Dados complementares indisponiveis.");
 
     return {
       restaurant,
@@ -108,6 +110,7 @@ export const supabaseGateway = {
       orders: ordersResult.data as Record<string, unknown>[],
       orderItems: orderItemsResult.data as Record<string, unknown>[],
       payments: paymentsResult.data as Record<string, unknown>[],
+      financialEntries: financialEntriesResult.data as Record<string, unknown>[],
       stockMovements: stockMovementsResult.data as Record<string, unknown>[],
       tableAlerts: alertsResult.data as Record<string, unknown>[],
       profile: {
@@ -173,6 +176,16 @@ export const supabaseGateway = {
     return unwrap(result, "Não foi possível atualizar o preparo");
   },
 
+  async cancelOrderItem(itemId: UUID, reason: string) {
+    const result = await client().rpc("cancel_order_item", { p_item_id: itemId, p_reason: reason.trim() });
+    return unwrap(result, "Não foi possível cancelar o item") as UUID;
+  },
+
+  async cancelOrder(orderId: UUID, reason: string) {
+    const result = await client().rpc("cancel_order", { p_order_id: orderId, p_reason: reason.trim() });
+    return unwrap(result, "Não foi possível cancelar o pedido") as UUID;
+  },
+
   async rejectOrderItem(itemId: UUID, reason: string) {
     const result = await client().rpc("reject_order_item", { p_item_id: itemId, p_reason: reason.trim() });
     return unwrap(result, "Não foi possível recusar o item") as UUID;
@@ -192,6 +205,11 @@ export const supabaseGateway = {
   async closeOrder(orderId: UUID) {
     const result = await client().rpc("close_paid_order", { p_order_id: orderId });
     return unwrap(result, "Não foi possível fechar a conta") as UUID;
+  },
+
+  async cancelFinancialEntry(entryId: UUID, reason: string) {
+    const result = await client().rpc("cancel_financial_entry", { p_entry_id: entryId, p_reason: reason.trim() });
+    return unwrap(result, "Não foi possível cancelar o lançamento") as UUID;
   },
 
   async applyOrderServiceFee(orderId: UUID) {

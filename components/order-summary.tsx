@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, CheckCircle2, MessageSquareText, Send, ShoppingBasket } from "lucide-react";
+import { Ban, CheckCircle2, MessageSquareText, Send, ShoppingBasket, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { orderItemStatusLabel, orderStatusLabel } from "@/lib/services";
@@ -16,7 +16,8 @@ export function OrderSummary({
   onCancel,
   onDeliver,
   onApplyServiceFee,
-  onSetServiceFeeEnabled
+  onSetServiceFeeEnabled,
+  onCancelOrder
 }: {
   order: Order;
   items: OrderItem[];
@@ -26,6 +27,7 @@ export function OrderSummary({
   onDeliver: (itemId: string) => void;
   onApplyServiceFee?: () => void;
   onSetServiceFeeEnabled?: (enabled: boolean) => void;
+  onCancelOrder?: () => void;
 }) {
   const { preset } = useBusinessPreset();
   const hasPending = items.some((item) => item.status === "pending");
@@ -162,6 +164,14 @@ export function OrderSummary({
           <Button className="w-full text-base" variant="amber" size="lg" onClick={onSend}>
             <Send className="h-4 w-4" aria-hidden="true" />
             {preset.quickActions.sendToPrep} · {pendingCount} {pendingCount === 1 ? "item" : "itens"}
+          </Button>
+        </div>
+      ) : null}
+      {items.some((item) => !["cancelled", "delivered"].includes(item.status)) && onCancelOrder ? (
+        <div className="border-t border-slate-100 px-4 py-3">
+          <Button className="w-full" variant="outline" onClick={onCancelOrder}>
+            <XCircle className="h-4 w-4 text-red-600" aria-hidden="true" />
+            Cancelar pedido completo
           </Button>
         </div>
       ) : null}

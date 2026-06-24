@@ -24,6 +24,7 @@ import {
 import type {
   AppState,
   Category,
+  FinancialEntry,
   Order,
   OrderItem,
   OrderItemAddon,
@@ -90,7 +91,8 @@ interface StoreContextValue {
   sendItemsToPreparation: (orderId: UUID) => Promise<void>;
   updateOrderItemStatus: (itemId: UUID, status: OrderItemStatus) => Promise<void>;
   rejectOrderItem: (itemId: UUID, reason: string) => Promise<void>;
-  cancelOrderItem: (itemId: UUID, reason: string) => void;
+  cancelOrderItem: (itemId: UUID, reason: string) => Promise<void>;
+  cancelOrder: (orderId: UUID, reason: string) => Promise<void>;
   updateOrderDiscount: (orderId: UUID, discount: number) => void;
   applyOrderServiceFee: (orderId: UUID) => Promise<void>;
   setOrderServiceFeeEnabled: (orderId: UUID, enabled: boolean) => Promise<void>;
@@ -101,6 +103,7 @@ interface StoreContextValue {
   reopenOrder: (orderId: UUID, reason: string) => void;
   registerPayment: (orderId: UUID, input: RegisterPaymentInput) => Promise<void>;
   createExpense: (input: CreateExpenseInput) => void;
+  cancelFinancialEntry: (entryId: UUID, reason: string) => Promise<void>;
   createCategory: (name: string) => void;
   createProduct: (input: Partial<Product> & Pick<Product, "name" | "categoryId" | "price" | "preparationSector">) => void;
   updateProduct: (productId: UUID, patch: Partial<Product>) => void;
@@ -600,7 +603,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         };
         commit(next, "preparation");
       },
-      cancelOrderItem(itemId, reason) {
+      async cancelOrderItem(itemId, reason) {
+        if (runtimeConfig.dataMode === "supabase") {
+          await supabaseGateway.cancelOrderItem(itemId, reason);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return;
+        }
         const activeProfile = currentProfile();
         const oldItem = state.orderItems.find((item) => item.id === itemId);
         if (!oldItem || !reason.trim()) return;
@@ -624,6 +633,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ]
         };
         commit(next, "order_item");
+      },
+      async cancelOrder(orderId, reason) {
+        if (!reason.trim()) return;
+        if (runtimeConfig.dataMode === "supabase") {
+          await supabaseGateway.cancelOrder(orderId, reason);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return;
+        }
+        const now = new Date().toISOString();
+        const order = state.orders.find((item) => item.id === orderId);
+        if (!order) return;
+        let next: AppState = {
+          ...state,
+          orderItems: state.orderItems.map((item) => item.orderId === orderId && !["cancelled", "delivered"].includes(item.status) ? { ...item, status: "cancelled", cancelReason: reason.trim(), updatedAt: now } : item)
+        };
+        next = withTotals(next, orderId);
+        next = { ...next, auditLogs: [...next.auditLogs, createAuditLog(next, "order_cancelled", "orders", orderId, order, { reason })] };
+        commit(next, "order");
       },
       async rejectOrderItem(itemId, reason) {
         if (!reason.trim()) return;
@@ -866,7 +894,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       async registerPayment(orderId, input) {
         if (runtimeConfig.dataMode === "supabase") {
           await supabaseGateway.registerPayment(orderId, input.method, input.amount, input.cardBrand, input.changeAmount);
-          const workspace = await supabaseGateway.loadWorkspace();
+          let workspace = await supabaseGateway.loadWorkspace();
+          const remoteOrder = workspace.orders.find((item) => String(item.id) === orderId);
+          const paid = workspace.payments.filter((item) => String(item.order_id) === orderId).reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
+          if (remoteOrder && paid + 0.001 >= Number(remoteOrder.total ?? 0) && remoteOrder.status !== "closed") {
+            await supabaseGateway.closeOrder(orderId);
+            workspace = await supabaseGateway.loadWorkspace();
+          }
           setState((current) => mergeWorkspace(current, workspace));
           return;
         }
@@ -1005,6 +1039,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           auditLogs: [...next.auditLogs, createAuditLog(next, "expense_created", "financial_entries", entryId)]
         };
         commit(next, "finance");
+      },
+      async cancelFinancialEntry(entryId, reason) {
+        if (!reason.trim()) return;
+        if (runtimeConfig.dataMode === "supabase") {
+          await supabaseGateway.cancelFinancialEntry(entryId, reason);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return;
+        }
+        const now = new Date().toISOString();
+        const entry = state.financialEntries.find((item) => item.id === entryId);
+        if (!entry || !entry.paid) return;
+        const next: AppState = { ...state, financialEntries: state.financialEntries.map((item) => item.id === entryId ? { ...item, paid: false, cancelReason: reason.trim(), cancelledAt: now, updatedAt: now } : item) };
+        commit({ ...next, auditLogs: [...next.auditLogs, createAuditLog(next, "financial_entry_cancelled", "financial_entries", entryId, entry, { reason })] }, "finance");
       },
       createCategory(name) {
         const now = new Date().toISOString();
@@ -1237,6 +1285,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           if ("qrOrdersNeedApproval" in patch) row.qr_orders_need_approval = patch.qrOrdersNeedApproval;
           if ("waiterCanCloseAccount" in patch) row.waiter_can_close_account = patch.waiterCanCloseAccount;
           if ("serviceFeePercent" in patch) row.service_fee_percent = patch.serviceFeePercent;
+          if ("pixKey" in patch) row.pix_key = patch.pixKey;
+          if ("pixRecipientName" in patch) row.pix_recipient_name = patch.pixRecipientName;
+          if ("pixCity" in patch) row.pix_city = patch.pixCity;
+          if ("strongFont" in patch) row.strong_font = patch.strongFont;
           if (supabase) void supabase.from("restaurant_settings").update(row).eq("restaurant_id", restaurant.id).then(() => undefined);
         }
         commit(
@@ -1439,7 +1491,11 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
         qrOrdersEnabled: settingsRow.qr_orders_enabled !== false,
         qrOrdersNeedApproval: settingsRow.qr_orders_need_approval === true,
         waiterCanCloseAccount: settingsRow.waiter_can_close_account !== false,
-        serviceFeePercent: Number(settingsRow.service_fee_percent ?? 10)
+        serviceFeePercent: Number(settingsRow.service_fee_percent ?? 10),
+        pixKey: typeof settingsRow.pix_key === "string" ? settingsRow.pix_key : "",
+        pixRecipientName: typeof settingsRow.pix_recipient_name === "string" ? settingsRow.pix_recipient_name : "",
+        pixCity: typeof settingsRow.pix_city === "string" ? settingsRow.pix_city : "",
+        strongFont: settingsRow.strong_font === true
       }
     : undefined;
   const remoteCategories: Category[] = workspace.categories.map((item) => ({ id: String(item.id), restaurantId: id, name: String(item.name), sortOrder: Number(item.sort_order ?? 0), active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) }));
@@ -1448,6 +1504,7 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
   const remoteOrders: Order[] = workspace.orders.map((item) => ({ id: String(item.id), restaurantId: id, tableId: item.table_id ? String(item.table_id) : undefined, tabId: item.tab_id ? String(item.tab_id) : undefined, customerName: typeof item.customer_name === "string" ? item.customer_name : undefined, source: item.source as Order["source"], status: item.status as Order["status"], createdBy: item.created_by ? String(item.created_by) : undefined, closedBy: item.closed_by ? String(item.closed_by) : undefined, subtotal: Number(item.subtotal ?? 0), discount: Number(item.discount ?? 0), serviceFee: Number(item.service_fee ?? 0), serviceFeeEnabled: item.service_fee_enabled !== false, deliveryFee: Number(item.delivery_fee ?? 0), total: Number(item.total ?? 0), notes: typeof item.notes === "string" ? item.notes : undefined, cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), closedAt: item.closed_at ? String(item.closed_at) : undefined }));
   const remoteOrderItems: OrderItem[] = workspace.orderItems.map((item) => ({ id: String(item.id), orderId: String(item.order_id), restaurantId: id, productId: String(item.product_id), productNameSnapshot: String(item.product_name_snapshot), unitPriceSnapshot: Number(item.unit_price_snapshot), quantity: Number(item.quantity), variationName: typeof item.variation_name === "string" ? item.variation_name : undefined, variationPriceDelta: item.variation_price_delta === null ? undefined : Number(item.variation_price_delta), notes: typeof item.notes === "string" ? item.notes : undefined, preparationSector: item.preparation_sector as OrderItem["preparationSector"], status: item.status as OrderItem["status"], cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined, createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), sentAt: item.sent_at ? String(item.sent_at) : undefined, preparingAt: item.preparing_at ? String(item.preparing_at) : undefined, readyAt: item.ready_at ? String(item.ready_at) : undefined, deliveredAt: item.delivered_at ? String(item.delivered_at) : undefined }));
   const remotePayments: Payment[] = workspace.payments.map((item) => ({ id: String(item.id), restaurantId: id, orderId: String(item.order_id), method: item.method as Payment["method"], amount: Number(item.amount ?? 0), cardBrand: typeof item.card_brand === "string" ? item.card_brand : undefined, changeAmount: item.change_amount === null ? undefined : Number(item.change_amount), createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now) }));
+  const remoteFinancialEntries: FinancialEntry[] = workspace.financialEntries.map((item) => ({ id: String(item.id), restaurantId: id, type: item.type as FinancialEntry["type"], category: String(item.category ?? ""), description: String(item.description ?? ""), amount: Number(item.amount ?? 0), date: String(item.date ?? now.slice(0, 10)), paid: item.paid === true, paymentMethod: item.payment_method as FinancialEntry["paymentMethod"], notes: typeof item.notes === "string" ? item.notes : undefined, orderId: item.order_id ? String(item.order_id) : undefined, createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), cancelledAt: item.cancelled_at ? String(item.cancelled_at) : undefined, cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined }));
   const remoteStockMovements: StockMovement[] = workspace.stockMovements.map((item) => ({ id: String(item.id), restaurantId: id, productId: String(item.product_id), type: item.type as StockMovement["type"], quantity: Number(item.quantity ?? 0), reason: String(item.reason ?? ""), createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now) }));
   const remoteAlerts: TableAlert[] = workspace.tableAlerts.map((item) => ({ id: String(item.id), restaurantId: id, tableId: String(item.table_id), type: item.type as TableAlert["type"], active: item.active === true, createdAt: String(item.created_at ?? now), resolvedAt: item.resolved_at ? String(item.resolved_at) : undefined }));
 
@@ -1464,6 +1521,7 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
     orders: [...current.orders.filter((item) => item.restaurantId !== id), ...remoteOrders],
     orderItems: [...current.orderItems.filter((item) => item.restaurantId !== id), ...remoteOrderItems],
     payments: [...current.payments.filter((item) => item.restaurantId !== id), ...remotePayments],
+    financialEntries: [...current.financialEntries.filter((item) => item.restaurantId !== id), ...remoteFinancialEntries],
     stockMovements: [...current.stockMovements.filter((item) => item.restaurantId !== id), ...remoteStockMovements],
     tableAlerts: [...current.tableAlerts.filter((item) => item.restaurantId !== id), ...remoteAlerts],
     currentProfileId: workspace.profile.id

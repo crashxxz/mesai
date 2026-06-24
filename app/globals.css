@@ -28,6 +28,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html[data-strong-font="true"] body :is(p, span, label, input, textarea, select, button) {
+  font-weight: 600;
+}
+
 button,
 input,
 select,

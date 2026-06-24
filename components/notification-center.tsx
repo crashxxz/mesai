@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, BellRing, CheckCheck, Volume2, VolumeX } from "lucide-react";
+import { Bell, BellRing, CheckCheck, Volume2, VolumeX, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { effectiveRoles } from "@/lib/permissions";
 import { useStore } from "@/lib/store";
@@ -13,7 +13,7 @@ export function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const [read, setRead] = useState<string[]>([]);
   const [sound, setSound] = useState(false);
-  const [toast, setToast] = useState("");
+  const [toast, setToast] = useState<Notice>();
   const initialized = useRef(false);
   const previousIds = useRef<string[]>([]);
   const roles = useMemo(() => effectiveRoles(profile), [profile]);
@@ -36,8 +36,8 @@ export function NotificationCenter() {
     const fresh = notices.find((notice) => !previousIds.current.includes(notice.id));
     previousIds.current = notices.map((notice) => notice.id);
     if (!fresh) return;
-    setToast(fresh.text);
-    const timer = window.setTimeout(() => setToast(""), 4000);
+    setToast(fresh);
+    const timer = window.setTimeout(() => setToast(undefined), 4000);
     if (sound) void beep();
     return () => window.clearTimeout(timer);
   }, [notices, sound]);
@@ -58,7 +58,7 @@ export function NotificationCenter() {
         <div className="mt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain">{notices.length ? notices.map((notice) => <button key={notice.id} className={`block w-full rounded-xl p-3 text-left text-sm ${read.includes(notice.id) ? "text-slate-500" : "bg-amber-50 font-bold text-slate-900"}`} onClick={() => { const next = [...new Set([...read, notice.id])]; setRead(next); localStorage.setItem(storageKey, JSON.stringify(next)); }}><span>{notice.text}</span><small className="mt-1 block text-xs text-slate-400">{relativeTime(notice.at)}</small></button>) : <p className="p-5 text-center text-sm font-bold text-slate-400">Tudo tranquilo por aqui.</p>}</div>
       </div> : null}
     </div>
-    {toast ? <div className="fixed inset-x-3 top-16 z-[60] rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-soft-lg sm:left-auto sm:right-4 sm:max-w-xs">{toast}</div> : null}
+    {toast ? <div role="status" className="fixed inset-x-3 top-16 z-[60] flex items-start gap-3 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-soft-lg sm:left-auto sm:right-4 sm:max-w-xs"><span className="min-w-0 flex-1">{toast.text}</span><button type="button" aria-label="Fechar notificação" className="-mr-1 -mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-lg hover:bg-white/10" onClick={() => setToast(undefined)}><X className="h-4 w-4" /></button></div> : null}
   </>;
 }
 

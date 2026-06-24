@@ -98,17 +98,17 @@ export function getDashboardMetrics(
   restaurantId: UUID,
   period: PeriodFilterValue = { key: "today" }
 ): DashboardMetrics {
-  const payments = state.payments.filter(
-    (payment) => payment.restaurantId === restaurantId && inPeriod(payment.createdAt, period)
-  );
+  const financialIncome = state.financialEntries.filter((entry) => entry.restaurantId === restaurantId && entry.type === "income" && entry.paid && inPeriod(`${entry.date}T12:00:00`, period));
+  const paidOrderIds = new Set(financialIncome.flatMap((entry) => entry.orderId ? [entry.orderId] : []));
+  const payments = state.payments.filter((payment) => payment.restaurantId === restaurantId && inPeriod(payment.createdAt, period) && paidOrderIds.has(payment.orderId));
   const orders = state.orders.filter(
     (order) => order.restaurantId === restaurantId && inPeriod(order.createdAt, period)
   );
-  const closedOrders = orders.filter((order) => order.status === "closed");
+  const closedOrders = orders.filter((order) => order.status === "closed" && paidOrderIds.has(order.id));
   const today = dateKey(new Date());
-  const monthSales = state.payments
-    .filter((payment) => payment.restaurantId === restaurantId && isSameMonth(payment.createdAt))
-    .reduce((sum, payment) => sum + payment.amount, 0);
+  const monthSales = state.financialEntries
+    .filter((entry) => entry.restaurantId === restaurantId && entry.type === "income" && entry.paid && isSameMonth(`${entry.date}T12:00:00`))
+    .reduce((sum, entry) => sum + entry.amount, 0);
 
   const totalsByMethod: Record<PaymentMethod, number> = {
     pix: 0,
@@ -123,7 +123,7 @@ export function getDashboardMetrics(
     totalsByMethod[payment.method] += payment.amount;
   }
 
-  const orderIds = new Set(orders.map((order) => order.id));
+  const orderIds = new Set(closedOrders.map((order) => order.id));
   const topMap = new Map<string, { name: string; quantity: number; total: number }>();
 
   for (const item of state.orderItems) {
@@ -138,10 +138,10 @@ export function getDashboardMetrics(
     topMap.set(item.productId, current);
   }
 
-  const sales = payments.reduce((sum, payment) => sum + payment.amount, 0);
-  const todaySales = state.payments
-    .filter((payment) => payment.restaurantId === restaurantId && dateKey(payment.createdAt) === today)
-    .reduce((sum, payment) => sum + payment.amount, 0);
+  const sales = financialIncome.reduce((sum, entry) => sum + entry.amount, 0);
+  const todaySales = state.financialEntries
+    .filter((entry) => entry.restaurantId === restaurantId && entry.type === "income" && entry.paid && dateKey(`${entry.date}T12:00:00`) === today)
+    .reduce((sum, entry) => sum + entry.amount, 0);
 
   return {
     salesToday: todaySales,

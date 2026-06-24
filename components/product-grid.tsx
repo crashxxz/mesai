@@ -31,6 +31,7 @@ export function ProductGrid({
   title = "Cardápio",
   subtitle = "Toque no produto, ajuste e envie.",
   addLabel = "Adicionar",
+  initialCategoryId = "all",
   onAdd
 }: {
   categories: Category[];
@@ -41,6 +42,7 @@ export function ProductGrid({
   title?: string;
   subtitle?: string;
   addLabel?: string;
+  initialCategoryId?: string;
   onAdd: (productId: string, input: AddInput) => void | Promise<unknown>;
 }) {
   const uniqueCategories = useMemo(() => {
@@ -52,8 +54,7 @@ export function ProductGrid({
       return true;
     });
   }, [categories]);
-  const firstCategory = uniqueCategories.find((category) => category.active)?.id ?? "all";
-  const [activeCategory, setActiveCategory] = useState(firstCategory);
+  const [activeCategory, setActiveCategory] = useState(initialCategoryId);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Product | undefined>();
   const [quantity, setQuantity] = useState(1);
@@ -66,6 +67,10 @@ export function ProductGrid({
     () => new Map(uniqueCategories.map((category) => [category.id, category])),
     [uniqueCategories]
   );
+
+  useEffect(() => {
+    setActiveCategory(initialCategoryId === "all" || uniqueCategories.some((category) => category.id === initialCategoryId) ? initialCategoryId : "all");
+  }, [initialCategoryId, uniqueCategories]);
 
   const filteredProducts = useMemo(() => {
     const term = search.trim().toLowerCase();

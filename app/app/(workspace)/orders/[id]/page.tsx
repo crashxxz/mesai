@@ -22,6 +22,7 @@ export default function OrderPage() {
     addOrderItem,
     sendItemsToPreparation,
     cancelOrderItem,
+    cancelOrder,
     updateOrderItemStatus,
     applyOrderServiceFee,
     setOrderServiceFeeEnabled
@@ -31,6 +32,7 @@ export default function OrderPage() {
   const table = state.tables.find((item) => item.id === order?.tableId);
   const items = order ? getOrderItems(state, order.id) : [];
   const [cancelItemId, setCancelItemId] = useState<string | undefined>();
+  const [cancelOrderOpen, setCancelOrderOpen] = useState(false);
   const pendingCount = items.filter((item) => item.status === "pending").length;
   const quickDrinks = searchParams.get("quick") === "drinks";
   const drinkCategoryIds = new Set(
@@ -44,6 +46,10 @@ export default function OrderPage() {
   const menuCategories = quickDrinks
     ? state.categories.filter((category) => drinkCategoryIds.has(category.id) || menuProducts.some((product) => product.categoryId === category.id))
     : state.categories;
+  const quickDrinkCategoryId = menuCategories.find((category) => /cerveja/i.test(category.name))?.id
+    ?? menuCategories.find((category) => /long neck/i.test(category.name))?.id
+    ?? menuCategories.find((category) => /600ml/i.test(category.name))?.id
+    ?? "all";
 
   if (!order) {
     return (
@@ -113,6 +119,7 @@ export default function OrderPage() {
             allowedAddons={state.productAllowedAddons}
             title={quickDrinks ? "Bebidas" : "Cardápio"}
             subtitle={quickDrinks ? "Escolha uma bebida para esta mesa." : "Escolha os itens para adicionar."}
+            initialCategoryId={quickDrinks ? quickDrinkCategoryId : "all"}
             onAdd={(productId, input) => addOrderItem(order.id, productId, input)}
           />
         </div>
@@ -127,6 +134,7 @@ export default function OrderPage() {
             onDeliver={(itemId) => updateOrderItemStatus(itemId, "delivered")}
             onApplyServiceFee={() => void applyOrderServiceFee(order.id)}
             onSetServiceFeeEnabled={(enabled) => void setOrderServiceFeeEnabled(order.id, enabled)}
+            onCancelOrder={() => setCancelOrderOpen(true)}
           />
         </aside>
 
@@ -151,10 +159,11 @@ export default function OrderPage() {
           suggestions={["Cliente desistiu", "Lançado errado", "Produto acabou", "Cortesia", "Outro"]}
           onCancel={() => setCancelItemId(undefined)}
           onConfirm={(reason) => {
-            if (cancelItemId) cancelOrderItem(cancelItemId, reason);
+            if (cancelItemId) void cancelOrderItem(cancelItemId, reason);
             setCancelItemId(undefined);
           }}
         />
+        <ReasonDialog open={cancelOrderOpen} title="Cancelar pedido completo" label="Motivo obrigatório" confirmLabel="Cancelar pedido" suggestions={["Cliente desistiu", "Pedido lançado errado", "Itens indisponíveis", "Outro motivo"]} onCancel={() => setCancelOrderOpen(false)} onConfirm={(reason) => { void cancelOrder(order.id, reason); setCancelOrderOpen(false); }} />
       </section>
     </RoleGuard>
   );

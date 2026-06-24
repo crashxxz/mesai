@@ -1,11 +1,14 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import QRCode from "qrcode";
 import { Banknote, CreditCard, Landmark, Receipt, Split, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { paymentMethodLabel } from "@/lib/services";
 import type { Order, OrderItem, Payment, PaymentMethod } from "@/lib/types";
 import { brl, cn } from "@/lib/utils";
+import { createPixCopyPaste } from "@/lib/pix";
 
 const methods: Array<{ method: PaymentMethod; icon: typeof WalletCards }> = [
   { method: "pix", icon: Landmark },
@@ -23,6 +26,7 @@ export function PaymentForm({
   accountName,
   onDiscount,
   onSetServiceFeeEnabled,
+  pix,
   onPay,
   onClose,
   onReopen
@@ -33,6 +37,7 @@ export function PaymentForm({
   accountName: string;
   onDiscount: (value: number) => void;
   onSetServiceFeeEnabled: (enabled: boolean) => void;
+  pix?: { key?: string; recipient?: string; city?: string };
   onPay: (input: { method: PaymentMethod; amount: number; cardBrand?: string; changeAmount?: number }) => void;
   onClose: () => void;
   onReopen: () => void;
@@ -47,6 +52,7 @@ export function PaymentForm({
   const [people, setPeople] = useState(2);
   const [splitValue, setSplitValue] = useState(remaining.toFixed(2));
   const [confirmClose, setConfirmClose] = useState(false);
+  const [pixImage, setPixImage] = useState("");
 
   const numericAmount = Number(amount) || 0;
   const change = method === "cash" ? Math.max(0, (Number(cashReceived) || 0) - numericAmount) : 0;
@@ -55,6 +61,12 @@ export function PaymentForm({
     () => items.filter((item) => item.status !== "cancelled").reduce((sum, item) => sum + item.unitPriceSnapshot * item.quantity, 0),
     [items]
   );
+  const pixCode = useMemo(() => method === "pix" && pix?.key ? createPixCopyPaste({ key: pix.key, recipient: pix.recipient ?? "", city: pix.city ?? "", amount: remaining }) : "", [method, pix?.city, pix?.key, pix?.recipient, remaining]);
+
+  useEffect(() => {
+    if (!pixCode) { setPixImage(""); return; }
+    void QRCode.toDataURL(pixCode, { width: 220, margin: 1 }).then(setPixImage).catch(() => setPixImage(""));
+  }, [pixCode]);
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -239,6 +251,9 @@ export function PaymentForm({
             </label>
           ) : null}
           {method === "credit_card" || method === "debit_card" ? (
+            <p className="rounded-lg bg-slate-50 p-3 text-sm font-bold text-slate-600">Registrar pagamento feito na maquininha. O sistema não tenta cobrar online.</p>
+          ) : null}
+          {method === "credit_card" || method === "debit_card" ? (
             <label className="grid gap-1 text-sm font-bold text-slate-700">
               Bandeira
               <input
@@ -248,8 +263,10 @@ export function PaymentForm({
               />
             </label>
           ) : null}
+          {method === "pix" && !pix?.key ? <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-900">Cadastre a chave Pix em Ajustes para gerar o QR Code.</p> : null}
+          {method === "pix" && pixCode ? <div className="grid place-items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong className="text-emerald-900">Pix de {brl(remaining)}</strong>{pixImage ? <Image src={pixImage} alt="QR Code Pix" width={220} height={220} unoptimized /> : null}<Button type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(pixCode)}>Copiar código Pix</Button></div> : null}
           <Button variant="amber" size="lg" type="submit" disabled={remaining <= 0}>
-            Registrar
+            {method === "pix" ? "Marcar como pago" : method === "credit_card" || method === "debit_card" ? "Registrar pagamento manual" : "Registrar"}
           </Button>
         </div>
       </form>

@@ -55,6 +55,10 @@ export interface RestaurantSettings {
   qrOrdersNeedApproval: boolean;
   waiterCanCloseAccount: boolean;
   serviceFeePercent: number;
+  pixKey?: string;
+  pixRecipientName?: string;
+  pixCity?: string;
+  strongFont?: boolean;
 }
 
 export interface Profile {
@@ -263,6 +267,8 @@ export interface FinancialEntry {
   createdBy?: UUID;
   createdAt: string;
   updatedAt: string;
+  cancelledAt?: string;
+  cancelReason?: string;
 }
 
 export interface Customer {

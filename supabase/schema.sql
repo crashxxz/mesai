@@ -29,7 +29,11 @@ create table public.restaurant_settings (
   qr_orders_enabled boolean not null default true,
   qr_orders_need_approval boolean not null default false,
   waiter_can_close_account boolean not null default true,
-  service_fee_percent numeric(5,2) not null default 10
+  service_fee_percent numeric(5,2) not null default 10,
+  pix_key text,
+  pix_recipient_name text,
+  pix_city text,
+  strong_font boolean not null default false
 );
 
 create table public.profiles (
@@ -223,7 +227,9 @@ create table public.financial_entries (
   order_id uuid references public.orders(id) on delete set null,
   created_by uuid references public.profiles(id),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  cancelled_at timestamptz,
+  cancel_reason text
 );
 
 create table public.customers (

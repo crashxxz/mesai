@@ -1,5 +1,5 @@
-const cacheName = "mesai-v5";
-const coreAssets = ["/", "/app/login", "/manifest.webmanifest", "/favicon.png?v=5", "/icon-192.png?v=5", "/icon-512.png?v=5", "/apple-touch-icon.png?v=5"];
+const cacheName = "mesay-v6";
+const coreAssets = ["/", "/app/login", "/manifest.webmanifest", "/favicon.png?v=6", "/icon-192.png?v=6", "/icon-512.png?v=6", "/apple-touch-icon.png?v=6"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(cacheName).then((cache) => cache.addAll(coreAssets)));

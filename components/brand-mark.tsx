@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { brand } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
@@ -9,9 +10,7 @@ interface BrandMarkProps {
   tone?: BrandTone;
 }
 
-export function BrandMark({ className, decorative = false, tone = "dark" }: BrandMarkProps) {
-  const colors = brand.marks[tone];
-
+export function BrandMark({ className, decorative = false }: BrandMarkProps) {
   return (
     <span
       className={cn("inline-grid h-11 w-11 shrink-0 place-items-center", className)}
@@ -19,22 +18,7 @@ export function BrandMark({ className, decorative = false, tone = "dark" }: Bran
       aria-label={decorative ? undefined : brand.name}
       role={decorative ? undefined : "img"}
     >
-      <svg viewBox="0 0 64 64" className="h-full w-full" aria-hidden="true">
-        <rect x="2" y="2" width="60" height="60" rx="16" fill={colors.background} />
-        <path d="M15 24v-7a5 5 0 0 1 5-5h7M42 12h2a5 5 0 0 1 5 5v7M49 40v7a5 5 0 0 1-5 5h-7M27 52h-7a5 5 0 0 1-5-5v-7" fill="none" stroke={colors.monogram} strokeWidth="3.5" strokeLinecap="round" />
-        <path d="M20 18h5M39 18h5M20 46h5M39 46h5" fill="none" stroke={colors.table} strokeWidth="4" strokeLinecap="round" />
-        <path d="M20 38h24M25 37c0-8 4-14 9-14s9 6 9 14" fill={colors.monogram} stroke={colors.monogram} strokeWidth="2" strokeLinejoin="round" />
-        <path d="M23 40h22" fill="none" stroke={colors.table} strokeWidth="4" strokeLinecap="round" />
-        <path d="M34 20v3" fill="none" stroke={colors.monogram} strokeWidth="3" strokeLinecap="round" />
-        <path
-          d="m28 43 4 5 7-8"
-          fill="none"
-          stroke={colors.confirmation}
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+      <Image src="/icon-192.png?v=6" alt="" width={192} height={192} className="h-full w-full rounded-[22%] object-cover" priority />
     </span>
   );
 }

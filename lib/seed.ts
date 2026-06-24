@@ -201,7 +201,11 @@ export function createSeedState(): AppState {
     qrOrdersEnabled: true,
     qrOrdersNeedApproval: false,
     waiterCanCloseAccount: true,
-    serviceFeePercent: 10
+    serviceFeePercent: 10,
+    pixKey: "",
+    pixRecipientName: "Boteco da Maricota",
+    pixCity: "Iguatu",
+    strongFont: false
   };
 
   const profiles: Profile[] = [
