@@ -205,6 +205,8 @@ export function createSeedState(): AppState {
     pixKey: "",
     pixRecipientName: "Boteco da Maricota",
     pixCity: "Iguatu",
+    pixProvider: "manual",
+    pixProviderEnvironment: "test",
     systemTheme: "system"
   };
 

@@ -30,9 +30,11 @@ create table public.restaurant_settings (
   qr_orders_need_approval boolean not null default false,
   waiter_can_close_account boolean not null default true,
   service_fee_percent numeric(5,2) not null default 10,
-  pix_key text,
-  pix_recipient_name text,
+    pix_key text,
+    pix_recipient_name text,
     pix_city text,
+    pix_provider text not null default 'manual' check (pix_provider in ('manual', 'openpix', 'mercado_pago')),
+    pix_provider_environment text not null default 'test' check (pix_provider_environment in ('test', 'production')),
     system_theme text not null default 'system' check (system_theme in ('light', 'dark', 'system'))
 );
 
@@ -184,10 +186,20 @@ create table public.payments (
   order_id uuid not null references public.orders(id) on delete cascade,
   method public.payment_method not null,
   amount numeric(12,2) not null check (amount > 0),
-  card_brand text,
-  change_amount numeric(12,2),
-  created_by uuid references public.profiles(id),
-  created_at timestamptz not null default now()
+    card_brand text,
+    change_amount numeric(12,2),
+    provider text not null default 'manual' check (provider in ('manual', 'openpix', 'mercado_pago')),
+    provider_environment text not null default 'test' check (provider_environment in ('test', 'production')),
+    external_payment_id text,
+    txid text,
+    payment_status text not null default 'paid' check (payment_status in ('pending', 'paid', 'expired', 'cancelled', 'error')),
+    pix_copy_paste text,
+    expires_at timestamptz,
+    paid_at timestamptz,
+    webhook_payload jsonb,
+    created_by uuid references public.profiles(id),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
 );
 
 create table public.cash_sessions (

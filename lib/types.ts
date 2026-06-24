@@ -28,6 +28,8 @@ export type PaymentMethod =
   | "debit_card"
   | "voucher"
   | "internal_consumption";
+export type PixProvider = "manual" | "openpix" | "mercado_pago";
+export type PixPaymentStatus = "pending" | "paid" | "expired" | "cancelled" | "error";
 export type CashSessionStatus = "open" | "closed";
 export type CashMovementType = "sale" | "withdrawal" | "supply" | "adjustment";
 export type FinancialEntryType = "income" | "expense";
@@ -58,6 +60,8 @@ export interface RestaurantSettings {
   pixKey?: string;
   pixRecipientName?: string;
   pixCity?: string;
+  pixProvider?: PixProvider;
+  pixProviderEnvironment?: "test" | "production";
   systemTheme?: "light" | "dark" | "system";
 }
 
@@ -224,6 +228,14 @@ export interface Payment {
   amount: number;
   cardBrand?: string;
   changeAmount?: number;
+  provider?: PixProvider;
+  providerEnvironment?: "test" | "production";
+  externalPaymentId?: string;
+  txid?: string;
+  paymentStatus?: PixPaymentStatus;
+  pixCopyPaste?: string;
+  expiresAt?: string;
+  paidAt?: string;
   createdBy?: UUID;
   createdAt: string;
 }

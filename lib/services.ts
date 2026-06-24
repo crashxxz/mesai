@@ -33,7 +33,9 @@ export function getOrderPayments(state: AppState, orderId: UUID) {
 }
 
 export function getPaidTotal(state: AppState, orderId: UUID) {
-  return getOrderPayments(state, orderId).reduce((sum, payment) => sum + payment.amount, 0);
+  return getOrderPayments(state, orderId)
+    .filter((payment) => (payment.paymentStatus ?? "paid") === "paid")
+    .reduce((sum, payment) => sum + payment.amount, 0);
 }
 
 export function getOpenOrderForTable(state: AppState, tableId: UUID) {
