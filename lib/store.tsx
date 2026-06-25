@@ -914,8 +914,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         commit(next, "order");
       },
       async registerPayment(orderId, input) {
+        const localOrder = state.orders.find((item) => item.id === orderId);
+        const localRemaining = localOrder ? Math.max(0, localOrder.total - getPaidTotal(state, orderId)) : input.amount;
+        const amount = Number(Math.min(input.amount, localRemaining).toFixed(2));
+        if (amount <= 0) return;
         if (runtimeConfig.dataMode === "supabase") {
-          await supabaseGateway.registerPayment(orderId, input.method, input.amount, input.cardBrand, input.changeAmount);
+          await supabaseGateway.registerPayment(orderId, input.method, amount, input.cardBrand, input.changeAmount);
           let workspace = await supabaseGateway.loadWorkspace();
           const remoteOrder = workspace.orders.find((item) => String(item.id) === orderId);
           const paid = workspace.payments
@@ -929,8 +933,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return;
         }
         const now = new Date().toISOString();
-        const order = state.orders.find((item) => item.id === orderId);
-        if (!order || input.amount <= 0) return;
+        const order = localOrder;
+        if (!order) return;
         const paymentId = uid("pay");
         const activeCash = state.cashSessions.find(
           (item) => item.restaurantId === order.restaurantId && item.status === "open"
@@ -945,7 +949,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               restaurantId: order.restaurantId,
               orderId,
               method: input.method,
-              amount: Number(input.amount.toFixed(2)),
+              amount,
               cardBrand: input.cardBrand,
               changeAmount: input.changeAmount,
               provider: "manual",
@@ -963,7 +967,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               type: "income",
               category: input.method === "internal_consumption" ? "internal_consumption" : "sale",
               description: `Pedido ${order.id}`,
-              amount: Number(input.amount.toFixed(2)),
+              amount,
               date: now.slice(0, 10),
               paid: true,
               paymentMethod: input.method,
@@ -985,7 +989,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 restaurantId: order.restaurantId,
                 cashSessionId: activeCash.id,
                 type: "sale",
-                amount: input.amount,
+                amount,
                 description: `Pedido ${order.id}`,
                 createdBy: profile?.id,
                 createdAt: now
@@ -993,7 +997,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ],
             cashSessions: next.cashSessions.map((session) =>
               session.id === activeCash.id
-                ? { ...session, expectedAmount: session.expectedAmount + input.amount }
+                ? { ...session, expectedAmount: session.expectedAmount + amount }
                 : session
             )
           };

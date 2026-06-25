@@ -1,10 +1,10 @@
-# Plano Supabase - Mesaí
+# Plano Supabase - MesaY
 
 > Estado local: migrações, gateway, segurança do QR, RPCs transacionais, seed e testes de contrato foram preparados. A aplicação no banco real depende da criação e das credenciais do projeto Supabase. Ver `supabase/README.md` e `PRODUCTION_READY.md`.
 
 ## Objetivo
 
-Migrar o Mesaí sem remover o modo demo e sem fazer a interface depender diretamente do Supabase.
+Migrar o MesaY sem remover o modo demo e sem fazer a interface depender diretamente do Supabase.
 
 Arquitetura desejada:
 
@@ -75,7 +75,7 @@ O `StorageAdapter` atual isola carga e gravação do demo. A próxima etapa deve
 - criar `stock_movements`
 - adicionar observação em lançamentos financeiros
 - criar tokens seguros de QR por mesa
-- substituir o seed SQL antigo pelos dados Mesaí/Boteco da Maricota
+- substituir o seed SQL antigo pelos dados MesaY/Boteco da Maricota
 - revisar políticas anônimas do QR, hoje amplas demais para produção
 - decidir se IDs locais serão convertidos para UUID ou mapeados na importação
 

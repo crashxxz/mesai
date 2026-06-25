@@ -1,8 +1,8 @@
-# Roadmap de Produto - Mesaí
+# Roadmap de Produto - MesaY
 
 ## Direção
 
-Mesaí deve atingir a completude operacional de um PDV profissional sem copiar interfaces e sem virar um ERP pesado.
+MesaY deve atingir a completude operacional de um PDV profissional sem copiar interfaces e sem virar um ERP pesado.
 
 Princípios:
 

@@ -1,87 +1,67 @@
-# Guia de marca — Mesaí
+# Guia de marca — MesaY
 
 ## Marca oficial
 
-**Nome:** Mesaí  
+**Nome:** MesaY
+
 **Slogan:** Pedido, mesa e caixa no jeito.
 
-Mesaí é uma marca brasileira para quem precisa organizar atendimento sem transformar o negócio em um sistema pesado. Deve parecer simples, direta, atual e confiável.
+MesaY é uma marca brasileira para atendimento simples em bares, botecos, restaurantes, lanchonetes e operações de balcão. Deve parecer direta, moderna, confiável e vendável, sem cara de ERP pesado.
 
 ## Conceito do símbolo
 
-O símbolo reúne três ideias operacionais:
+O símbolo oficial combina:
 
-- a forma central e os quatro apoios representam uma mesa vista de cima;
-- o traço interno sugere a letra `M` sem virar um monograma corporativo;
-- o check verde representa pedido confirmado e atendimento andando.
+- cloche/garçom para atendimento;
+- moldura de scan/QR para pedido pelo celular;
+- azul marinho como base premium e confiável;
+- laranja/dourado como destaque de ação.
 
-O contorno forte mantém a leitura em favicon, PWA, QR Code e sidebar. O símbolo não depende do nome para ser reconhecido.
+O ícone deve funcionar sozinho em favicon, PWA, QR Code, sidebar e telas públicas.
 
 ## Paleta oficial
 
 | Cor | Hex | Uso principal |
 | --- | --- | --- |
-| Preto carvão | `#111827` | base da marca, texto e fundos escuros |
-| Laranja quente | `#F59E0B` | energia, destaque e mesa |
-| Verde confirmação | `#10B981` | confirmação, sucesso e check |
+| Azul marinho | `#0F172A` | base da marca, ícone e fundos escuros |
+| Laranja/dourado | `#F59E0B` | destaque, ação e assinatura visual |
+| Verde confirmação | `#10B981` | confirmação e sucesso |
 | Fundo claro | `#FFF7ED` | superfícies claras e acolhimento |
-
-O carvão deve dominar. Laranja destaca ações e a assinatura visual. Verde fica reservado para confirmação. O fundo claro evita aparência fria ou corporativa.
 
 ## Versões disponíveis
 
-- `public/brand/mesai-logo.svg`: logo horizontal oficial com slogan, para fundo claro.
-- `public/brand/mesai-logo-light.svg`: logo horizontal para fundo carvão ou fotografia escura.
-- `public/brand/mesai-logo-compact.svg`: versão reduzida sem slogan.
-- `public/brand/mesai-mark.svg`: símbolo oficial isolado.
-- `public/brand/mesai-mark-light.svg`: símbolo claro para superfícies escuras.
-- `public/icons/icon.svg`: favicon e ícone comum do app.
-- `public/icons/icon-maskable.svg`: ícone seguro para instalação PWA.
+- Logo horizontal: usar em login, materiais comerciais e telas com espaço.
+- Logo compacta: usar em sidebar e cabeçalhos estreitos.
+- Ícone isolado: usar em favicon, app/PWA, QR Code e espaços quadrados.
+- Versão clara: usar sobre fundo azul marinho/escuro.
 
-## Quando usar
-
-### Logo horizontal
-
-Usar em apresentação comercial, proposta, cabeçalho de site, documentação e materiais com espaço horizontal. Preferir a versão com slogan quando a marca ainda precisa explicar o produto.
-
-### Logo compacta
-
-Usar em sidebar, cabeçalho estreito, recibo e telas onde o slogan criaria ruído.
-
-### Símbolo isolado
-
-Usar em favicon, app/PWA, avatar, QR Code, marcador de tela e espaços quadrados. Não adicionar talher, copo, prato, hambúrguer ou outro ícone de segmento ao símbolo.
-
-### Versão clara
-
-Usar somente sobre fundo carvão ou imagem escura com contraste suficiente. Em fundo branco ou creme, usar a versão oficial escura.
+Os nomes de alguns arquivos em `public/brand/` podem manter `mesai` por compatibilidade técnica; o texto visual correto é sempre MesaY.
 
 ## Escrita da marca
 
 Correto:
 
-- Mesaí
-- Mesaí — Pedido, mesa e caixa no jeito.
+- MesaY
+- MesaY — Pedido, mesa e caixa no jeito.
 
 Evitar:
 
-- Mesai
-- Mesa Í
-- MESAÍ em textos corridos
-- Mesa AI
+- nomes antigos da marca
+- variações sem o `Y`
+- escrever como termo genérico
 - alterar o slogan ou remover o ponto final
 
 ## Tamanho e respiro
 
-- símbolo digital: mínimo recomendado de `24 × 24 px`;
+- ícone digital: mínimo recomendado de `24 × 24 px`;
 - logo horizontal: largura mínima recomendada de `180 px`;
-- manter ao redor da marca um respiro equivalente a pelo menos um quarto da altura do símbolo;
+- manter respiro equivalente a pelo menos um quarto da altura do símbolo;
 - não esticar, girar, aplicar sombra pesada ou trocar as cores oficiais.
 
 ## Exemplos de uso
 
-- Login: símbolo oficial, nome e slogan completos.
-- Sidebar: logo compacta, sem slogan.
+- Login: símbolo oficial, nome e slogan.
+- Sidebar: logo compacta.
 - Header mobile e QR: símbolo isolado.
 - Favicon/PWA: ícones em `public/icons/`.
 - Material comercial: logo horizontal com slogan.

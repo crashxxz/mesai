@@ -1,4 +1,4 @@
-# Mesaí
+# MesaY
 
 Pedido, mesa e caixa no jeito.
 
@@ -6,9 +6,9 @@ PWA web para botecos, bares, restaurantes e atendimento no balcão. MVP mobile-f
 
 ## Marca
 
-- Nome oficial: **Mesaí**
+- Nome oficial: **MesaY**
 - Slogan oficial: **Pedido, mesa e caixa no jeito.**
-- Conceito do símbolo: mesa vista de cima, `M` sutil e check de pedido confirmado.
+- Conceito do símbolo: cloche/atendimento dentro de uma moldura de scan/QR, em azul marinho com laranja/dourado.
 - Paleta: carvão `#111827`, laranja `#F59E0B`, verde `#10B981` e fundo `#FFF7ED`.
 - Guia e arquivos de aplicação: [`BRAND_GUIDE.md`](BRAND_GUIDE.md) e `public/brand/`.
 

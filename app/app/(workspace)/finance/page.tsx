@@ -9,7 +9,7 @@ import { ReasonDialog } from "@/components/reason-dialog";
 import type { PeriodFilterValue } from "@/lib/services";
 import { getDashboardMetrics, getFinancialSummary, getOrderItems, paymentMethodLabel } from "@/lib/services";
 import { useStore } from "@/lib/store";
-import type { PaymentMethod } from "@/lib/types";
+import type { Payment, PaymentMethod } from "@/lib/types";
 import { useBusinessPreset } from "@/lib/use-business-preset";
 import { brl, dateKey, toCsv } from "@/lib/utils";
 
@@ -39,6 +39,7 @@ export default function FinancePage() {
     notes: ""
   });
   const [cancelEntryId, setCancelEntryId] = useState<string>();
+  const [showZeroOrders, setShowZeroOrders] = useState(false);
   const restaurantId = restaurant?.id ?? state.restaurants[0].id;
   const metrics = useMemo(
     () => getDashboardMetrics(state, restaurantId, period),
@@ -51,8 +52,11 @@ export default function FinancePage() {
   const expenses = financial.entries.filter((entry) => entry.type === "expense");
   const topProduct = metrics.topProducts[0];
   const closedOrders = useMemo(
-    () => state.orders.filter((order) => order.restaurantId === restaurantId && order.status === "closed").sort((a, b) => new Date(b.closedAt ?? b.updatedAt).getTime() - new Date(a.closedAt ?? a.updatedAt).getTime()),
-    [restaurantId, state.orders]
+    () => state.orders
+      .filter((order) => order.restaurantId === restaurantId && order.status === "closed")
+      .filter((order) => showZeroOrders || order.total > 0.001)
+      .sort((a, b) => new Date(b.closedAt ?? b.updatedAt).getTime() - new Date(a.closedAt ?? a.updatedAt).getTime()),
+    [restaurantId, showZeroOrders, state.orders]
   );
 
   function submitExpense(event: FormEvent) {
@@ -263,14 +267,22 @@ export default function FinancePage() {
         </div>
 
         <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
-          <h2 className="text-lg font-black text-slate-950">Histórico de mesas</h2>
-          <p className="mt-1 text-sm font-bold text-slate-500">Comandas fechadas, pagamentos e responsável.</p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-black text-slate-950">Histórico de mesas</h2>
+              <p className="mt-1 text-sm font-bold text-slate-500">Comandas fechadas, pagamentos e responsável.</p>
+            </div>
+            <label className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-black text-slate-600">
+              <input type="checkbox" checked={showZeroOrders} onChange={(event) => setShowZeroOrders(event.target.checked)} />
+              Mostrar mesas zeradas/canceladas
+            </label>
+          </div>
           <div className="mt-3 grid gap-2">
             {closedOrders.length ? closedOrders.map((order) => {
               const table = state.tables.find((entry) => entry.id === order.tableId);
               const responsible = state.profiles.find((entry) => entry.id === (order.closedBy ?? order.createdBy));
               const orderItems = getOrderItems(state, order.id).filter((item) => item.status !== "cancelled");
-              const payments = state.payments.filter((payment) => payment.orderId === order.id);
+              const payments = paidPaymentsForHistory(state.payments.filter((payment) => payment.orderId === order.id), order.total);
               return (
                 <details key={order.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <summary className="cursor-pointer list-none">
@@ -324,4 +336,17 @@ function Signal({ label, value }: { label: string; value: string }) {
 
 function expenseCategoryLabel(category: string) {
   return expenseCategories.find(([value]) => value === category)?.[1] ?? (category === "sale" ? "Venda" : category);
+}
+
+function paidPaymentsForHistory(payments: Payment[], orderTotal: number) {
+  let remaining = Math.max(0, orderTotal);
+  return payments
+    .filter((payment) => (payment.paymentStatus ?? "paid") === "paid")
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .flatMap((payment) => {
+      if (remaining <= 0) return [];
+      const amount = Number(Math.min(payment.amount, remaining).toFixed(2));
+      remaining = Number((remaining - amount).toFixed(2));
+      return amount > 0 ? [{ ...payment, amount }] : [];
+    });
 }

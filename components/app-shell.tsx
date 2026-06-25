@@ -15,10 +15,11 @@ import {
   UsersRound,
   WalletCards
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BrandLogo, BrandMark } from "@/components/brand-mark";
 import { MobileBottomNav, type NavItem } from "@/components/mobile-bottom-nav";
 import { NotificationCenter } from "@/components/notification-center";
+import { localThemePreferenceKey } from "@/components/theme-sync";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
 import { canAccess } from "@/lib/permissions";
@@ -105,7 +106,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <div className="truncate text-xs font-medium text-slate-500">{profile.name}</div>
             </div>
           </div>
-          <div className="flex items-center gap-1"><NotificationCenter /><Button
+          <div className="flex items-center gap-1"><ThemePicker /><NotificationCenter /><Button
             variant="ghost"
             size="icon"
             title="Sair"
@@ -123,6 +124,34 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="px-4 pb-24 pt-5 md:ml-64 md:px-6 md:pb-8">{children}</main>
       <MobileBottomNav items={allowedItems} extraItems={mobileExtraItems} />
     </div>
+  );
+}
+
+function ThemePicker() {
+  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
+
+  useEffect(() => {
+    const saved = localStorage.getItem(localThemePreferenceKey);
+    if (saved === "light" || saved === "dark" || saved === "system") setTheme(saved);
+  }, []);
+
+  return (
+    <select
+      aria-label="Tema"
+      title="Tema"
+      className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-xs font-black text-slate-600"
+      value={theme}
+      onChange={(event) => {
+        const next = event.target.value as "light" | "dark" | "system";
+        setTheme(next);
+        localStorage.setItem(localThemePreferenceKey, next);
+        window.dispatchEvent(new Event("mesay-theme-change"));
+      }}
+    >
+      <option value="light">Claro</option>
+      <option value="dark">Escuro</option>
+      <option value="system">Auto</option>
+    </select>
   );
 }
 

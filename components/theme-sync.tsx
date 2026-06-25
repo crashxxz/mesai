@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
 
 type Theme = "light" | "dark" | "system";
+export const localThemePreferenceKey = "mesay-theme-preference";
 
 function resolvedTheme(preference: Theme) {
   if (preference !== "system") return preference;
@@ -13,7 +14,18 @@ function resolvedTheme(preference: Theme) {
 /** Keeps the selected restaurant theme on every route, including login and QR pages. */
 export function ThemeSync() {
   const { settings } = useStore();
-  const preference = settings?.systemTheme ?? "system";
+  const [localPreference, setLocalPreference] = useState<Theme>();
+  const preference = localPreference ?? settings?.systemTheme ?? "system";
+
+  useEffect(() => {
+    const load = () => {
+      const saved = localStorage.getItem(localThemePreferenceKey);
+      setLocalPreference(saved === "light" || saved === "dark" || saved === "system" ? saved : undefined);
+    };
+    load();
+    window.addEventListener("mesay-theme-change", load);
+    return () => window.removeEventListener("mesay-theme-change", load);
+  }, []);
 
   useEffect(() => {
     const apply = () => {

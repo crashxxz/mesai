@@ -1,15 +1,18 @@
-# Mesaí - uso local
+# MesaY - uso local
 
-Mesaí é um sistema simples para pedidos, mesas e caixa.
+MesaY é um sistema simples para pedidos, mesas e caixa.
 
-Produto: Mesaí  
-Slogan: Pedido, mesa e caixa no jeito.  
-Preset atual: `boteco_popular`  
+Produto: MesaY
+
+Slogan: Pedido, mesa e caixa no jeito.
+
+Preset atual: `boteco_popular`
+
 Demo/laboratório: Boteco da Maricota, Iguatu-CE
 
 ## Identidade da marca
 
-A marca deve ser escrita sempre como **Mesaí**, com acento no `í`. O símbolo combina uma mesa vista de cima, um `M` sutil e um check de confirmação. Logo horizontal, versão compacta, símbolos claro/escuro e regras de uso estão em [`BRAND_GUIDE.md`](BRAND_GUIDE.md) e `public/brand/`.
+A marca deve ser escrita sempre como **MesaY**. O símbolo oficial combina cloche/atendimento com moldura de scan/QR, azul marinho e laranja/dourado. Logo horizontal, versão compacta, símbolos claro/escuro e regras de uso estão em [`BRAND_GUIDE.md`](BRAND_GUIDE.md) e `public/brand/`.
 
 ## Rodar localmente
 
