@@ -26,7 +26,7 @@ export function QRCodeTablePanel({ restaurant, table }: { restaurant: Restaurant
       setImage("");
       return;
     }
-    const origin = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+    const origin = window.location.origin || process.env.NEXT_PUBLIC_APP_URL || runtimeConfig.appUrl;
     const nextUrl = `${origin}/r/${restaurant.slug}/mesa/${table.id}?t=${encodeURIComponent(token)}`;
     setUrl(nextUrl);
     QRCode.toDataURL(nextUrl, {

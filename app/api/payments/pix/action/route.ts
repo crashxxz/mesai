@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       .eq("id", paymentId).eq("restaurant_id", auth.actor.restaurantId).eq("method", "pix").single();
     if (paymentResult.error || !paymentResult.data) return jsonError("Cobranca Pix nao encontrada.", 404);
     const payment = paymentResult.data;
-    const provider = payment.provider as PixProvider;
+    const provider: PixProvider = payment.provider === "openpix" || payment.provider === "mercado_pago" ? payment.provider : "manual";
     if (provider === "manual") return jsonError("Esta cobranca Pix e manual.", 400);
     const environment = payment.provider_environment === "production" ? "production" : "test";
 

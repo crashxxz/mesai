@@ -13,11 +13,14 @@ type ProductImageCandidate = Partial<Product> & {
 const keywordImages: Array<{ words: string[]; path: string }> = [
   { words: ["pastel", "pastelzinho"], path: "/menu-images/petiscos/pastelzinho.webp" },
   { words: ["macaxeira", "mandioca", "aipim"], path: "/menu-images/petiscos/macaxeira.webp" },
-  { words: ["batata", "fritas"], path: "/menu-images/petiscos/batata-rustica.webp" },
+  { words: ["batata", "batatinha", "fritas"], path: "/menu-images/petiscos/batata-rustica.webp" },
   { words: ["feijao", "feijão", "baiao", "baião"], path: "/menu-images/pratos/feijao-verde.webp" },
   { words: ["tripa"], path: "/menu-images/petiscos/tripa.png" },
   { words: ["torresmo"], path: "/menu-images/petiscos/torresmo.png" },
-  { words: ["calabresa", "bolinho", "porcao", "porção", "queijo", "frango", "isca"], path: "/menu-images/petiscos/default-petisco.webp" },
+  { words: ["pizza", "mussarela", "portuguesa", "catupiry", "frango catupiry"], path: "/menu-images/pizzas/default-pizza.webp" },
+  { words: ["burger", "hamburguer", "hambúrguer", "x-burger", "x-salada", "artesanal"], path: "/menu-images/hamburgueres/default-burger.webp" },
+  { words: ["pudim", "bolo", "sorvete", "doce", "sobremesa"], path: "/menu-images/sobremesas/default-sobremesa.webp" },
+  { words: ["calabresa", "bolinho", "porcao", "porção", "queijo", "frango", "isca", "espeto", "espetinho"], path: "/menu-images/petiscos/default-petisco.webp" },
   { words: ["cerveja", "heineken", "skol", "brahma", "antarctica", "long neck"], path: "/menu-images/cervejas/default-cerveja.webp" },
   { words: ["caipirinha", "gin", "vodka", "whisky", "drink", "cocktail"], path: "/menu-images/drinks/default-drink.webp" },
   { words: ["suco", "laranja", "limao", "limão", "maracuja", "maracujá"], path: "/menu-images/sucos/default-suco.webp" },
@@ -25,9 +28,6 @@ const keywordImages: Array<{ words: string[]; path: string }> = [
   { words: ["h2o"], path: "/menu-images/bebidas/h2o.png" },
   { words: ["agua", "água"], path: "/menu-images/bebidas/agua.png" },
   { words: ["refri", "refrigerante", "coca", "guarana", "guaraná"], path: "/menu-images/refrigerantes/default-refrigerante.webp" },
-  { words: ["pizza", "mussarela", "portuguesa", "catupiry"], path: "/menu-images/pizzas/default-pizza.webp" },
-  { words: ["burger", "hamburguer", "hambúrguer", "x-burger", "x-salada", "artesanal"], path: "/menu-images/hamburgueres/default-burger.webp" },
-  { words: ["pudim", "bolo", "sorvete", "doce", "sobremesa"], path: "/menu-images/sobremesas/default-sobremesa.webp" },
   { words: ["cafe", "café"], path: "/menu-images/cafe/default-cafe.webp" },
   { words: ["arroz", "feijao", "feijão", "carne", "peixe", "almoco", "almoço", "executivo", "prato"], path: "/menu-images/pratos/default-prato.webp" }
 ];

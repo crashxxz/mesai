@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     if (provider === "manual") {
       const key = settings?.pix_key?.trim();
       if (!key) return jsonError("Cadastre a chave Pix manual em Ajustes.", 422);
-      return NextResponse.json({ provider, status: "manual", amount: remaining, copyPaste: createPixCopyPaste({ key, recipient: settings?.pix_recipient_name ?? "", city: settings?.pix_city ?? "", amount: remaining }) });
+      return NextResponse.json({ provider, status: "pending", amount: remaining, copyPaste: createPixCopyPaste({ key, recipient: settings?.pix_recipient_name ?? "", city: settings?.pix_city ?? "", amount: remaining }) });
     }
     if (!providerConfigured(provider)) return jsonError(`Configure as credenciais ${provider === "openpix" ? "da OpenPix" : "do Mercado Pago"} no ambiente do servidor.`, 422);
 

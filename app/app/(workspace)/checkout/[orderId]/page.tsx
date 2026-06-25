@@ -68,7 +68,7 @@ export default function CheckoutPage() {
           accountName={table?.name ?? order.customerName ?? "Comanda"}
           onDiscount={(value) => updateOrderDiscount(order.id, value)}
           onSetServiceFeeEnabled={(enabled) => void setOrderServiceFeeEnabled(order.id, enabled)}
-          pix={{ key: settings?.pixKey, recipient: settings?.pixRecipientName ?? restaurant?.name, city: settings?.pixCity ?? restaurant?.city }}
+          pix={{ key: settings?.pixKey, recipient: settings?.pixRecipientName ?? restaurant?.name, city: settings?.pixCity ?? restaurant?.city, provider: settings?.pixProvider, providerEnvironment: settings?.pixProviderEnvironment }}
           onPay={(input) => registerPayment(order.id, input)}
           onClose={() => closeOrder(order.id)}
           onReopen={() => setReopenDialogOpen(true)}

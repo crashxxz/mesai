@@ -139,6 +139,29 @@ export default function SettingsPage() {
         <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
           <h2 className="mb-3 text-lg font-black text-slate-950">Recebimento e visual</h2>
           <div className="grid gap-3 sm:grid-cols-2">
+            <label className="grid gap-1 text-sm font-bold text-slate-700">
+              Modo Pix
+              <select
+                className="h-12 rounded-lg border border-slate-200 px-3"
+                value={settings.pixProvider ?? "manual"}
+                onChange={(event) => updateSettings({ pixProvider: event.target.value as "manual" | "openpix" | "mercado_pago" })}
+              >
+                <option value="manual">Manual</option>
+                <option value="openpix">OpenPix automatico</option>
+                <option value="mercado_pago">Mercado Pago automatico</option>
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm font-bold text-slate-700">
+              Ambiente Pix
+              <select
+                className="h-12 rounded-lg border border-slate-200 px-3"
+                value={settings.pixProviderEnvironment ?? "test"}
+                onChange={(event) => updateSettings({ pixProviderEnvironment: event.target.value as "test" | "production" })}
+              >
+                <option value="test">Teste</option>
+                <option value="production">Producao</option>
+              </select>
+            </label>
             <label className="grid gap-1 text-sm font-bold text-slate-700">Chave Pix<input className="h-12 rounded-lg border border-slate-200 px-3" value={settings.pixKey ?? ""} onChange={(event) => updateSettings({ pixKey: event.target.value })} placeholder="CPF, e-mail, telefone ou chave aleatória" /></label>
             <label className="grid gap-1 text-sm font-bold text-slate-700">Nome do recebedor<input className="h-12 rounded-lg border border-slate-200 px-3" value={settings.pixRecipientName ?? ""} onChange={(event) => updateSettings({ pixRecipientName: event.target.value })} placeholder={restaurant.name} /></label>
             <label className="grid gap-1 text-sm font-bold text-slate-700">Cidade Pix<input className="h-12 rounded-lg border border-slate-200 px-3" value={settings.pixCity ?? ""} onChange={(event) => updateSettings({ pixCity: event.target.value })} placeholder={restaurant.city ?? "Cidade"} /></label>
@@ -151,6 +174,11 @@ export default function SettingsPage() {
               </select>
             </label>
           </div>
+          {settings.pixProvider && settings.pixProvider !== "manual" ? (
+            <p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs font-bold text-amber-900">
+              Credenciais ficam apenas no servidor/Vercel. Configure as variaveis do provedor e o webhook /api/webhooks/{settings.pixProvider === "openpix" ? "openpix" : "mercadopago"}.
+            </p>
+          ) : null}
           <p className="mt-3 text-xs font-bold text-slate-500">Cartões são registrados manualmente após pagamento na maquininha. Nenhuma cobrança online é simulada.</p>
         </article>
 

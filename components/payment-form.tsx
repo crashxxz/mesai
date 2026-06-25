@@ -3,9 +3,12 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import QRCode from "qrcode";
-import { Banknote, CreditCard, Landmark, Receipt, Split, WalletCards } from "lucide-react";
+import { AlertCircle, Banknote, CreditCard, Landmark, Receipt, RefreshCcw, Split, WalletCards, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { pixProviderLabel, pixStatusLabel, type PixCharge, type PixProvider } from "@/lib/pix-payment";
+import { runtimeConfig } from "@/lib/runtime-config";
 import { paymentMethodLabel } from "@/lib/services";
+import { supabase } from "@/lib/supabase";
 import type { Order, OrderItem, Payment, PaymentMethod } from "@/lib/types";
 import { brl, cn } from "@/lib/utils";
 import { createPixCopyPaste } from "@/lib/pix";
@@ -37,12 +40,14 @@ export function PaymentForm({
   accountName: string;
   onDiscount: (value: number) => void;
   onSetServiceFeeEnabled: (enabled: boolean) => void;
-  pix?: { key?: string; recipient?: string; city?: string };
+  pix?: { key?: string; recipient?: string; city?: string; provider?: PixProvider; providerEnvironment?: "test" | "production" };
   onPay: (input: { method: PaymentMethod; amount: number; cardBrand?: string; changeAmount?: number }) => void;
   onClose: () => void;
   onReopen: () => void;
 }) {
-  const paid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+  const paid = payments
+    .filter((payment) => (payment.paymentStatus ?? "paid") === "paid")
+    .reduce((sum, payment) => sum + payment.amount, 0);
   const remaining = Math.max(0, order.total - paid);
   const [method, setMethod] = useState<PaymentMethod>("pix");
   const [amount, setAmount] = useState(remaining.toFixed(2));
@@ -53,6 +58,9 @@ export function PaymentForm({
   const [splitValue, setSplitValue] = useState(remaining.toFixed(2));
   const [confirmClose, setConfirmClose] = useState(false);
   const [pixImage, setPixImage] = useState("");
+  const [pixCharge, setPixCharge] = useState<PixCharge>();
+  const [pixLoading, setPixLoading] = useState(false);
+  const [pixError, setPixError] = useState("");
 
   const numericAmount = Number(amount) || 0;
   const change = method === "cash" ? Math.max(0, (Number(cashReceived) || 0) - numericAmount) : 0;
@@ -61,15 +69,27 @@ export function PaymentForm({
     () => items.filter((item) => item.status !== "cancelled").reduce((sum, item) => sum + item.unitPriceSnapshot * item.quantity, 0),
     [items]
   );
-  const pixCode = useMemo(() => method === "pix" && pix?.key ? createPixCopyPaste({ key: pix.key, recipient: pix.recipient ?? "", city: pix.city ?? "", amount: remaining }) : "", [method, pix?.city, pix?.key, pix?.recipient, remaining]);
+  const pixProvider = pix?.provider ?? "manual";
+  const onlinePix = method === "pix" && runtimeConfig.dataMode === "supabase" && (pixProvider === "openpix" || pixProvider === "mercado_pago");
+  const manualPixCode = useMemo(() => method === "pix" && !onlinePix && pix?.key ? createPixCopyPaste({ key: pix.key, recipient: pix.recipient ?? "", city: pix.city ?? "", amount: remaining }) : "", [method, onlinePix, pix?.city, pix?.key, pix?.recipient, remaining]);
+  const pixCode = onlinePix ? pixCharge?.copyPaste ?? "" : manualPixCode;
 
   useEffect(() => {
     if (!pixCode) { setPixImage(""); return; }
     void QRCode.toDataURL(pixCode, { width: 220, margin: 1 }).then(setPixImage).catch(() => setPixImage(""));
   }, [pixCode]);
 
+  useEffect(() => {
+    setAmount(remaining.toFixed(2));
+    setSplitValue(remaining.toFixed(2));
+  }, [remaining]);
+
   function submit(event: FormEvent) {
     event.preventDefault();
+    if (onlinePix) {
+      void generateOnlinePix();
+      return;
+    }
     if (numericAmount <= 0) return;
     onPay({
       method,
@@ -80,6 +100,53 @@ export function PaymentForm({
     const nextRemaining = Math.max(0, remaining - numericAmount);
     setAmount(nextRemaining.toFixed(2));
     setCashReceived("");
+  }
+
+  async function sessionHeaders() {
+    const session = await supabase?.auth.getSession();
+    const token = session?.data.session?.access_token;
+    if (!token) throw new Error("Sessao nao encontrada.");
+    return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  }
+
+  async function generateOnlinePix() {
+    setPixLoading(true);
+    setPixError("");
+    try {
+      const response = await fetch("/api/payments/pix/create", {
+        method: "POST",
+        headers: await sessionHeaders(),
+        body: JSON.stringify({ orderId: order.id })
+      });
+      const data = await response.json() as PixCharge & { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Nao foi possivel gerar o Pix.");
+      setPixCharge(data);
+    } catch (error) {
+      setPixError(error instanceof Error ? error.message : "Nao foi possivel gerar o Pix.");
+    } finally {
+      setPixLoading(false);
+    }
+  }
+
+  async function runPixAction(action: "check" | "cancel" | "confirm") {
+    if (!pixCharge?.paymentId) return;
+    setPixLoading(true);
+    setPixError("");
+    try {
+      const response = await fetch("/api/payments/pix/action", {
+        method: "POST",
+        headers: await sessionHeaders(),
+        body: JSON.stringify({ paymentId: pixCharge.paymentId, action })
+      });
+      const data = await response.json() as { status?: PixCharge["status"]; error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Nao foi possivel atualizar o Pix.");
+      setPixCharge((current) => current ? { ...current, status: data.status ?? current.status } : current);
+      if (data.status === "paid") window.location.reload();
+    } catch (error) {
+      setPixError(error instanceof Error ? error.message : "Nao foi possivel atualizar o Pix.");
+    } finally {
+      setPixLoading(false);
+    }
   }
 
   return (
@@ -263,10 +330,32 @@ export function PaymentForm({
               />
             </label>
           ) : null}
-          {method === "pix" && !pix?.key ? <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-900">Cadastre a chave Pix em Ajustes para gerar o QR Code.</p> : null}
-          {method === "pix" && pixCode ? <div className="grid place-items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong className="text-emerald-900">Pix de {brl(remaining)}</strong>{pixImage ? <Image src={pixImage} alt="QR Code Pix" width={220} height={220} unoptimized /> : null}<Button type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(pixCode)}>Copiar código Pix</Button></div> : null}
+          {method === "pix" && onlinePix ? (
+            <div className="grid gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <div className="flex items-start gap-2 text-sm font-bold text-emerald-900">
+                <Landmark className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{pixProviderLabel[pixProvider]} cria a cobranca no servidor. O webhook confirma automaticamente.</span>
+              </div>
+              {pixCharge ? (
+                <div className="grid place-items-center gap-3">
+                  <strong className="text-emerald-900">Pix de {brl(pixCharge.amount)} · {pixStatusLabel[pixCharge.status]}</strong>
+                  {pixImage ? <Image src={pixImage} alt="QR Code Pix" width={220} height={220} unoptimized /> : null}
+                  {pixCode ? <textarea className="h-24 w-full rounded-lg border border-emerald-200 bg-white p-2 text-xs font-bold" readOnly value={pixCode} /> : null}
+                  <div className="grid w-full gap-2 sm:grid-cols-2">
+                    <Button type="button" variant="outline" onClick={() => pixCode && void navigator.clipboard.writeText(pixCode)}>Copiar Pix copia e cola</Button>
+                    <Button type="button" variant="outline" disabled={pixLoading} onClick={() => void runPixAction("check")}><RefreshCcw className="h-4 w-4" />Consultar pagamento</Button>
+                    <Button type="button" variant="outline" disabled={pixLoading} onClick={() => void runPixAction("confirm")}>Confirmar manualmente</Button>
+                    <Button type="button" variant="outline" disabled={pixLoading} onClick={() => void runPixAction("cancel")}><XCircle className="h-4 w-4" />Cancelar cobranca</Button>
+                  </div>
+                </div>
+              ) : null}
+              {pixError ? <p className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-900"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{pixError}</p> : null}
+            </div>
+          ) : null}
+          {method === "pix" && !onlinePix && !pix?.key ? <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-900">Cadastre a chave Pix em Ajustes para gerar o QR Code.</p> : null}
+          {method === "pix" && !onlinePix && pixCode ? <div className="grid place-items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong className="text-emerald-900">Pix de {brl(remaining)}</strong>{pixImage ? <Image src={pixImage} alt="QR Code Pix" width={220} height={220} unoptimized /> : null}<Button type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(pixCode)}>Copiar código Pix</Button></div> : null}
           <Button variant="amber" size="lg" type="submit" disabled={remaining <= 0}>
-            {method === "pix" ? "Marcar como pago" : method === "credit_card" || method === "debit_card" ? "Registrar pagamento manual" : "Registrar"}
+            {onlinePix ? pixLoading ? "Gerando Pix..." : pixCharge ? "Gerar novo Pix" : "Gerar Pix" : method === "pix" ? "Marcar como pago" : method === "credit_card" || method === "debit_card" ? "Registrar pagamento manual" : "Registrar"}
           </Button>
         </div>
       </form>
@@ -277,8 +366,8 @@ export function PaymentForm({
           {payments.length ? (
             payments.map((payment) => (
               <div key={payment.id} className="flex justify-between rounded-lg bg-slate-50 p-3 text-sm font-bold">
-                <span>{paymentMethodLabel(payment.method)}</span>
-                <strong>{brl(payment.amount)}</strong>
+                <span>{paymentMethodLabel(payment.method)}{payment.method === "pix" ? ` · ${pixProviderLabel[payment.provider ?? "manual"]} · ${pixStatusLabel[payment.paymentStatus ?? "paid"]}` : null}</span>
+                <strong className={(payment.paymentStatus ?? "paid") === "paid" ? "text-emerald-700" : "text-amber-700"}>{brl(payment.amount)}</strong>
               </div>
             ))
           ) : (

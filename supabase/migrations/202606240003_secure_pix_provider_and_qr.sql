@@ -99,8 +99,11 @@ begin
     end if;
   end if;
   insert into public.financial_entries (restaurant_id, type, category, description, amount, date, paid, payment_method, order_id)
-  values (v_payment.restaurant_id, 'income', 'sale', 'Venda ' || v_order.id::text, v_order.total, current_date, true, 'pix', v_order.id)
-  on conflict (order_id) where type = 'income' and category = 'sale' and order_id is not null do nothing;
+  select v_payment.restaurant_id, 'income', 'sale', 'Venda ' || v_order.id::text, v_order.total, current_date, true, 'pix', v_order.id
+  where not exists (
+    select 1 from public.financial_entries fe
+    where fe.order_id = v_order.id and fe.type = 'income' and fe.category = 'sale' and fe.cancelled_at is null
+  );
   insert into public.audit_logs (restaurant_id, action, entity, entity_id, new_data)
   values (v_payment.restaurant_id, 'pix_payment_confirmed', 'payments', v_payment.id, jsonb_build_object('provider', p_provider, 'order_id', v_order.id, 'amount', v_payment.amount));
   return v_payment.id;

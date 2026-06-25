@@ -32,15 +32,25 @@ function env(name: string) {
   return process.env[name]?.trim() ?? "";
 }
 
+function openPixToken() {
+  return env("OPENPIX_API_KEY") || env("OPENPIX_APP_ID");
+}
+
+function mercadoPagoToken() {
+  return env("MERCADO_PAGO_ACCESS_TOKEN") || env("MERCADOPAGO_ACCESS_TOKEN");
+}
+
 export function providerConfigured(provider: Exclude<PixProvider, "manual">) {
   return provider === "openpix"
-    ? Boolean(env("OPENPIX_API_KEY"))
-    : Boolean(env("MERCADOPAGO_ACCESS_TOKEN"));
+    ? Boolean(openPixToken())
+    : Boolean(mercadoPagoToken());
 }
 
 function baseUrl(provider: Exclude<PixProvider, "manual">, environment: "test" | "production") {
   if (provider === "openpix") return env(environment === "test" ? "OPENPIX_API_URL_TEST" : "OPENPIX_API_URL") || "https://api.openpix.com.br/api/v1";
-  return env(environment === "test" ? "MERCADOPAGO_API_URL_TEST" : "MERCADOPAGO_API_URL") || "https://api.mercadopago.com";
+  return env(environment === "test" ? "MERCADO_PAGO_API_URL_TEST" : "MERCADO_PAGO_API_URL")
+    || env(environment === "test" ? "MERCADOPAGO_API_URL_TEST" : "MERCADOPAGO_API_URL")
+    || "https://api.mercadopago.com";
 }
 
 async function jsonRequest(url: string, init: RequestInit) {
@@ -56,7 +66,7 @@ export async function createProviderCharge(input: ProviderChargeInput): Promise<
     const correlationID = `mesay-${input.orderId}`;
     const body = await jsonRequest(`${baseUrl("openpix", input.environment)}/charge`, {
       method: "POST",
-      headers: { Authorization: env("OPENPIX_API_KEY"), "Content-Type": "application/json" },
+      headers: { Authorization: openPixToken(), "Content-Type": "application/json" },
       body: JSON.stringify({ correlationID, value: Math.round(input.amount * 100), comment: input.description, expiresIn: 3600 })
     });
     const charge = (body.charge ?? body) as Record<string, unknown>;
@@ -69,7 +79,7 @@ export async function createProviderCharge(input: ProviderChargeInput): Promise<
   const body = await jsonRequest(`${baseUrl("mercado_pago", input.environment)}/v1/payments`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${env("MERCADOPAGO_ACCESS_TOKEN")}`,
+      Authorization: `Bearer ${mercadoPagoToken()}`,
       "Content-Type": "application/json",
       "X-Idempotency-Key": `mesay-${input.orderId}`
     },
@@ -92,12 +102,12 @@ export async function createProviderCharge(input: ProviderChargeInput): Promise<
 export async function lookupProviderPayment(provider: Exclude<PixProvider, "manual">, environment: "test" | "production", externalPaymentId: string): Promise<ProviderPaymentLookup> {
   if (!providerConfigured(provider)) throw new PixProviderError("Credenciais do provedor Pix nao configuradas no servidor.");
   if (provider === "openpix") {
-    const body = await jsonRequest(`${baseUrl("openpix", environment)}/charge/${encodeURIComponent(externalPaymentId)}`, { headers: { Authorization: env("OPENPIX_API_KEY") } });
+    const body = await jsonRequest(`${baseUrl("openpix", environment)}/charge/${encodeURIComponent(externalPaymentId)}`, { headers: { Authorization: openPixToken() } });
     const charge = (body.charge ?? body) as Record<string, unknown>;
     const status = stringValue(charge.status).toUpperCase();
     return { externalPaymentId: stringValue(charge.correlationID) || externalPaymentId, txid: stringValue(charge.transactionID), amount: Number(charge.value ?? 0) / 100, paid: status === "COMPLETED", expired: status === "EXPIRED", payload: body };
   }
-  const body = await jsonRequest(`${baseUrl("mercado_pago", environment)}/v1/payments/${encodeURIComponent(externalPaymentId)}`, { headers: { Authorization: `Bearer ${env("MERCADOPAGO_ACCESS_TOKEN")}` } });
+  const body = await jsonRequest(`${baseUrl("mercado_pago", environment)}/v1/payments/${encodeURIComponent(externalPaymentId)}`, { headers: { Authorization: `Bearer ${mercadoPagoToken()}` } });
   const status = stringValue(body.status).toLowerCase();
   return { externalPaymentId: stringValue(body.id) || externalPaymentId, txid: stringValue(body.transaction_id), amount: Number(body.transaction_amount ?? 0), paid: status === "approved", expired: status === "cancelled" || status === "rejected", payload: body };
 }
@@ -105,19 +115,19 @@ export async function lookupProviderPayment(provider: Exclude<PixProvider, "manu
 export async function cancelProviderCharge(provider: Exclude<PixProvider, "manual">, environment: "test" | "production", externalPaymentId: string) {
   if (!providerConfigured(provider)) throw new PixProviderError("Credenciais do provedor Pix nao configuradas no servidor.");
   if (provider === "openpix") {
-    await jsonRequest(`${baseUrl("openpix", environment)}/charge/${encodeURIComponent(externalPaymentId)}`, { method: "DELETE", headers: { Authorization: env("OPENPIX_API_KEY") } });
+    await jsonRequest(`${baseUrl("openpix", environment)}/charge/${encodeURIComponent(externalPaymentId)}`, { method: "DELETE", headers: { Authorization: openPixToken() } });
     return;
   }
-  await jsonRequest(`${baseUrl("mercado_pago", environment)}/v1/payments/${encodeURIComponent(externalPaymentId)}`, { method: "PUT", headers: { Authorization: `Bearer ${env("MERCADOPAGO_ACCESS_TOKEN")}`, "Content-Type": "application/json" }, body: JSON.stringify({ status: "cancelled" }) });
+  await jsonRequest(`${baseUrl("mercado_pago", environment)}/v1/payments/${encodeURIComponent(externalPaymentId)}`, { method: "PUT", headers: { Authorization: `Bearer ${mercadoPagoToken()}`, "Content-Type": "application/json" }, body: JSON.stringify({ status: "cancelled" }) });
 }
 
 export function verifyOpenPixWebhook(providedToken: string | null) {
-  const expected = env("OPENPIX_WEBHOOK_TOKEN");
+  const expected = env("OPENPIX_WEBHOOK_TOKEN") || env("PAYMENT_WEBHOOK_SECRET");
   return Boolean(expected && providedToken && safeEqual(expected, providedToken.replace(/^Bearer\s+/i, "")));
 }
 
 export function verifyMercadoPagoWebhook(signature: string | null, requestId: string | null, paymentId: string) {
-  const secret = env("MERCADOPAGO_WEBHOOK_SECRET");
+  const secret = env("MERCADO_PAGO_WEBHOOK_SECRET") || env("MERCADOPAGO_WEBHOOK_SECRET") || env("PAYMENT_WEBHOOK_SECRET");
   if (!secret || !signature || !paymentId) return false;
   const values = Object.fromEntries(signature.split(",").map((part) => part.trim().split("=")).filter(([key, value]) => key && value));
   const timestamp = values.ts;
