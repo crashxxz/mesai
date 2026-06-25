@@ -96,10 +96,19 @@ export function getPreparationItems(
     .filter(
       (item) =>
         item.restaurantId === restaurantId &&
-        (item.preparationSector === sector || item.preparationSector === "both") &&
+        itemAppearsInPreparationSector(item, sector) &&
         activeStatuses.includes(item.status)
     )
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+}
+
+export function itemAppearsInPreparationSector(
+  item: Pick<OrderItem, "preparationSector">,
+  sector: Exclude<PreparationSector, "none">
+) {
+  if (item.preparationSector === "none") return false;
+  if (item.preparationSector === sector || item.preparationSector === "both") return true;
+  return sector === "kitchen" && item.preparationSector === "bar";
 }
 
 export function getKitchenItems(state: AppState, restaurantId: UUID) {

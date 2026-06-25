@@ -21,7 +21,7 @@ import { PeriodFilter } from "@/components/period-filter";
 import { RoleGuard } from "@/components/role-guard";
 import { Button } from "@/components/ui/button";
 import type { PeriodFilterValue } from "@/lib/services";
-import { getDashboardMetrics } from "@/lib/services";
+import { getDashboardMetrics, itemAppearsInPreparationSector } from "@/lib/services";
 import { useStore } from "@/lib/store";
 import { useBusinessPreset } from "@/lib/use-business-preset";
 import { brl } from "@/lib/utils";
@@ -41,10 +41,10 @@ export default function DashboardPage() {
   const activeAlerts = state.tableAlerts.filter((alert) => alert.restaurantId === restaurantId && alert.active);
   const readyItems = state.orderItems.filter((item) => item.restaurantId === restaurantId && item.status === "ready");
   const kitchenQueue = state.orderItems.filter(
-    (item) => item.restaurantId === restaurantId && ["kitchen", "both"].includes(item.preparationSector) && ["sent", "received", "preparing"].includes(item.status)
+    (item) => item.restaurantId === restaurantId && itemAppearsInPreparationSector(item, "kitchen") && ["sent", "received", "preparing"].includes(item.status)
   );
   const barQueue = state.orderItems.filter(
-    (item) => item.restaurantId === restaurantId && ["bar", "both"].includes(item.preparationSector) && ["sent", "received", "preparing"].includes(item.status)
+    (item) => item.restaurantId === restaurantId && itemAppearsInPreparationSector(item, "bar") && ["sent", "received", "preparing"].includes(item.status)
   );
   const billRequests = activeAlerts.filter((alert) => alert.type === "bill_request").length;
   const waiterCalls = activeAlerts.filter((alert) => alert.type === "waiter_call").length;

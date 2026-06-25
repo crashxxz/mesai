@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { canAccess, canCloseAccount, canManageProducts, canSeeFinance, roleLabel } from "../lib/permissions";
-import { calculateOrderTotals, getBarItems, getFinancialSummary, getKitchenItems } from "../lib/services";
+import { calculateOrderTotals, getBarItems, getFinancialSummary, getKitchenItems, itemAppearsInPreparationSector } from "../lib/services";
 import { createSeedState } from "../lib/seed";
 import type { Profile, UserRole } from "../lib/types";
 
@@ -60,6 +60,15 @@ test("totais, financeiro e filas do seed permanecem válidos", () => {
   assert.equal(summary.income, 72.6);
   assert.equal(summary.expenses, 18);
   assert.equal(summary.result, 54.6);
-  assert.equal(getKitchenItems(state, "rest_maricota_demo").every((item) => item.preparationSector === "kitchen"), true);
-  assert.equal(getBarItems(state, "rest_maricota_demo").every((item) => item.preparationSector === "bar"), true);
+
+  const kitchenItems = getKitchenItems(state, "rest_maricota_demo");
+  const barItems = getBarItems(state, "rest_maricota_demo");
+  const mirroredDrink = state.orderItems.find((item) => item.id === "item_open_cerveja");
+  assert.ok(mirroredDrink);
+  assert.equal(itemAppearsInPreparationSector(mirroredDrink, "kitchen"), true);
+  assert.equal(itemAppearsInPreparationSector(mirroredDrink, "bar"), true);
+  assert.equal(kitchenItems.some((item) => item.id === "item_open_cerveja"), true);
+  assert.equal(barItems.some((item) => item.id === "item_open_cerveja"), true);
+  assert.equal(kitchenItems.filter((item) => item.id === "item_open_cerveja").length, 1);
+  assert.equal(barItems.filter((item) => item.id === "item_open_cerveja").length, 1);
 });

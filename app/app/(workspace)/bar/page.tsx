@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Martini } from "lucide-react";
 import { PreparationBoard } from "@/components/preparation-board";
 import { RoleGuard } from "@/components/role-guard";
-import { getBarItems } from "@/lib/services";
+import { getBarItems, itemAppearsInPreparationSector } from "@/lib/services";
 import { useStore } from "@/lib/store";
 import { useBusinessPreset } from "@/lib/use-business-preset";
 
@@ -19,7 +19,7 @@ export default function BarPage() {
       const readyItems = state.orderItems.filter(
         (item) =>
           item.restaurantId === restaurantId &&
-          ["bar", "both"].includes(item.preparationSector) &&
+          itemAppearsInPreparationSector(item, "bar") &&
           item.status === "ready"
       );
       return [...activeItems, ...readyItems];

@@ -3,6 +3,7 @@
 import { Bell, BellRing, CheckCheck, Volume2, VolumeX, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { effectiveRoles } from "@/lib/permissions";
+import { itemAppearsInPreparationSector } from "@/lib/services";
 import { useStore } from "@/lib/store";
 import type { UserRole } from "@/lib/types";
 
@@ -68,11 +69,11 @@ function buildNotices(state: ReturnType<typeof useStore>["state"], restaurantId?
   for (const order of state.orders.filter((item) => item.restaurantId === restaurantId)) {
     if (order.status === "closed") notices.push({ id: `closed-${order.id}`, text: "Comanda fechada", at: order.closedAt ?? order.updatedAt, roles: ["owner", "manager", "cashier"] });
     else {
-      const sectors = state.orderItems.filter((item) => item.orderId === order.id).map((item) => item.preparationSector);
+      const orderItems = state.orderItems.filter((item) => item.orderId === order.id);
       const roles: UserRole[] = ["owner", "manager", "waiter"];
-      if (sectors.some((sector) => sector === "kitchen" || sector === "both")) roles.push("kitchen");
-      if (sectors.some((sector) => sector === "bar" || sector === "both")) roles.push("bar");
-      notices.push({ id: `order-${order.id}`, text: order.source === "qr_code" ? "Novo pedido pelo QR" : "Novo pedido do atendimento", at: order.createdAt, roles });
+      if (orderItems.some((item) => itemAppearsInPreparationSector(item, "kitchen"))) roles.push("kitchen");
+      if (orderItems.some((item) => itemAppearsInPreparationSector(item, "bar"))) roles.push("bar");
+      notices.push({ id: `order-${order.id}`, text: order.source === "qr_code" ? "Novo pedido pelo QR" : "Novo pedido do atendimento", at: order.createdAt, roles: [...new Set(roles)] });
     }
   }
   for (const alert of state.tableAlerts.filter((item) => item.restaurantId === restaurantId && item.active)) notices.push({ id: `alert-${alert.id}`, text: alert.type === "bill_request" ? "Cliente pediu a conta" : "Cliente chamou o garçom", at: alert.createdAt, roles: alert.type === "bill_request" ? ["owner", "manager", "waiter", "cashier"] : ["owner", "manager", "waiter"] });

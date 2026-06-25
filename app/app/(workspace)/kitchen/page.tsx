@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { ChefHat } from "lucide-react";
 import { PreparationBoard } from "@/components/preparation-board";
 import { RoleGuard } from "@/components/role-guard";
-import { getKitchenItems } from "@/lib/services";
+import { getKitchenItems, itemAppearsInPreparationSector } from "@/lib/services";
 import { useStore } from "@/lib/store";
 import { useBusinessPreset } from "@/lib/use-business-preset";
 
@@ -19,7 +19,7 @@ export default function KitchenPage() {
       const readyItems = state.orderItems.filter(
         (item) =>
           item.restaurantId === restaurantId &&
-          ["kitchen", "both"].includes(item.preparationSector) &&
+          itemAppearsInPreparationSector(item, "kitchen") &&
           item.status === "ready"
       );
       return [...activeItems, ...readyItems];
