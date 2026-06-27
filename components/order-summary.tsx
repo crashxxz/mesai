@@ -99,7 +99,7 @@ export function OrderSummary({
                   {(item.status === "ready" || !["cancelled", "delivered", "preparing"].includes(item.status)) ? (
                     <div className="mt-2 flex gap-1.5">
                       {item.status === "ready" ? (
-                        <Button size="sm" variant="green" onClick={() => onDeliver(item.id)}>
+                        <Button size="sm" variant="outline" className="border-sky-500 bg-sky-50 text-sky-800 hover:bg-sky-100" onClick={() => onDeliver(item.id)}>
                           <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
                           Entregar
                         </Button>

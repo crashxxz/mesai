@@ -30,6 +30,7 @@ export default function CheckoutPage() {
   const table = state.tables.find((item) => item.id === order?.tableId);
   const items = order ? getOrderItems(state, order.id) : [];
   const payments = state.payments.filter((payment) => payment.orderId === order?.id);
+  const cashOpen = profile?.role === "waiter" || state.cashSessions.some((s) => s.restaurantId === restaurant?.id && s.status === "open");
 
   if (!order) {
     return <div className="rounded-lg bg-white p-5 font-black text-slate-700">Pedido não encontrado</div>;
@@ -66,6 +67,7 @@ export default function CheckoutPage() {
           items={items}
           payments={payments}
           accountName={table?.name ?? order.customerName ?? "Comanda"}
+          cashOpen={cashOpen}
           onDiscount={(value) => updateOrderDiscount(order.id, value)}
           onSetServiceFeeEnabled={(enabled) => void setOrderServiceFeeEnabled(order.id, enabled)}
           pix={{ key: settings?.pixKey, recipient: settings?.pixRecipientName ?? restaurant?.name, city: settings?.pixCity ?? restaurant?.city, provider: settings?.pixProvider, providerEnvironment: settings?.pixProviderEnvironment }}

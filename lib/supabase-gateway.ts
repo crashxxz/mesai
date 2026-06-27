@@ -24,6 +24,8 @@ export interface WorkspaceBootstrap {
   financialEntries: Record<string, unknown>[];
   stockMovements: Record<string, unknown>[];
   tableAlerts: Record<string, unknown>[];
+  cashSessions: Record<string, unknown>[];
+  cashMovements: Record<string, unknown>[];
 }
 
 function client() {
@@ -81,7 +83,7 @@ export const supabaseGateway = {
       .eq("active", true)
       .single();
     const row = unwrap(profileResult, "Perfil ativo não encontrado");
-    const [restaurantResult, settingsResult, categoriesResult, productsResult, tablesResult, ordersResult, orderItemsResult, paymentsResult, financialEntriesResult, stockMovementsResult, alertsResult] = await Promise.all([
+    const [restaurantResult, settingsResult, categoriesResult, productsResult, tablesResult, ordersResult, orderItemsResult, paymentsResult, financialEntriesResult, stockMovementsResult, alertsResult, cashSessionsResult, cashMovementsResult] = await Promise.all([
       client().from("restaurants").select("*").eq("id", row.restaurant_id).single(),
       client().from("restaurant_settings").select("*").eq("restaurant_id", row.restaurant_id).maybeSingle(),
       client().from("categories").select("*").eq("restaurant_id", row.restaurant_id),
@@ -92,7 +94,9 @@ export const supabaseGateway = {
       client().from("payments").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(500),
       client().from("financial_entries").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(500),
       client().from("stock_movements").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(500),
-      client().from("table_alerts").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(100)
+      client().from("table_alerts").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(100),
+      client().from("cash_sessions").select("*").eq("restaurant_id", row.restaurant_id).order("opened_at", { ascending: false }).limit(20),
+      client().from("cash_movements").select("*").eq("restaurant_id", row.restaurant_id).order("created_at", { ascending: false }).limit(200)
     ]);
     const restaurant = unwrap(restaurantResult, "Estabelecimento não encontrado") as Record<string, unknown>;
     if (settingsResult.error) throw new Error(`Configurações não encontradas: ${settingsResult.error.message}`);
@@ -113,6 +117,8 @@ export const supabaseGateway = {
       financialEntries: financialEntriesResult.data as Record<string, unknown>[],
       stockMovements: stockMovementsResult.data as Record<string, unknown>[],
       tableAlerts: alertsResult.data as Record<string, unknown>[],
+      cashSessions: cashSessionsResult.data as Record<string, unknown>[] ?? [],
+      cashMovements: cashMovementsResult.data as Record<string, unknown>[] ?? [],
       profile: {
         id: row.id,
         userId: row.user_id,

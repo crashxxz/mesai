@@ -27,6 +27,7 @@ export function PaymentForm({
   items,
   payments,
   accountName,
+  cashOpen = true,
   onDiscount,
   onSetServiceFeeEnabled,
   pix,
@@ -38,6 +39,7 @@ export function PaymentForm({
   items: OrderItem[];
   payments: Payment[];
   accountName: string;
+  cashOpen?: boolean;
   onDiscount: (value: number) => void;
   onSetServiceFeeEnabled: (enabled: boolean) => void;
   pix?: { key?: string; recipient?: string; city?: string; provider?: PixProvider; providerEnvironment?: "test" | "production" };
@@ -102,10 +104,9 @@ export function PaymentForm({
       setAmount(selected.toFixed(2));
     } else if (splitMode === "items" && selectedItemIds.length === 0) {
       setAmount(remaining.toFixed(2));
-    } else if (splitMode === "value") {
-      setAmount(splitValue);
     }
-  }, [splitMode, people, order.total, selectedItemIds, itemSplitTotal, remaining, splitValue]);
+    // splitMode "value" syncs amount via splitValue onChange, not here
+  }, [splitMode, people, order.total, selectedItemIds, itemSplitTotal, remaining]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -292,7 +293,7 @@ export function PaymentForm({
                 min={0}
                 step="0.01"
                 value={splitValue}
-                onChange={(event) => setSplitValue(event.target.value)}
+                onChange={(event) => { setSplitValue(event.target.value); setAmount(event.target.value); }}
               />
             </label>
           ) : null}
@@ -409,7 +410,8 @@ export function PaymentForm({
           {method === "pix" && !onlinePix && !pix?.key ? <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-900">Cadastre a chave Pix em Ajustes para gerar o QR Code.</p> : null}
           {method === "pix" && !onlinePix && pix?.key && !pixCode ? <p className="rounded-lg bg-emerald-50 p-3 text-sm font-bold text-emerald-800">Pix manual: confirme o pagamento no banco/app e clique em &quot;Marcar como pago&quot;.</p> : null}
           {method === "pix" && !onlinePix && pixCode ? <div className="grid place-items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong className="text-emerald-900">Pix de {brl(paymentAmount)}</strong>{pixImage ? <Image src={pixImage} alt="QR Code Pix" width={220} height={220} unoptimized /> : null}<p className="text-xs font-bold text-emerald-700">Confirme no banco/app e clique abaixo.</p><Button type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(pixCode)}>Copiar código Pix</Button></div> : null}
-          <Button variant="amber" size="lg" type="submit" disabled={remaining <= 0 || paymentAmount <= 0 || submitting || pixLoading}>
+          {!cashOpen && remaining > 0 ? <p className="rounded-lg bg-red-50 p-3 text-sm font-black text-red-800">Abra o caixa antes de registrar pagamentos.</p> : null}
+          <Button variant="amber" size="lg" type="submit" disabled={!cashOpen || remaining <= 0 || paymentAmount <= 0 || submitting || pixLoading}>
             {onlinePix ? pixLoading ? "Gerando Pix..." : pixCharge ? "Gerar novo Pix" : "Gerar Pix" : method === "pix" ? submitting ? "Registrando..." : "Marcar como pago" : method === "credit_card" || method === "debit_card" ? "Registrar pagamento manual" : "Registrar"}
           </Button>
         </div>

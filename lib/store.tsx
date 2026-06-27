@@ -23,6 +23,8 @@ import {
 } from "@/lib/services";
 import type {
   AppState,
+  CashMovement,
+  CashSession,
   Category,
   FinancialEntry,
   Order,
@@ -1575,6 +1577,8 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
   const remoteFinancialEntries: FinancialEntry[] = workspace.financialEntries.map((item) => ({ id: String(item.id), restaurantId: id, type: item.type as FinancialEntry["type"], category: String(item.category ?? ""), description: String(item.description ?? ""), amount: Number(item.amount ?? 0), date: String(item.date ?? now.slice(0, 10)), paid: item.paid === true, paymentMethod: item.payment_method as FinancialEntry["paymentMethod"], notes: typeof item.notes === "string" ? item.notes : undefined, orderId: item.order_id ? String(item.order_id) : undefined, createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), cancelledAt: item.cancelled_at ? String(item.cancelled_at) : undefined, cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined }));
   const remoteStockMovements: StockMovement[] = workspace.stockMovements.map((item) => ({ id: String(item.id), restaurantId: id, productId: String(item.product_id), type: item.type as StockMovement["type"], quantity: Number(item.quantity ?? 0), reason: String(item.reason ?? ""), createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now) }));
   const remoteAlerts: TableAlert[] = workspace.tableAlerts.map((item) => ({ id: String(item.id), restaurantId: id, tableId: String(item.table_id), type: item.type as TableAlert["type"], active: item.active === true, createdAt: String(item.created_at ?? now), resolvedAt: item.resolved_at ? String(item.resolved_at) : undefined }));
+  const remoteCashSessions: CashSession[] = (workspace.cashSessions ?? []).map((item) => ({ id: String(item.id), restaurantId: id, openedBy: String(item.opened_by ?? ""), closedBy: item.closed_by ? String(item.closed_by) : undefined, openingAmount: Number(item.opening_amount ?? 0), expectedAmount: Number(item.expected_amount ?? 0), countedAmount: item.counted_amount !== null && item.counted_amount !== undefined ? Number(item.counted_amount) : undefined, differenceAmount: item.difference_amount !== null && item.difference_amount !== undefined ? Number(item.difference_amount) : undefined, status: item.status as CashSession["status"], openedAt: String(item.opened_at ?? now), closedAt: item.closed_at ? String(item.closed_at) : undefined }));
+  const remoteCashMovements: CashMovement[] = (workspace.cashMovements ?? []).map((item) => ({ id: String(item.id), restaurantId: id, cashSessionId: String(item.cash_session_id), type: item.type as CashMovement["type"], amount: Number(item.amount ?? 0), description: String(item.description ?? ""), createdBy: item.created_by ? String(item.created_by) : undefined, createdAt: String(item.created_at ?? now) }));
 
   return {
     ...current,
@@ -1592,6 +1596,8 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
     financialEntries: [...current.financialEntries.filter((item) => item.restaurantId !== id), ...remoteFinancialEntries],
     stockMovements: [...current.stockMovements.filter((item) => item.restaurantId !== id), ...remoteStockMovements],
     tableAlerts: [...current.tableAlerts.filter((item) => item.restaurantId !== id), ...remoteAlerts],
+    cashSessions: remoteCashSessions.length ? [...current.cashSessions.filter((item) => item.restaurantId !== id), ...remoteCashSessions] : current.cashSessions,
+    cashMovements: remoteCashMovements.length ? [...current.cashMovements.filter((item) => item.restaurantId !== id), ...remoteCashMovements] : current.cashMovements,
     currentProfileId: workspace.profile.id
   };
 }
