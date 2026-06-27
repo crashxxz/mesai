@@ -17,12 +17,24 @@ export default function CashPage() {
     : [];
   const withdrawals = movements.filter((movement) => movement.type === "withdrawal").reduce((sum, movement) => sum + movement.amount, 0);
   const supplies = movements.filter((movement) => movement.type === "supply").reduce((sum, movement) => sum + movement.amount, 0);
+  const salesFromMovements = movements.filter((movement) => movement.type === "sale").reduce((sum, movement) => sum + movement.amount, 0);
 
   const today = dateKey(new Date());
   const todayPayments = state.payments
     .filter((p) => p.restaurantId === restaurant?.id && (p.paymentStatus ?? "paid") === "paid" && dateKey(p.createdAt) === today)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const todayTotal = todayPayments.reduce((sum, p) => sum + p.amount, 0);
+
+  // Pagamentos recebidos durante a sessão aberta (se cash_movements não refletir via RPC)
+  const sessionPayments = openSession
+    ? state.payments.filter((p) => p.restaurantId === restaurant?.id && (p.paymentStatus ?? "paid") === "paid" && new Date(p.createdAt) >= new Date(openSession.openedAt))
+    : [];
+  const sessionPaymentsTotal = sessionPayments.reduce((sum, p) => sum + p.amount, 0);
+
+  // Esperado real = max(expectedAmount do banco, valor calculado com pagamentos do turno)
+  const computedExpected = openSession
+    ? openSession.openingAmount + Math.max(salesFromMovements, sessionPaymentsTotal) + supplies - withdrawals
+    : 0;
 
   return (
     <RoleGuard allowed={["owner", "manager", "cashier"]}>
@@ -35,12 +47,18 @@ export default function CashPage() {
               <p className="text-sm font-bold text-slate-500">Abrir, registrar dinheiro que saiu/entrou e fechar.</p>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
-              <CashStat label="Esperado" value={brl(openSession?.expectedAmount ?? 0)} tone="bg-emerald-50 text-emerald-800" />
+              <CashStat label="Esperado" value={brl(openSession ? computedExpected : 0)} tone="bg-emerald-50 text-emerald-800" />
               <CashStat label="Sangria" value={brl(withdrawals)} tone="bg-red-50 text-red-700" />
               <CashStat label="Suprimento" value={brl(supplies)} tone="bg-sky-50 text-sky-800" />
             </div>
           </div>
         </header>
+
+        {!openSession && todayPayments.length > 0 ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-black text-amber-900">
+            ⚠️ Caixa fechado. Há {todayPayments.length} pagamento(s) hoje ({brl(todayTotal)}) que não entraram no controle de caixa. Abra o caixa para registrar movimentos.
+          </div>
+        ) : null}
 
         <div className="grid gap-4 xl:grid-cols-[380px_1fr]">
           <div>

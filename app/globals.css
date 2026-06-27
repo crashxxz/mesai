@@ -44,6 +44,10 @@ html[data-theme="dark"] :is(.bg-white, .bg-slate-50, .bg-slate-100) {
   background-color: #111827 !important;
 }
 
+html[data-theme="dark"] [class*="bg-white\/"] {
+  background-color: rgba(17, 24, 39, 0.95) !important;
+}
+
 html[data-theme="dark"] :is(.border-slate-100, .border-slate-200, .border-slate-300) {
   border-color: #334155 !important;
 }
@@ -66,12 +70,45 @@ html[data-theme="dark"] :is(.bg-amber-50, .bg-amber-100) {
   background-color: #3b2b0a !important;
 }
 
-html[data-theme="dark"] :is(.bg-emerald-50, .bg-emerald-100) {
+html[data-theme="dark"] :is(.bg-emerald-50, .bg-emerald-100, .bg-green-50) {
   background-color: #07382b !important;
 }
 
 html[data-theme="dark"] :is(.bg-red-50, .bg-red-100) {
   background-color: #3a1015 !important;
+}
+
+html[data-theme="dark"] :is(.bg-sky-50, .bg-sky-100, .bg-cyan-50) {
+  background-color: #0c2d48 !important;
+}
+
+html[data-theme="dark"] :is(.bg-orange-50, .bg-orange-100) {
+  background-color: #3b2506 !important;
+}
+
+html[data-theme="dark"] :is(.bg-lime-50, .bg-lime-100) {
+  background-color: #1a2e0a !important;
+}
+
+html[data-theme="dark"] :is(.bg-indigo-50) {
+  background-color: #1e1b4b !important;
+}
+
+html[data-theme="dark"] :is(.border-amber-200, .border-emerald-200, .border-red-200, .border-sky-200, .border-orange-200, .border-lime-200) {
+  border-color: #475569 !important;
+}
+
+html[data-theme="dark"] .shadow-soft,
+html[data-theme="dark"] .shadow-soft-lg {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+html[data-theme="dark"] :is(.border-dashed) {
+  border-color: #475569 !important;
+}
+
+html[data-theme="dark"] .login-bg {
+  background: #0b1220 !important;
 }
 
 button,

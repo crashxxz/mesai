@@ -35,7 +35,7 @@ export default function CheckoutPage() {
     return <div className="rounded-lg bg-white p-5 font-black text-slate-700">Pedido não encontrado</div>;
   }
 
-  if (!canCloseAccount(profile, settings?.waiterCanCloseAccount ?? false)) {
+  if (!canCloseAccount(profile, settings?.waiterCanCloseAccount ?? true)) {
     return (
       <RoleGuard allowed={["owner", "manager", "waiter", "cashier"]}>
         <div className="rounded-lg border border-slate-200 bg-white p-5 font-black text-slate-700 shadow-soft">

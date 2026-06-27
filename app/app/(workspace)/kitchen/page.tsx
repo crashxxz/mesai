@@ -16,11 +16,17 @@ export default function KitchenPage() {
     () => {
       const restaurantId = restaurant?.id ?? state.restaurants[0].id;
       const activeItems = getKitchenItems(state, restaurantId);
+      const openOrderIds = new Set(
+        state.orders
+          .filter((o) => o.restaurantId === restaurantId && !["closed", "cancelled"].includes(o.status))
+          .map((o) => o.id)
+      );
       const readyItems = state.orderItems.filter(
         (item) =>
           item.restaurantId === restaurantId &&
           itemAppearsInPreparationSector(item, "kitchen") &&
-          item.status === "ready"
+          item.status === "ready" &&
+          openOrderIds.has(item.orderId)
       );
       return [...activeItems, ...readyItems];
     },
