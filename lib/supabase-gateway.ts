@@ -207,6 +207,11 @@ export const supabaseGateway = {
     return unwrap(result, "Não foi possível fechar a conta") as UUID;
   },
 
+  async reopenOrder(orderId: UUID, reason: string) {
+    const result = await client().rpc("reopen_order", { p_order_id: orderId, p_reason: reason.trim() });
+    return unwrap(result, "Não foi possível reabrir o pedido") as UUID;
+  },
+
   async cancelFinancialEntry(entryId: UUID, reason: string) {
     const result = await client().rpc("cancel_financial_entry", { p_entry_id: entryId, p_reason: reason.trim() });
     return unwrap(result, "Não foi possível cancelar o lançamento") as UUID;

@@ -909,6 +909,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const activeProfile = currentProfile();
         if (!order || !reason.trim() || !["owner", "manager", "waiter"].includes(activeProfile?.role ?? "bar")) return;
 
+        if (runtimeConfig.dataMode === "supabase") {
+          void (async () => {
+            await supabaseGateway.reopenOrder(orderId, reason);
+            const workspace = await supabaseGateway.loadWorkspace();
+            setState((current) => mergeWorkspace(current, workspace));
+          })();
+          return;
+        }
+
         let next: AppState = {
           ...state,
           orders: state.orders.map((item) =>
