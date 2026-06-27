@@ -2,9 +2,9 @@
 
 import { CashSessionPanel } from "@/components/cash-session-panel";
 import { RoleGuard } from "@/components/role-guard";
-import { cashMovementTypeLabel, cashSessionStatusLabel } from "@/lib/services";
+import { cashMovementTypeLabel, cashSessionStatusLabel, paymentMethodLabel } from "@/lib/services";
 import { useStore } from "@/lib/store";
-import { brl } from "@/lib/utils";
+import { brl, dateKey } from "@/lib/utils";
 
 export default function CashPage() {
   const { state, restaurant, openCashSession, addCashMovement, closeCashSession } = useStore();
@@ -17,6 +17,12 @@ export default function CashPage() {
     : [];
   const withdrawals = movements.filter((movement) => movement.type === "withdrawal").reduce((sum, movement) => sum + movement.amount, 0);
   const supplies = movements.filter((movement) => movement.type === "supply").reduce((sum, movement) => sum + movement.amount, 0);
+
+  const today = dateKey(new Date());
+  const todayPayments = state.payments
+    .filter((p) => p.restaurantId === restaurant?.id && (p.paymentStatus ?? "paid") === "paid" && dateKey(p.createdAt) === today)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const todayTotal = todayPayments.reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <RoleGuard allowed={["owner", "manager", "cashier"]}>
@@ -61,6 +67,27 @@ export default function CashPage() {
                 ) : (
                   <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center text-sm font-bold text-slate-400">
                     Nenhum movimento registrado
+                  </div>
+                )}
+              </div>
+            </article>
+
+            <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-lg font-black text-slate-950">Pagamentos recebidos hoje</h2>
+                <strong className="text-emerald-700">{brl(todayTotal)}</strong>
+              </div>
+              <div className="grid gap-2">
+                {todayPayments.length ? (
+                  todayPayments.map((payment) => (
+                    <div key={payment.id} className="flex justify-between rounded-2xl bg-slate-50 p-3 text-sm font-bold">
+                      <span>{paymentMethodLabel(payment.method)}{payment.cardBrand ? ` · ${payment.cardBrand}` : ""}</span>
+                      <strong className="text-emerald-700">{brl(payment.amount)}</strong>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center text-sm font-bold text-slate-400">
+                    Nenhum pagamento registrado hoje
                   </div>
                 )}
               </div>

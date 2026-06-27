@@ -219,7 +219,7 @@ export const supabaseGateway = {
 
   async setOrderServiceFeeEnabled(orderId: UUID, enabled: boolean) {
     const result = await client().rpc("set_order_service_fee_enabled", { p_order_id: orderId, p_enabled: enabled });
-    return unwrap(result, "NÃ£o foi possÃ­vel atualizar a taxa de serviÃ§o") as UUID;
+    return unwrap(result, "Não foi possível atualizar a taxa de serviço") as UUID;
   },
 
   async closeTable(tableId: UUID) {

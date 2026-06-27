@@ -54,7 +54,7 @@ export function PaymentForm({
   const [cardBrand, setCardBrand] = useState("");
   const [cashReceived, setCashReceived] = useState("");
   const [splitMode, setSplitMode] = useState<"equal" | "value" | "items">("value");
-  const [people, setPeople] = useState(2);
+  const [peopleStr, setPeopleStr] = useState("2");
   const [splitValue, setSplitValue] = useState(remaining.toFixed(2));
   const [confirmClose, setConfirmClose] = useState(false);
   const [pixImage, setPixImage] = useState("");
@@ -62,14 +62,22 @@ export function PaymentForm({
   const [pixLoading, setPixLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [pixError, setPixError] = useState("");
+  const [discountType, setDiscountType] = useState<"value" | "percent">("value");
+  const [discountInput, setDiscountInput] = useState(String(order.discount || 0));
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const people = Math.max(1, Number(peopleStr) || 1);
 
   const numericAmount = Number(amount) || 0;
   const paymentAmount = Math.min(Math.max(0, numericAmount), remaining);
   const change = method === "cash" ? Math.max(0, (Number(cashReceived) || 0) - paymentAmount) : 0;
 
   const itemSplitTotal = useMemo(
-    () => items.filter((item) => item.status !== "cancelled").reduce((sum, item) => sum + item.unitPriceSnapshot * item.quantity, 0),
-    [items]
+    () => {
+      const activeItems = items.filter((item) => item.status !== "cancelled");
+      if (selectedItemIds.length === 0) return activeItems.reduce((sum, item) => sum + item.unitPriceSnapshot * item.quantity, 0);
+      return activeItems.filter((item) => selectedItemIds.includes(item.id)).reduce((sum, item) => sum + item.unitPriceSnapshot * item.quantity, 0);
+    },
+    [items, selectedItemIds]
   );
   const pixProvider = pix?.provider ?? "manual";
   const onlinePix = method === "pix" && runtimeConfig.dataMode === "supabase" && (pixProvider === "openpix" || pixProvider === "mercado_pago");
@@ -85,6 +93,19 @@ export function PaymentForm({
     setAmount(remaining.toFixed(2));
     setSplitValue(remaining.toFixed(2));
   }, [remaining]);
+
+  useEffect(() => {
+    if (splitMode === "equal") {
+      setAmount((order.total / people).toFixed(2));
+    } else if (splitMode === "items" && selectedItemIds.length > 0) {
+      const selected = Math.min(itemSplitTotal, remaining);
+      setAmount(selected.toFixed(2));
+    } else if (splitMode === "items" && selectedItemIds.length === 0) {
+      setAmount(remaining.toFixed(2));
+    } else if (splitMode === "value") {
+      setAmount(splitValue);
+    }
+  }, [splitMode, people, order.total, selectedItemIds, itemSplitTotal, remaining, splitValue]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -176,17 +197,32 @@ export function PaymentForm({
             <span>Subtotal</span>
             <strong>{brl(order.subtotal)}</strong>
           </div>
-          <label className="flex items-center justify-between gap-3">
+          <div className="grid gap-1 text-sm font-bold text-slate-700">
             <span>Desconto</span>
-            <input
-              className="h-10 w-32 rounded-lg border border-slate-200 px-3 text-right"
-              type="number"
-              min={0}
-              step="0.01"
-              value={order.discount}
-              onChange={(event) => onDiscount(Number(event.target.value) || 0)}
-            />
-          </label>
+            <div className="flex gap-2">
+              <button type="button" className={cn("h-8 rounded-lg border px-3 text-xs font-black", discountType === "value" ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200")} onClick={() => { setDiscountType("value"); const val = Number(discountInput) || 0; onDiscount(Math.min(val, order.subtotal)); }}>R$</button>
+              <button type="button" className={cn("h-8 rounded-lg border px-3 text-xs font-black", discountType === "percent" ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200")} onClick={() => { setDiscountType("percent"); const pct = Number(discountInput) || 0; const val = Number((order.subtotal * Math.min(pct, 100) / 100).toFixed(2)); onDiscount(val); }}>%</button>
+              <input
+                className="h-8 w-28 rounded-lg border border-slate-200 px-3 text-right"
+                type="number"
+                min={0}
+                step="0.01"
+                max={discountType === "percent" ? 100 : order.subtotal}
+                value={discountInput}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  setDiscountInput(raw);
+                  const num = Number(raw) || 0;
+                  if (discountType === "percent") {
+                    const clamped = Math.min(num, 100);
+                    onDiscount(Number((order.subtotal * clamped / 100).toFixed(2)));
+                  } else {
+                    onDiscount(Math.min(num, order.subtotal));
+                  }
+                }}
+              />
+            </div>
+          </div>
           <div className="flex items-center justify-between gap-3">
             <span>Taxa de serviço</span>
             <div className="flex items-center gap-2">
@@ -238,9 +274,11 @@ export function PaymentForm({
               <input
                 className="h-11 rounded-lg border border-slate-200 px-3"
                 type="number"
+                inputMode="numeric"
                 min={1}
-                value={people}
-                onChange={(event) => setPeople(Math.max(1, Number(event.target.value)))}
+                value={peopleStr}
+                onChange={(event) => setPeopleStr(event.target.value)}
+                onBlur={() => { if (!peopleStr || Number(peopleStr) < 1) setPeopleStr("1"); }}
               />
               <span className="text-lg font-black text-slate-950">{brl(order.total / people)}</span>
             </label>
@@ -262,14 +300,22 @@ export function PaymentForm({
             <div className="grid gap-2">
               {items
                 .filter((item) => item.status !== "cancelled")
-                .map((item) => (
-                  <div key={item.id} className="flex justify-between rounded-lg bg-slate-50 p-3 text-sm font-bold">
-                    <span>{item.quantity}x {item.productNameSnapshot}</span>
-                    <strong>{brl(item.unitPriceSnapshot * item.quantity)}</strong>
-                  </div>
-                ))}
+                .map((item) => {
+                  const selected = selectedItemIds.includes(item.id);
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={cn("flex justify-between rounded-lg p-3 text-sm font-bold text-left", selected ? "bg-amber-100 ring-2 ring-amber-500" : "bg-slate-50")}
+                      onClick={() => setSelectedItemIds((prev) => selected ? prev.filter((id) => id !== item.id) : [...prev, item.id])}
+                    >
+                      <span>{item.quantity}x {item.productNameSnapshot}</span>
+                      <strong>{brl(item.unitPriceSnapshot * item.quantity)}</strong>
+                    </button>
+                  );
+                })}
               <div className="flex justify-between rounded-lg bg-amber-50 p-3 text-sm font-black text-amber-900">
-                <span>Itens</span>
+                <span>Itens{selectedItemIds.length > 0 ? ` (${selectedItemIds.length})` : ""}</span>
                 <strong>{brl(itemSplitTotal)}</strong>
               </div>
             </div>
@@ -361,7 +407,8 @@ export function PaymentForm({
             </div>
           ) : null}
           {method === "pix" && !onlinePix && !pix?.key ? <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-900">Cadastre a chave Pix em Ajustes para gerar o QR Code.</p> : null}
-          {method === "pix" && !onlinePix && pixCode ? <div className="grid place-items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong className="text-emerald-900">Pix de {brl(paymentAmount)}</strong>{pixImage ? <Image src={pixImage} alt="QR Code Pix" width={220} height={220} unoptimized /> : null}<Button type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(pixCode)}>Copiar código Pix</Button></div> : null}
+          {method === "pix" && !onlinePix && pix?.key && !pixCode ? <p className="rounded-lg bg-emerald-50 p-3 text-sm font-bold text-emerald-800">Pix manual: confirme o pagamento no banco/app e clique em &quot;Marcar como pago&quot;.</p> : null}
+          {method === "pix" && !onlinePix && pixCode ? <div className="grid place-items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong className="text-emerald-900">Pix de {brl(paymentAmount)}</strong>{pixImage ? <Image src={pixImage} alt="QR Code Pix" width={220} height={220} unoptimized /> : null}<p className="text-xs font-bold text-emerald-700">Confirme no banco/app e clique abaixo.</p><Button type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(pixCode)}>Copiar código Pix</Button></div> : null}
           <Button variant="amber" size="lg" type="submit" disabled={remaining <= 0 || paymentAmount <= 0 || submitting || pixLoading}>
             {onlinePix ? pixLoading ? "Gerando Pix..." : pixCharge ? "Gerar novo Pix" : "Gerar Pix" : method === "pix" ? submitting ? "Registrando..." : "Marcar como pago" : method === "credit_card" || method === "debit_card" ? "Registrar pagamento manual" : "Registrar"}
           </Button>

@@ -651,6 +651,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           orderItems: state.orderItems.map((item) => item.orderId === orderId && !["cancelled", "delivered"].includes(item.status) ? { ...item, status: "cancelled", cancelReason: reason.trim(), updatedAt: now } : item)
         };
         next = withTotals(next, orderId);
+        const updatedOrder = next.orders.find((item) => item.id === orderId);
+        if (updatedOrder && updatedOrder.total <= 0) {
+          next = {
+            ...next,
+            orders: next.orders.map((item) => item.id === orderId ? { ...item, status: "cancelled", cancelReason: reason.trim(), closedAt: now, updatedAt: now } : item),
+            tabs: next.tabs.map((tab) => tab.id === order.tabId ? { ...tab, status: "closed", closedAt: now } : tab)
+          };
+          if (order.tableId) {
+            next = {
+              ...next,
+              tables: next.tables.map((table) => table.id === order.tableId ? { ...table, status: "free", updatedAt: now } : table),
+              tableAlerts: (next.tableAlerts ?? []).map((alert) => alert.tableId === order.tableId && alert.active ? { ...alert, active: false, resolvedAt: now } : alert)
+            };
+          }
+        }
         next = { ...next, auditLogs: [...next.auditLogs, createAuditLog(next, "order_cancelled", "orders", orderId, order, { reason })] };
         commit(next, "order");
       },
@@ -674,10 +689,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         commit(next, "order_item");
       },
       updateOrderDiscount(orderId, discount) {
+        const order = state.orders.find((item) => item.id === orderId);
+        const maxDiscount = order ? calculateOrderTotals(state, order).subtotal : 0;
+        const clamped = Math.min(Math.max(0, discount), maxDiscount);
         let next: AppState = {
           ...state,
-          orders: state.orders.map((order) =>
-            order.id === orderId ? { ...order, discount: Math.max(0, discount) } : order
+          orders: state.orders.map((item) =>
+            item.id === orderId ? { ...item, discount: clamped } : item
           )
         };
         next = withTotals(next, orderId);
@@ -889,7 +907,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const now = new Date().toISOString();
         const order = state.orders.find((item) => item.id === orderId);
         const activeProfile = currentProfile();
-        if (!order || !reason.trim() || !["owner", "waiter"].includes(activeProfile?.role ?? "bar")) return;
+        if (!order || !reason.trim() || !["owner", "manager", "waiter"].includes(activeProfile?.role ?? "bar")) return;
 
         let next: AppState = {
           ...state,
