@@ -51,12 +51,16 @@ export default function FinancePage() {
   );
   const expenses = financial.entries.filter((entry) => entry.type === "expense");
   const topProduct = metrics.topProducts[0];
+  const activeFinancialOrderIds = useMemo(
+    () => new Set(state.financialEntries.filter((e) => e.restaurantId === restaurantId && e.type === "income" && e.paid && !e.cancelledAt).map((e) => e.orderId).filter(Boolean)),
+    [restaurantId, state.financialEntries]
+  );
   const closedOrders = useMemo(
     () => state.orders
       .filter((order) => order.restaurantId === restaurantId && order.status === "closed")
-      .filter((order) => showZeroOrders || order.total > 0.001)
+      .filter((order) => showZeroOrders || (order.total > 0.001 && activeFinancialOrderIds.has(order.id)))
       .sort((a, b) => new Date(b.closedAt ?? b.updatedAt).getTime() - new Date(a.closedAt ?? a.updatedAt).getTime()),
-    [restaurantId, showZeroOrders, state.orders]
+    [restaurantId, showZeroOrders, state.orders, activeFinancialOrderIds]
   );
 
   function submitExpense(event: FormEvent) {

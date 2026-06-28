@@ -119,7 +119,7 @@ export function TableCard({
             </Link>
           </Button>
         ) : readyCount && order ? (
-          <Button asChild variant="green" className="rounded-xl">
+          <Button asChild variant="outline" className="rounded-xl border-sky-500 bg-sky-50 text-sky-800 hover:bg-sky-100">
             <Link href={`/app/tables/${table.id}`}>
               <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
               Entregar

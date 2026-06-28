@@ -188,7 +188,7 @@ export default function ProductsPage() {
                       size="icon"
                       title="Retirar 1"
                       disabled={(product.stockQuantity ?? 0) <= 0}
-                      onClick={() => recordStockMovement(product.id, "exit", 1, "Ajuste manual")}
+                      onClick={() => void recordStockMovement(product.id, "exit", 1, "Ajuste manual").catch((e) => alert(e instanceof Error ? e.message : "Erro ao retirar do estoque"))}
                     >
                       <Minus className="h-4 w-4" aria-hidden="true" />
                     </Button>
@@ -196,7 +196,7 @@ export default function ProductsPage() {
                       variant="outline"
                       size="icon"
                       title="Adicionar 1"
-                      onClick={() => recordStockMovement(product.id, "entry", 1, "Ajuste manual")}
+                      onClick={() => void recordStockMovement(product.id, "entry", 1, "Ajuste manual").catch((e) => alert(e instanceof Error ? e.message : "Erro ao adicionar estoque"))}
                     >
                       <Plus className="h-4 w-4" aria-hidden="true" />
                     </Button>

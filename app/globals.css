@@ -48,6 +48,20 @@ html[data-theme="dark"] [class*="bg-white\/"] {
   background-color: rgba(17, 24, 39, 0.95) !important;
 }
 
+html[data-theme="dark"] [class*="bg-emerald-50\/"],
+html[data-theme="dark"] [class*="bg-amber-50\/"],
+html[data-theme="dark"] [class*="bg-sky-50\/"],
+html[data-theme="dark"] [class*="bg-lime-50\/"],
+html[data-theme="dark"] [class*="bg-orange-50\/"],
+html[data-theme="dark"] [class*="bg-red-50\/"] {
+  background-color: #1e293b !important;
+}
+
+html[data-theme="dark"] .card-lift {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
 html[data-theme="dark"] :is(.border-slate-100, .border-slate-200, .border-slate-300) {
   border-color: #334155 !important;
 }
@@ -80,6 +94,10 @@ html[data-theme="dark"] :is(.bg-red-50, .bg-red-100) {
 
 html[data-theme="dark"] :is(.bg-sky-50, .bg-sky-100, .bg-cyan-50) {
   background-color: #0c2d48 !important;
+}
+
+html[data-theme="dark"] .border-sky-500 {
+  border-color: #0ea5e9 !important;
 }
 
 html[data-theme="dark"] :is(.bg-orange-50, .bg-orange-100) {

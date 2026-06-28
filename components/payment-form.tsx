@@ -52,12 +52,11 @@ export function PaymentForm({
     .reduce((sum, payment) => sum + payment.amount, 0);
   const remaining = Math.max(0, order.total - paid);
   const [method, setMethod] = useState<PaymentMethod>("pix");
-  const [amount, setAmount] = useState(remaining.toFixed(2));
+  const [amountOverride, setAmountOverride] = useState<string | null>(null);
   const [cardBrand, setCardBrand] = useState("");
   const [cashReceived, setCashReceived] = useState("");
   const [splitMode, setSplitMode] = useState<"equal" | "value" | "items">("value");
   const [peopleStr, setPeopleStr] = useState("2");
-  const [splitValue, setSplitValue] = useState(remaining.toFixed(2));
   const [confirmClose, setConfirmClose] = useState(false);
   const [pixImage, setPixImage] = useState("");
   const [pixCharge, setPixCharge] = useState<PixCharge>();
@@ -69,10 +68,6 @@ export function PaymentForm({
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const people = Math.max(1, Number(peopleStr) || 1);
 
-  const numericAmount = Number(amount) || 0;
-  const paymentAmount = Math.min(Math.max(0, numericAmount), remaining);
-  const change = method === "cash" ? Math.max(0, (Number(cashReceived) || 0) - paymentAmount) : 0;
-
   const itemSplitTotal = useMemo(
     () => {
       const activeItems = items.filter((item) => item.status !== "cancelled");
@@ -81,6 +76,19 @@ export function PaymentForm({
     },
     [items, selectedItemIds]
   );
+
+  // Computed payment amount based on split mode
+  const suggestedAmount = useMemo(() => {
+    if (splitMode === "equal") return Number((order.total / people).toFixed(2));
+    if (splitMode === "items" && selectedItemIds.length > 0) return Math.min(itemSplitTotal, remaining);
+    return remaining;
+  }, [splitMode, people, order.total, selectedItemIds, itemSplitTotal, remaining]);
+
+  const amount = amountOverride ?? suggestedAmount.toFixed(2);
+  const numericAmount = Number(amount) || 0;
+  const paymentAmount = Math.min(Math.max(0, numericAmount), remaining);
+  const change = method === "cash" ? Math.max(0, (Number(cashReceived) || 0) - paymentAmount) : 0;
+
   const pixProvider = pix?.provider ?? "manual";
   const onlinePix = method === "pix" && runtimeConfig.dataMode === "supabase" && (pixProvider === "openpix" || pixProvider === "mercado_pago");
   const manualPixCode = useMemo(() => method === "pix" && !onlinePix && pix?.key && paymentAmount > 0 ? createPixCopyPaste({ key: pix.key, recipient: pix.recipient ?? "", city: pix.city ?? "", amount: paymentAmount }) : "", [method, onlinePix, paymentAmount, pix?.city, pix?.key, pix?.recipient]);
@@ -91,22 +99,8 @@ export function PaymentForm({
     void QRCode.toDataURL(pixCode, { width: 220, margin: 1 }).then(setPixImage).catch(() => setPixImage(""));
   }, [pixCode]);
 
-  useEffect(() => {
-    setAmount(remaining.toFixed(2));
-    setSplitValue(remaining.toFixed(2));
-  }, [remaining]);
-
-  useEffect(() => {
-    if (splitMode === "equal") {
-      setAmount((order.total / people).toFixed(2));
-    } else if (splitMode === "items" && selectedItemIds.length > 0) {
-      const selected = Math.min(itemSplitTotal, remaining);
-      setAmount(selected.toFixed(2));
-    } else if (splitMode === "items" && selectedItemIds.length === 0) {
-      setAmount(remaining.toFixed(2));
-    }
-    // splitMode "value" syncs amount via splitValue onChange, not here
-  }, [splitMode, people, order.total, selectedItemIds, itemSplitTotal, remaining]);
+  // Reset override when remaining changes (new payment registered)
+  useEffect(() => { setAmountOverride(null); }, [remaining]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -124,8 +118,7 @@ export function PaymentForm({
         cardBrand: cardBrand || undefined,
         changeAmount: change || undefined
       });
-      const nextRemaining = Math.max(0, remaining - paymentAmount);
-      setAmount(nextRemaining.toFixed(2));
+      setAmountOverride(null);
       setCashReceived("");
     } finally {
       setSubmitting(false);
@@ -292,8 +285,8 @@ export function PaymentForm({
                 type="number"
                 min={0}
                 step="0.01"
-                value={splitValue}
-                onChange={(event) => { setSplitValue(event.target.value); setAmount(event.target.value); }}
+                value={amount}
+                onChange={(event) => setAmountOverride(event.target.value)}
               />
             </label>
           ) : null}
@@ -355,7 +348,7 @@ export function PaymentForm({
               min={0}
               step="0.01"
               value={amount}
-              onChange={(event) => setAmount(event.target.value)}
+              onChange={(event) => setAmountOverride(event.target.value)}
             />
           </label>
           {method === "cash" ? (
