@@ -53,7 +53,6 @@ export function PaymentForm({
   const remaining = Math.max(0, order.total - paid);
   const [method, setMethod] = useState<PaymentMethod>("pix");
   const [amountOverride, setAmountOverride] = useState<string | null>(null);
-  const [cardBrand, setCardBrand] = useState("");
   const [cashReceived, setCashReceived] = useState("");
   const [splitMode, setSplitMode] = useState<"equal" | "value" | "items">("value");
   const [peopleStr, setPeopleStr] = useState("2");
@@ -119,7 +118,6 @@ export function PaymentForm({
       await onPay({
         method,
         amount: paymentAmount,
-        cardBrand: cardBrand || undefined,
         changeAmount: change || undefined
       });
       setAmountOverride(null);
@@ -382,17 +380,7 @@ export function PaymentForm({
             </details>
           ) : null}
           {method === "credit_card" || method === "debit_card" ? (
-            <p className="rounded-lg bg-slate-50 p-3 text-sm font-bold text-slate-600">Registrar pagamento feito na maquininha. O sistema não tenta cobrar online.</p>
-          ) : null}
-          {method === "credit_card" || method === "debit_card" ? (
-            <label className="grid gap-1 text-sm font-bold text-slate-700">
-              Bandeira
-              <input
-                className="h-12 rounded-lg border border-slate-200 px-3"
-                value={cardBrand}
-                onChange={(event) => setCardBrand(event.target.value)}
-              />
-            </label>
+            <p className="rounded-lg bg-slate-50 p-3 text-sm font-bold text-slate-600">Registrar pagamento feito na maquininha.</p>
           ) : null}
           {method === "pix" && onlinePix ? (
             <div className="grid gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
@@ -417,12 +405,12 @@ export function PaymentForm({
             </div>
           ) : null}
           {method === "pix" && !onlinePix && !pix?.key ? <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-900">Cadastre a chave Pix em Ajustes para gerar o QR Code.</p> : null}
-          {method === "pix" && !onlinePix && pix?.key && !pixCode ? <p className="rounded-lg bg-emerald-50 p-3 text-sm font-bold text-emerald-800">Pix manual: confirme o pagamento no banco/app e clique em &quot;Marcar como pago&quot;.</p> : null}
-          {method === "pix" && !onlinePix && pixCode ? <div className="grid place-items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong className="text-emerald-900">Pix de {brl(paymentAmount)}</strong>{pixImage ? <Image src={pixImage} alt="QR Code Pix" width={220} height={220} unoptimized /> : null}<p className="text-xs font-bold text-emerald-700">Confirme no banco/app e clique abaixo.</p><Button type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(pixCode)}>Copiar código Pix</Button></div> : null}
+          {method === "pix" && !onlinePix && pix?.key && !pixCode ? <p className="rounded-lg bg-emerald-50 p-3 text-sm font-bold text-emerald-800">Confira se o Pix caiu no app do banco e clique em &quot;Confirmar Pix recebido&quot;.</p> : null}
+          {method === "pix" && !onlinePix && pixCode ? <div className="grid place-items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong className="text-emerald-900">Pix de {brl(paymentAmount)}</strong>{pixImage ? <Image src={pixImage} alt="QR Code Pix" width={220} height={220} unoptimized /> : null}<p className="text-xs font-bold text-emerald-700">Confira no app do banco e clique abaixo.</p><Button type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(pixCode)}>Copiar código Pix</Button></div> : null}
           {!cashOpen && remaining > 0 ? <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-800">Caixa fechado. Se o pagamento falhar, peça ao gerente para abrir o caixa.</p> : null}
           {payError ? <p className="rounded-lg bg-red-50 p-3 text-sm font-black text-red-800">{payError}</p> : null}
           <Button variant="amber" size="lg" type="submit" disabled={remaining <= 0 || paymentAmount <= 0 || submitting || pixLoading}>
-            {submitting ? "Registrando..." : onlinePix ? (pixLoading ? "Gerando Pix..." : pixCharge ? "Gerar novo Pix" : "Gerar Pix") : willCloseOrder ? (method === "pix" ? "Marcar pago e fechar conta" : "Registrar e fechar conta") : (method === "pix" ? "Marcar como pago" : "Registrar pagamento")}
+            {submitting ? "Registrando..." : onlinePix ? (pixLoading ? "Gerando Pix..." : pixCharge ? "Gerar novo Pix" : "Gerar Pix") : willCloseOrder ? (method === "pix" ? "Confirmar Pix e fechar conta" : "Registrar e fechar conta") : (method === "pix" ? "Confirmar Pix recebido" : "Registrar pagamento")}
           </Button>
         </div>
       </form>

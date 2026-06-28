@@ -311,6 +311,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           if (!product) continue;
           const itemId = uid("item");
           const variation = state.productVariations.find((item) => item.id === cartItem.variationId);
+          const effectiveSector = product.preparationRequired === false ? "none" : product.preparationSector;
           orderItems.push({
             id: itemId,
             orderId,
@@ -322,12 +323,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             variationName: variation?.name,
             variationPriceDelta: variation?.priceDelta,
             notes: cartItem.notes,
-            preparationSector: product.preparationSector,
-            status: qrNeedApproval ? "pending" : product.preparationSector === "none" ? "delivered" : "sent",
+            preparationSector: effectiveSector,
+            status: qrNeedApproval ? "pending" : effectiveSector === "none" ? "delivered" : "sent",
             createdAt: now,
             updatedAt: now,
             sentAt: qrNeedApproval ? undefined : now,
-            deliveredAt: !qrNeedApproval && product.preparationSector === "none" ? now : undefined
+            deliveredAt: !qrNeedApproval && effectiveSector === "none" ? now : undefined
           });
           for (const addonId of cartItem.addonIds ?? []) {
             const addon = state.productAddons.find((item) => item.id === addonId && item.active);
@@ -498,7 +499,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           variationName: variation?.name,
           variationPriceDelta: variation?.priceDelta,
           notes: input.notes,
-          preparationSector: product.preparationSector,
+          preparationSector: product.preparationRequired === false ? "none" : product.preparationSector,
           status: "pending",
           createdBy: profile?.id,
           createdAt: now,
@@ -1127,13 +1128,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           setState((current) => mergeWorkspace(current, workspace));
           return;
         }
-        // Local/demo mode: cancel financial entry + payments for this order
+        // Local/demo mode: cancel financial entry + payments + restore stock for this order
         const now = new Date().toISOString();
+        const orderItems = state.orderItems.filter((oi) => oi.orderId === orderId && oi.status !== "cancelled");
+        let restoredProducts = state.products;
+        const newMovements = [...(state.stockMovements ?? [])];
+        for (const oi of orderItems) {
+          const product = state.products.find((p) => p.id === oi.productId);
+          if (!product?.hasStockControl) continue;
+          // Check if stock was deducted for this order (avoid double restore)
+          const alreadyRestored = state.stockMovements?.some((m) => m.productId === oi.productId && m.reason === `Estorno - Pedido ${orderId}`);
+          if (alreadyRestored) continue;
+          restoredProducts = restoredProducts.map((p) => p.id === oi.productId ? { ...p, stockQuantity: (p.stockQuantity ?? 0) + oi.quantity, updatedAt: now } : p);
+          newMovements.push({ id: uid("stock"), restaurantId: product.restaurantId, productId: oi.productId, type: "entry", quantity: oi.quantity, reason: `Estorno - Pedido ${orderId}`, createdBy: profile?.id, createdAt: now });
+        }
         const next: AppState = {
           ...state,
           financialEntries: state.financialEntries.map((item) => item.orderId === orderId && item.type === "income" && item.paid ? { ...item, paid: false, cancelReason: reason.trim(), cancelledAt: now, updatedAt: now } : item),
           payments: state.payments.map((item) => item.orderId === orderId && (item.paymentStatus ?? "paid") === "paid" ? { ...item, paymentStatus: "cancelled" as const } : item),
-          orders: state.orders.map((item) => item.id === orderId ? { ...item, status: "cancelled" as const, cancelReason: reason.trim(), updatedAt: now } : item)
+          orders: state.orders.map((item) => item.id === orderId ? { ...item, status: "cancelled" as const, cancelReason: reason.trim(), updatedAt: now } : item),
+          products: restoredProducts,
+          stockMovements: newMovements
         };
         commit({ ...next, auditLogs: [...next.auditLogs, createAuditLog(next, "sale_cancelled", "orders", orderId, undefined, { reason })] }, "finance");
       },
@@ -1616,7 +1631,7 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
     const categoryValue = workspace.categories.find((category) => String(category.id) === String(item.category_id))?.name;
     const categoryName = typeof categoryValue === "string" ? categoryValue : undefined;
     const manualImageUrl = typeof item.image_url === "string" ? item.image_url : undefined;
-    return { id: String(item.id), restaurantId: id, categoryId: String(item.category_id), name: String(item.name), description: typeof item.description === "string" ? item.description : undefined, price: Number(item.price), preparationSector: item.preparation_sector as Product["preparationSector"], estimatedTimeMinutes: item.estimated_time_minutes ? Number(item.estimated_time_minutes) : undefined, available: item.available !== false, hasStockControl: item.has_stock_control === true, stockQuantity: item.stock_quantity === null ? undefined : Number(item.stock_quantity), stockMinimum: item.stock_minimum === null ? undefined : Number(item.stock_minimum), stockUnit: item.stock_unit as Product["stockUnit"], imageUrl: manualImageUrl, generatedImageUrl: typeof item.generated_image_url === "string" ? item.generated_image_url : manualImageUrl ? undefined : resolveProductImage(item, categoryName), active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) };
+    return { id: String(item.id), restaurantId: id, categoryId: String(item.category_id), name: String(item.name), description: typeof item.description === "string" ? item.description : undefined, price: Number(item.price), preparationSector: item.preparation_sector as Product["preparationSector"], preparationRequired: item.preparation_required !== false, estimatedTimeMinutes: item.estimated_time_minutes ? Number(item.estimated_time_minutes) : undefined, available: item.available !== false, hasStockControl: item.has_stock_control === true, stockQuantity: item.stock_quantity === null ? undefined : Number(item.stock_quantity), stockMinimum: item.stock_minimum === null ? undefined : Number(item.stock_minimum), stockUnit: item.stock_unit as Product["stockUnit"], imageUrl: manualImageUrl, generatedImageUrl: typeof item.generated_image_url === "string" ? item.generated_image_url : manualImageUrl ? undefined : resolveProductImage(item, categoryName), active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) };
   });
   const remoteTables: RestaurantTable[] = workspace.tables.map((item) => ({ id: String(item.id), restaurantId: id, number: Number(item.number), name: typeof item.name === "string" ? item.name : undefined, status: item.status as RestaurantTable["status"], active: item.active !== false, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now) }));
   const remoteOrders: Order[] = workspace.orders.map((item) => ({ id: String(item.id), restaurantId: id, tableId: item.table_id ? String(item.table_id) : undefined, tabId: item.tab_id ? String(item.tab_id) : undefined, customerName: typeof item.customer_name === "string" ? item.customer_name : undefined, source: item.source as Order["source"], status: item.status as Order["status"], createdBy: item.created_by ? String(item.created_by) : undefined, closedBy: item.closed_by ? String(item.closed_by) : undefined, subtotal: Number(item.subtotal ?? 0), discount: Number(item.discount ?? 0), serviceFee: Number(item.service_fee ?? 0), serviceFeeEnabled: item.service_fee_enabled !== false, deliveryFee: Number(item.delivery_fee ?? 0), total: Number(item.total ?? 0), notes: typeof item.notes === "string" ? item.notes : undefined, cancelReason: typeof item.cancel_reason === "string" ? item.cancel_reason : undefined, createdAt: String(item.created_at ?? now), updatedAt: String(item.updated_at ?? now), closedAt: item.closed_at ? String(item.closed_at) : undefined }));
@@ -1651,12 +1666,12 @@ function mergeWorkspace(current: AppState, workspace: WorkspaceBootstrap): AppSt
 }
 
 function toProductRow(product: Product) {
-  return { id: product.id, restaurant_id: product.restaurantId, category_id: product.categoryId, name: product.name, description: product.description ?? null, price: product.price, preparation_sector: product.preparationSector, estimated_time_minutes: product.estimatedTimeMinutes ?? null, available: product.available, has_stock_control: product.hasStockControl, stock_quantity: product.stockQuantity ?? null, stock_minimum: product.stockMinimum ?? null, stock_unit: product.stockUnit ?? null, image_url: product.imageUrl ?? null, generated_image_url: product.generatedImageUrl ?? null, active: product.active };
+  return { id: product.id, restaurant_id: product.restaurantId, category_id: product.categoryId, name: product.name, description: product.description ?? null, price: product.price, preparation_sector: product.preparationSector, preparation_required: product.preparationRequired ?? true, estimated_time_minutes: product.estimatedTimeMinutes ?? null, available: product.available, has_stock_control: product.hasStockControl, stock_quantity: product.stockQuantity ?? null, stock_minimum: product.stockMinimum ?? null, stock_unit: product.stockUnit ?? null, image_url: product.imageUrl ?? null, generated_image_url: product.generatedImageUrl ?? null, active: product.active };
 }
 
 function toProductPatch(patch: Partial<Product>) {
   const row: Record<string, unknown> = {};
-  const fields: Array<[keyof Product, string]> = [["categoryId", "category_id"], ["name", "name"], ["description", "description"], ["price", "price"], ["preparationSector", "preparation_sector"], ["estimatedTimeMinutes", "estimated_time_minutes"], ["available", "available"], ["hasStockControl", "has_stock_control"], ["stockQuantity", "stock_quantity"], ["stockMinimum", "stock_minimum"], ["stockUnit", "stock_unit"], ["imageUrl", "image_url"], ["generatedImageUrl", "generated_image_url"], ["active", "active"]];
+  const fields: Array<[keyof Product, string]> = [["categoryId", "category_id"], ["name", "name"], ["description", "description"], ["price", "price"], ["preparationSector", "preparation_sector"], ["preparationRequired", "preparation_required"], ["estimatedTimeMinutes", "estimated_time_minutes"], ["available", "available"], ["hasStockControl", "has_stock_control"], ["stockQuantity", "stock_quantity"], ["stockMinimum", "stock_minimum"], ["stockUnit", "stock_unit"], ["imageUrl", "image_url"], ["generatedImageUrl", "generated_image_url"], ["active", "active"]];
   for (const [key, column] of fields) if (key in patch) row[column] = patch[key] ?? null;
   return row;
 }

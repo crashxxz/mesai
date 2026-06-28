@@ -86,6 +86,7 @@ export default function ProductsPage() {
       price: Number(form.price) || 0,
       categoryId,
       preparationSector: form.preparationSector,
+      preparationRequired: form.preparationSector !== "none",
       available: form.available,
       description: form.description.trim() || undefined,
       estimatedTimeMinutes: Number(form.estimatedTimeMinutes) || undefined,
@@ -460,7 +461,7 @@ export default function ProductsPage() {
                       <select
                         className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-bold"
                         value={product.preparationSector}
-                        onChange={(event) => updateProduct(product.id, { preparationSector: event.target.value as PreparationSector })}
+                        onChange={(event) => updateProduct(product.id, { preparationSector: event.target.value as PreparationSector, preparationRequired: event.target.value !== "none" })}
                       >
                         {sectors.map((sector) => (
                           <option key={sector} value={sector}>{sectorLabel(sector)}</option>

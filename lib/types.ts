@@ -131,6 +131,7 @@ export interface Product {
   description?: string;
   price: number;
   preparationSector: PreparationSector;
+  preparationRequired?: boolean;
   estimatedTimeMinutes?: number;
   available: boolean;
   hasStockControl: boolean;
