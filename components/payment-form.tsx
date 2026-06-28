@@ -44,7 +44,7 @@ export function PaymentForm({
   onSetServiceFeeEnabled: (enabled: boolean) => void;
   pix?: { key?: string; recipient?: string; city?: string; provider?: PixProvider; providerEnvironment?: "test" | "production" };
   onPay: (input: { method: PaymentMethod; amount: number; cardBrand?: string; changeAmount?: number }) => void | Promise<void>;
-  onClose: () => void;
+  onClose: () => void | Promise<void>;
   onReopen: () => void;
 }) {
   const paid = payments
@@ -102,6 +102,8 @@ export function PaymentForm({
   // Reset override when remaining changes (new payment registered)
   useEffect(() => { setAmountOverride(null); }, [remaining]);
 
+  const willCloseOrder = paymentAmount > 0 && paymentAmount >= remaining - 0.001;
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (submitting) return;
@@ -120,6 +122,10 @@ export function PaymentForm({
       });
       setAmountOverride(null);
       setCashReceived("");
+      // Se pagamento completo, fechar conta automaticamente
+      if (willCloseOrder) {
+        try { await Promise.resolve(onClose()); } catch { /* closeOrder error handled by parent */ }
+      }
     } finally {
       setSubmitting(false);
     }
@@ -351,19 +357,25 @@ export function PaymentForm({
               onChange={(event) => setAmountOverride(event.target.value)}
             />
           </label>
+          {method === "cash" && Number(cashReceived) > 0 ? (
+            <span className="text-lg font-black text-emerald-700">Troco {brl(change)}</span>
+          ) : null}
           {method === "cash" ? (
-            <label className="grid gap-1 text-sm font-bold text-slate-700">
-              Recebido
-              <input
-                className="h-12 rounded-lg border border-slate-200 px-3"
-                type="number"
-                min={0}
-                step="0.01"
-                value={cashReceived}
-                onChange={(event) => setCashReceived(event.target.value)}
-              />
-              <span className="text-lg font-black text-emerald-700">Troco {brl(change)}</span>
-            </label>
+            <details className="text-sm">
+              <summary className="cursor-pointer font-bold text-slate-500">Calcular troco</summary>
+              <label className="mt-2 grid gap-1 font-bold text-slate-700">
+                Valor recebido do cliente
+                <input
+                  className="h-11 rounded-lg border border-slate-200 px-3"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={cashReceived}
+                  onChange={(event) => setCashReceived(event.target.value)}
+                  placeholder="Só preencha se o cliente deu a mais"
+                />
+              </label>
+            </details>
           ) : null}
           {method === "credit_card" || method === "debit_card" ? (
             <p className="rounded-lg bg-slate-50 p-3 text-sm font-bold text-slate-600">Registrar pagamento feito na maquininha. O sistema não tenta cobrar online.</p>
@@ -405,7 +417,7 @@ export function PaymentForm({
           {method === "pix" && !onlinePix && pixCode ? <div className="grid place-items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong className="text-emerald-900">Pix de {brl(paymentAmount)}</strong>{pixImage ? <Image src={pixImage} alt="QR Code Pix" width={220} height={220} unoptimized /> : null}<p className="text-xs font-bold text-emerald-700">Confirme no banco/app e clique abaixo.</p><Button type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(pixCode)}>Copiar código Pix</Button></div> : null}
           {!cashOpen && remaining > 0 ? <p className="rounded-lg bg-red-50 p-3 text-sm font-black text-red-800">Abra o caixa antes de registrar pagamentos.</p> : null}
           <Button variant="amber" size="lg" type="submit" disabled={!cashOpen || remaining <= 0 || paymentAmount <= 0 || submitting || pixLoading}>
-            {onlinePix ? pixLoading ? "Gerando Pix..." : pixCharge ? "Gerar novo Pix" : "Gerar Pix" : method === "pix" ? submitting ? "Registrando..." : "Marcar como pago" : method === "credit_card" || method === "debit_card" ? "Registrar pagamento manual" : "Registrar"}
+            {submitting ? "Registrando..." : onlinePix ? (pixLoading ? "Gerando Pix..." : pixCharge ? "Gerar novo Pix" : "Gerar Pix") : willCloseOrder ? (method === "pix" ? "Marcar pago e fechar conta" : "Registrar e fechar conta") : (method === "pix" ? "Marcar como pago" : "Registrar pagamento")}
           </Button>
         </div>
       </form>

@@ -73,7 +73,7 @@ export default function CheckoutPage() {
           onSetServiceFeeEnabled={(enabled) => void setOrderServiceFeeEnabled(order.id, enabled)}
           pix={{ key: settings?.pixKey, recipient: settings?.pixRecipientName ?? restaurant?.name, city: settings?.pixCity ?? restaurant?.city, provider: settings?.pixProvider, providerEnvironment: settings?.pixProviderEnvironment }}
           onPay={(input) => registerPayment(order.id, input)}
-          onClose={() => { setCloseError(""); void closeOrder(order.id).catch((e) => setCloseError(e instanceof Error ? e.message : "Não foi possível fechar a conta.")); }}
+          onClose={async () => { setCloseError(""); try { await closeOrder(order.id); } catch (e) { setCloseError(e instanceof Error ? e.message : "Não foi possível fechar a conta."); throw e; } }}
           onReopen={() => setReopenDialogOpen(true)}
         />
         {closeError ? <p className="rounded-lg bg-red-50 p-4 text-sm font-black text-red-800">{closeError}</p> : null}

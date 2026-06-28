@@ -6,27 +6,39 @@ import { Button } from "@/components/ui/button";
 import { RoleGuard } from "@/components/role-guard";
 import { getStockStatus, stockStatusLabel } from "@/lib/services";
 import { useStore } from "@/lib/store";
-
 import type { Product } from "@/lib/types";
 
+type StockFilter = "all" | "controlled" | "uncontrolled" | "low" | "empty";
+
 export default function StockPage() {
-  const { state, restaurant, recordStockMovement } = useStore();
-  const [filter, setFilter] = useState<"all" | "low" | "empty">("all");
-  const products = useMemo(
-    () => state.products.filter((p) => p.restaurantId === restaurant?.id && p.hasStockControl),
+  const { state, restaurant, recordStockMovement, updateProduct } = useStore();
+  const [filter, setFilter] = useState<StockFilter>("all");
+  const allProducts = useMemo(
+    () => state.products.filter((p) => p.restaurantId === restaurant?.id && p.active),
     [state.products, restaurant?.id]
   );
   const categories = state.categories.filter((c) => c.restaurantId === restaurant?.id);
   const movements = state.stockMovements.filter((m) => m.restaurantId === restaurant?.id).slice(0, 20);
 
-  const filtered = products.filter((p) => {
-    if (filter === "low") return getStockStatus(p) === "low";
-    if (filter === "empty") return getStockStatus(p) === "empty";
+  const controlled = allProducts.filter((p) => p.hasStockControl);
+  const lowCount = controlled.filter((p) => getStockStatus(p) === "low").length;
+  const emptyCount = controlled.filter((p) => getStockStatus(p) === "empty").length;
+
+  const filtered = allProducts.filter((p) => {
+    if (filter === "controlled") return p.hasStockControl;
+    if (filter === "uncontrolled") return !p.hasStockControl;
+    if (filter === "low") return p.hasStockControl && getStockStatus(p) === "low";
+    if (filter === "empty") return p.hasStockControl && getStockStatus(p) === "empty";
     return true;
   });
 
-  const lowCount = products.filter((p) => getStockStatus(p) === "low").length;
-  const emptyCount = products.filter((p) => getStockStatus(p) === "empty").length;
+  const filters: Array<[StockFilter, string]> = [
+    ["all", "Todos"],
+    ["controlled", "Controlados"],
+    ["uncontrolled", "Sem controle"],
+    ["low", "Baixo"],
+    ["empty", "Zerado"]
+  ];
 
   return (
     <RoleGuard allowed={["owner", "manager", "cashier"]}>
@@ -34,15 +46,15 @@ export default function StockPage() {
         <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft">
           <p className="text-xs font-black uppercase tracking-wide text-amber-700">Controle de estoque</p>
           <h1 className="mt-1 text-3xl font-black text-slate-950">Estoque</h1>
-          <p className="text-sm font-bold text-slate-500">{products.length} produtos controlados · {lowCount} baixo · {emptyCount} zerado</p>
+          <p className="text-sm font-bold text-slate-500">{allProducts.length} produtos · {controlled.length} controlados · {lowCount} baixo · {emptyCount} zerado</p>
         </header>
 
-        <div className="grid grid-cols-3 gap-2 sm:w-96">
-          {([["all", "Todos"], ["low", "Baixo"], ["empty", "Zerado"]] as const).map(([key, label]) => (
+        <div className="flex flex-wrap gap-2">
+          {filters.map(([key, label]) => (
             <button
               key={key}
               type="button"
-              className={`h-10 rounded-lg border text-sm font-black ${filter === key ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-700"}`}
+              className={`h-9 rounded-lg border px-3 text-sm font-black ${filter === key ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-700"}`}
               onClick={() => setFilter(key)}
             >
               {label}
@@ -58,10 +70,12 @@ export default function StockPage() {
               categoryName={categories.find((c) => c.id === product.categoryId)?.name ?? ""}
               onEntry={() => void recordStockMovement(product.id, "entry", 1, "Entrada manual").catch((e) => alert(e instanceof Error ? e.message : "Erro"))}
               onExit={() => void recordStockMovement(product.id, "exit", 1, "Saída manual").catch((e) => alert(e instanceof Error ? e.message : "Erro"))}
+              onActivate={() => updateProduct(product.id, { hasStockControl: true, stockQuantity: 0, stockMinimum: 0 })}
+              onDeactivate={() => updateProduct(product.id, { hasStockControl: false })}
             />
           )) : (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm font-bold text-slate-400">
-              {products.length ? "Nenhum produto nesse filtro." : "Ative o controle de estoque em um produto no Cardápio."}
+              Nenhum produto nesse filtro.
             </div>
           )}
         </div>
@@ -89,7 +103,29 @@ export default function StockPage() {
   );
 }
 
-function StockRow({ product, categoryName, onEntry, onExit }: { product: Product; categoryName: string; onEntry: () => void; onExit: () => void }) {
+function StockRow({ product, categoryName, onEntry, onExit, onActivate, onDeactivate }: {
+  product: Product;
+  categoryName: string;
+  onEntry: () => void;
+  onExit: () => void;
+  onActivate: () => void;
+  onDeactivate: () => void;
+}) {
+  if (!product.hasStockControl) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-slate-200 bg-white p-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Package className="h-4 w-4 shrink-0 text-slate-300" aria-hidden="true" />
+            <strong className="truncate text-slate-600">{product.name}</strong>
+          </div>
+          <div className="mt-1 text-xs font-bold text-slate-400">{categoryName} · Sem controle</div>
+        </div>
+        <Button variant="outline" size="sm" onClick={onActivate}>Ativar controle</Button>
+      </div>
+    );
+  }
+
   const status = getStockStatus(product);
   const statusTone = status === "empty" ? "bg-red-100 text-red-700" : status === "low" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800";
 
@@ -113,6 +149,7 @@ function StockRow({ product, categoryName, onEntry, onExit }: { product: Product
             <Plus className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
+        <Button variant="ghost" size="sm" className="text-xs text-slate-400" onClick={onDeactivate}>Remover</Button>
       </div>
     </div>
   );
