@@ -10,6 +10,7 @@ import {
   LogOut,
   Martini,
   Package,
+  PackageCheck,
   Settings,
   Table2,
   UsersRound,
@@ -27,7 +28,7 @@ import { useBusinessPreset } from "@/lib/use-business-preset";
 import type { UserRole } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type NavKey = "dashboard" | "tables" | "kitchen" | "bar" | "cash" | "products" | "finance" | "settings" | "team" | "help";
+type NavKey = "dashboard" | "tables" | "kitchen" | "bar" | "cash" | "products" | "stock" | "finance" | "settings" | "team" | "help";
 
 const navItems: Array<NavItem & { key: NavKey; roles: UserRole[]; section: "operation" | "admin" }> = [
   { key: "dashboard", href: "/app/dashboard", label: "Agora", icon: LayoutDashboard, roles: ["owner", "manager"], section: "operation" },
@@ -36,6 +37,7 @@ const navItems: Array<NavItem & { key: NavKey; roles: UserRole[]; section: "oper
   { key: "bar", href: "/app/bar", label: "Bar", icon: Martini, roles: ["owner", "manager", "bar"], section: "operation" },
   { key: "cash", href: "/app/cash", label: "Caixa", icon: ClipboardList, roles: ["owner", "manager", "cashier"], section: "operation" },
   { key: "products", href: "/app/products", label: "Cardápio", icon: Package, roles: ["owner", "manager"], section: "admin" },
+  { key: "stock", href: "/app/stock", label: "Estoque", icon: PackageCheck, roles: ["owner", "manager"], section: "admin" },
   { key: "finance", href: "/app/finance", label: "Financeiro", icon: WalletCards, roles: ["owner", "manager"], section: "admin" },
   { key: "team", href: "/app/settings/users", label: "Equipe", icon: UsersRound, roles: ["manager"], section: "admin" },
   { key: "settings", href: "/app/settings", label: "Ajustes", icon: Settings, roles: ["owner", "manager"], section: "admin" },

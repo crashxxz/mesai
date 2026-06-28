@@ -25,15 +25,22 @@ export default function CashPage() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   const todayTotal = todayPayments.reduce((sum, p) => sum + p.amount, 0);
 
-  // Pagamentos recebidos durante a sessão aberta (se cash_movements não refletir via RPC)
+  // Pagamentos do turno atual (dentro da sessão aberta)
   const sessionPayments = openSession
-    ? state.payments.filter((p) => p.restaurantId === restaurant?.id && (p.paymentStatus ?? "paid") === "paid" && new Date(p.createdAt) >= new Date(openSession.openedAt))
+    ? todayPayments.filter((p) => new Date(p.createdAt) >= new Date(openSession.openedAt))
     : [];
-  const sessionPaymentsTotal = sessionPayments.reduce((sum, p) => sum + p.amount, 0);
+  const sessionTotal = sessionPayments.reduce((sum, p) => sum + p.amount, 0);
+  const sessionCashOnly = sessionPayments.filter((p) => p.method === "cash").reduce((sum, p) => sum + p.amount, 0);
 
-  // Esperado real = max(expectedAmount do banco, valor calculado com pagamentos do turno)
+  // Pagamentos fora do caixa (antes de abrir ou sem sessão)
+  const outsidePayments = openSession
+    ? todayPayments.filter((p) => new Date(p.createdAt) < new Date(openSession.openedAt))
+    : todayPayments;
+  const outsideTotal = outsidePayments.reduce((sum, p) => sum + p.amount, 0);
+
+  // Esperado físico = inicial + vendas em dinheiro no turno + suprimentos - sangrias
   const computedExpected = openSession
-    ? openSession.openingAmount + Math.max(salesFromMovements, sessionPaymentsTotal) + supplies - withdrawals
+    ? openSession.openingAmount + Math.max(salesFromMovements, sessionCashOnly) + supplies - withdrawals
     : 0;
 
   return (
@@ -92,12 +99,12 @@ export default function CashPage() {
 
             <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-lg font-black text-slate-950">Pagamentos recebidos hoje</h2>
-                <strong className="text-emerald-700">{brl(todayTotal)}</strong>
+                <h2 className="text-lg font-black text-slate-950">{openSession ? "Recebido no turno" : "Pagamentos recebidos hoje"}</h2>
+                <strong className="text-emerald-700">{brl(openSession ? sessionTotal : todayTotal)}</strong>
               </div>
               <div className="grid gap-2">
-                {todayPayments.length ? (
-                  todayPayments.map((payment) => (
+                {(openSession ? sessionPayments : todayPayments).length ? (
+                  (openSession ? sessionPayments : todayPayments).map((payment) => (
                     <div key={payment.id} className="flex justify-between rounded-2xl bg-slate-50 p-3 text-sm font-bold">
                       <span>{paymentMethodLabel(payment.method)}{payment.cardBrand ? ` · ${payment.cardBrand}` : ""}</span>
                       <strong className="text-emerald-700">{brl(payment.amount)}</strong>
@@ -105,10 +112,23 @@ export default function CashPage() {
                   ))
                 ) : (
                   <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center text-sm font-bold text-slate-400">
-                    Nenhum pagamento registrado hoje
+                    Nenhum pagamento no turno
                   </div>
                 )}
               </div>
+              {openSession && outsideTotal > 0 ? (
+                <details className="mt-3">
+                  <summary className="cursor-pointer text-xs font-black text-amber-700">Pagamentos fora do caixa ({brl(outsideTotal)})</summary>
+                  <div className="mt-2 grid gap-1">
+                    {outsidePayments.map((payment) => (
+                      <div key={payment.id} className="flex justify-between rounded-lg bg-amber-50 p-2 text-xs font-bold text-amber-800">
+                        <span>{paymentMethodLabel(payment.method)}</span>
+                        <span>{brl(payment.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              ) : null}
             </article>
 
             <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">

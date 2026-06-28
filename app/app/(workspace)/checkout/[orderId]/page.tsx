@@ -26,6 +26,7 @@ export default function CheckoutPage() {
     reopenOrder
   } = useStore();
   const [reopenDialogOpen, setReopenDialogOpen] = useState(false);
+  const [closeError, setCloseError] = useState("");
   const order = state.orders.find((item) => item.id === params.orderId);
   const table = state.tables.find((item) => item.id === order?.tableId);
   const items = order ? getOrderItems(state, order.id) : [];
@@ -72,9 +73,10 @@ export default function CheckoutPage() {
           onSetServiceFeeEnabled={(enabled) => void setOrderServiceFeeEnabled(order.id, enabled)}
           pix={{ key: settings?.pixKey, recipient: settings?.pixRecipientName ?? restaurant?.name, city: settings?.pixCity ?? restaurant?.city, provider: settings?.pixProvider, providerEnvironment: settings?.pixProviderEnvironment }}
           onPay={(input) => registerPayment(order.id, input)}
-          onClose={() => closeOrder(order.id)}
+          onClose={() => { setCloseError(""); void closeOrder(order.id).catch((e) => setCloseError(e instanceof Error ? e.message : "Não foi possível fechar a conta.")); }}
           onReopen={() => setReopenDialogOpen(true)}
         />
+        {closeError ? <p className="rounded-lg bg-red-50 p-4 text-sm font-black text-red-800">{closeError}</p> : null}
         <ReasonDialog
           open={reopenDialogOpen}
           title="Reabrir conta"

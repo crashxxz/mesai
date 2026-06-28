@@ -955,8 +955,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             .filter((item) => String(item.order_id) === orderId && String(item.payment_status ?? "paid") === "paid")
             .reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
           if (remoteOrder && paid + 0.001 >= Number(remoteOrder.total ?? 0) && remoteOrder.status !== "closed") {
-            await supabaseGateway.closeOrder(orderId);
-            workspace = await supabaseGateway.loadWorkspace();
+            try {
+              await supabaseGateway.closeOrder(orderId);
+              workspace = await supabaseGateway.loadWorkspace();
+            } catch {
+              // Auto-close failed — user can close manually via "Fechar conta" button
+            }
           }
           setState((current) => mergeWorkspace(current, workspace));
           return;

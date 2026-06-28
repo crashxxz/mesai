@@ -20,6 +20,7 @@ export interface BusinessPreset {
     bar: string;
     cash: string;
     products: string;
+    stock: string;
     finance: string;
     settings: string;
   };
@@ -94,6 +95,7 @@ const botecoPopular: BusinessPreset = {
     bar: "Bar",
     cash: "Caixa",
     products: "Cardápio",
+    stock: "Estoque",
     finance: "Financeiro",
     settings: "Ajustes"
   },
