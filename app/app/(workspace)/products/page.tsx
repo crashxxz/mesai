@@ -2,11 +2,12 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { CheckCircle2, EyeOff, Minus, PackageCheck, PackagePlus, Pencil, Plus, RefreshCcw, Tag, Trash2, WandSparkles } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, EyeOff, PackageCheck, PackagePlus, Pencil, RefreshCcw, Tag, Trash2, WandSparkles } from "lucide-react";
 import { RoleGuard } from "@/components/role-guard";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { getStockStatus, sectorLabel, stockStatusLabel } from "@/lib/services";
+import { sectorLabel } from "@/lib/services";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { resolveProductImage } from "@/lib/product-image";
 import { saveGeneratedProductImage } from "@/lib/product-image-generation";
@@ -19,7 +20,7 @@ const sectors: PreparationSector[] = ["kitchen", "bar", "both", "none"];
 const stockUnits: StockUnit[] = ["unidade", "lata", "garrafa", "kg", "litro", "porcao"];
 
 export default function ProductsPage() {
-  const { state, restaurant, createCategory, createProduct, updateProduct, removeProduct, recordStockMovement, reloadMaricotaCatalog } = useStore();
+  const { state, restaurant, createCategory, createProduct, updateProduct, removeProduct, reloadMaricotaCatalog } = useStore();
   const { preset } = useBusinessPreset();
   const categories = useMemo(
     () =>
@@ -30,8 +31,6 @@ export default function ProductsPage() {
   );
   const products = state.products.filter((product) => product.restaurantId === restaurant?.id);
   const trackedProducts = products.filter((product) => product.hasStockControl);
-  const lowStockProducts = trackedProducts.filter((product) => getStockStatus(product) !== "ok");
-  const recentStockMovements = state.stockMovements.filter((movement) => movement.restaurantId === restaurant?.id).slice(-8).reverse();
   const pendingProducts = products.filter((product) => product.price <= 0);
   const [categoryName, setCategoryName] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -162,61 +161,13 @@ export default function ProductsPage() {
           </div>
         </header>
 
-        <details className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
-          <summary className="flex cursor-pointer items-center gap-2 text-lg font-black text-slate-950">
-            <PackageCheck className="h-5 w-5 text-emerald-600" aria-hidden="true" />
-            Estoque simples · {trackedProducts.length} itens · {lowStockProducts.length} alerta{lowStockProducts.length === 1 ? "" : "s"}
-          </summary>
-          <p className="mt-2 text-sm font-bold text-slate-500">Entradas, saídas e baixa automática por venda.</p>
-          <div className="mt-4 grid gap-2">
-            {trackedProducts.length ? trackedProducts.map((product) => {
-              const status = getStockStatus(product);
-              const statusTone = status === "empty" ? "bg-red-100 text-red-700" : status === "low" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800";
-              return (
-                <div key={product.id} data-stock-product={product.id} className="grid gap-3 rounded-xl bg-slate-50 p-3 sm:grid-cols-[1fr_auto_auto] sm:items-center">
-                  <div>
-                    <div className="font-black text-slate-950">{product.name}</div>
-                    <div className="text-xs font-bold text-slate-500">Mínimo: {product.stockMinimum ?? 0} {stockUnitLabel(product.stockUnit, product.stockMinimum ?? 0)}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <strong className="text-lg text-slate-950">{product.stockQuantity ?? 0} {stockUnitLabel(product.stockUnit, product.stockQuantity ?? 0)}</strong>
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-black ${statusTone}`}>{stockStatusLabel(status)}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      title="Retirar 1"
-                      disabled={(product.stockQuantity ?? 0) <= 0}
-                      onClick={() => void recordStockMovement(product.id, "exit", 1, "Ajuste manual").catch((e) => alert(e instanceof Error ? e.message : "Erro ao retirar do estoque"))}
-                    >
-                      <Minus className="h-4 w-4" aria-hidden="true" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      title="Adicionar 1"
-                      onClick={() => void recordStockMovement(product.id, "entry", 1, "Ajuste manual").catch((e) => alert(e instanceof Error ? e.message : "Erro ao adicionar estoque"))}
-                    >
-                      <Plus className="h-4 w-4" aria-hidden="true" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            }) : (
-              <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm font-bold text-slate-400">Ative o controle de estoque em um produto.</div>
-            )}
-          </div>
-          <section className="mt-4 rounded-xl border border-slate-200 bg-white p-3">
-            <h3 className="text-sm font-black text-slate-700">Movimentações recentes</h3>
-            <div className="mt-2 grid gap-1 text-xs font-bold text-slate-500">
-              {recentStockMovements.length ? recentStockMovements.map((movement) => {
-                const product = products.find((item) => item.id === movement.productId);
-                return <div key={movement.id} className="flex justify-between gap-3"><span>{product?.name ?? "Produto"} · {movement.reason}</span><strong className={movement.type === "entry" ? "text-emerald-700" : "text-red-700"}>{movement.type === "entry" ? "+" : "-"}{movement.quantity}</strong></div>;
-              }) : <span>Sem movimentações.</span>}
-            </div>
-          </section>
-        </details>
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
+          <PackageCheck className="h-5 w-5 text-emerald-600" aria-hidden="true" />
+          <span className="text-sm font-bold text-slate-700">{trackedProducts.length} produtos com estoque controlado</span>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/app/stock">Gerenciar estoque</Link>
+          </Button>
+        </div>
 
         <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <label className="grid gap-1 text-sm font-black text-slate-700">
@@ -610,18 +561,4 @@ function AdminProductImage({ product, categoryName }: { product: Product; catego
   useEffect(() => setFailed(false), [url]);
   const fallbackUrl = resolveProductImage({ ...product, imageUrl: undefined, generatedImageUrl: undefined }, categoryName);
   return <Image src={failed ? fallbackUrl : url} alt={product.name} fill sizes="64px" className="object-cover" unoptimized onError={() => setFailed(true)} />;
-}
-
-function stockUnitLabel(unit: StockUnit | undefined, quantity: number) {
-  const value = unit ?? "unidade";
-  if (quantity === 1) return value === "porcao" ? "porção" : value;
-  const plurals: Record<StockUnit, string> = {
-    unidade: "unidades",
-    lata: "latas",
-    garrafa: "garrafas",
-    kg: "kg",
-    litro: "litros",
-    porcao: "porções"
-  };
-  return plurals[value];
 }

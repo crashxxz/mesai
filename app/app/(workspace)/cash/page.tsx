@@ -54,7 +54,7 @@ export default function CashPage() {
               <p className="text-sm font-bold text-slate-500">Abrir, registrar dinheiro que saiu/entrou e fechar.</p>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
-              <CashStat label="Esperado" value={brl(openSession ? computedExpected : 0)} tone="bg-emerald-50 text-emerald-800" />
+              <CashStat label="Dinheiro esperado" value={brl(openSession ? computedExpected : 0)} tone="bg-emerald-50 text-emerald-800" />
               <CashStat label="Sangria" value={brl(withdrawals)} tone="bg-red-50 text-red-700" />
               <CashStat label="Suprimento" value={brl(supplies)} tone="bg-sky-50 text-sky-800" />
             </div>

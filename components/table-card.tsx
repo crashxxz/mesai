@@ -132,13 +132,20 @@ export function TableCard({
               Atender
             </Link>
           </Button>
+        ) : order ? (
+          <Button asChild variant="green" className="rounded-xl">
+            <Link href={`/app/checkout/${order.id}`}>
+              <WalletCards className="h-4 w-4" aria-hidden="true" />
+              Fechar conta
+            </Link>
+          </Button>
         ) : (
-          <Button variant={order ? "amber" : "green"} className="rounded-xl" onClick={onOpen}>
+          <Button variant="green" className="rounded-xl" onClick={onOpen}>
             <Plus className="h-4 w-4" aria-hidden="true" />
-            {order ? "Adicionar" : preset.quickActions.openTable}
+            {preset.quickActions.openTable}
           </Button>
         )}
-        <Button asChild variant="primary" className="rounded-xl">
+        <Button asChild variant="outline" className="rounded-xl">
           <Link href={`/app/tables/${table.id}`}>
             <Eye className="h-4 w-4" aria-hidden="true" />
             Ver mesa

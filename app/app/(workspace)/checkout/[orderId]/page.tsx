@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { PaymentForm } from "@/components/payment-form";
 import { ReasonDialog } from "@/components/reason-dialog";
@@ -14,6 +14,7 @@ import { useStore } from "@/lib/store";
 
 export default function CheckoutPage() {
   const params = useParams<{ orderId: string }>();
+  const router = useRouter();
   const {
     state,
     profile,
@@ -35,6 +36,28 @@ export default function CheckoutPage() {
 
   if (!order) {
     return <div className="rounded-lg bg-white p-5 font-black text-slate-700">Pedido não encontrado</div>;
+  }
+
+  // Comanda já fechada — mostrar resumo e voltar
+  if (order.status === "closed") {
+    const paidPayments = payments.filter((p) => (p.paymentStatus ?? "paid") === "paid");
+    return (
+      <RoleGuard allowed={["owner", "manager", "waiter", "cashier"]}>
+        <section className="mx-auto grid max-w-3xl gap-4">
+          <article className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center shadow-soft">
+            <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" aria-hidden="true" />
+            <h1 className="mt-3 text-2xl font-black text-slate-950">Comanda fechada</h1>
+            <p className="mt-2 text-sm font-bold text-slate-600">{table?.name ?? order.customerName ?? "Comanda"}</p>
+            {paidPayments.length ? (
+              <div className="mt-4 grid gap-1 text-sm font-bold text-slate-700">
+                {paidPayments.map((p) => <div key={p.id}>{p.method === "pix" ? "Pix" : p.method === "cash" ? "Dinheiro" : p.method === "credit_card" ? "Crédito" : p.method === "debit_card" ? "Débito" : p.method} · R$ {p.amount.toFixed(2)}</div>)}
+              </div>
+            ) : null}
+            <Button className="mt-6" variant="amber" onClick={() => router.push("/app/tables")}>Voltar para mesas</Button>
+          </article>
+        </section>
+      </RoleGuard>
+    );
   }
 
   if (!canCloseAccount(profile, settings?.waiterCanCloseAccount ?? true)) {
