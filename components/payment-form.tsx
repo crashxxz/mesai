@@ -63,6 +63,7 @@ export function PaymentForm({
   const [pixLoading, setPixLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [pixError, setPixError] = useState("");
+  const [payError, setPayError] = useState("");
   const [discountType, setDiscountType] = useState<"value" | "percent">("value");
   const [discountInput, setDiscountInput] = useState(String(order.discount || 0));
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
@@ -113,6 +114,7 @@ export function PaymentForm({
     }
     if (paymentAmount <= 0) return;
     setSubmitting(true);
+    setPayError("");
     try {
       await onPay({
         method,
@@ -126,6 +128,8 @@ export function PaymentForm({
       if (willCloseOrder) {
         try { await Promise.resolve(onClose()); } catch { /* closeOrder error handled by parent */ }
       }
+    } catch (e) {
+      setPayError(e instanceof Error ? e.message : "Não foi possível registrar o pagamento");
     } finally {
       setSubmitting(false);
     }
@@ -415,8 +419,9 @@ export function PaymentForm({
           {method === "pix" && !onlinePix && !pix?.key ? <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-900">Cadastre a chave Pix em Ajustes para gerar o QR Code.</p> : null}
           {method === "pix" && !onlinePix && pix?.key && !pixCode ? <p className="rounded-lg bg-emerald-50 p-3 text-sm font-bold text-emerald-800">Pix manual: confirme o pagamento no banco/app e clique em &quot;Marcar como pago&quot;.</p> : null}
           {method === "pix" && !onlinePix && pixCode ? <div className="grid place-items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"><strong className="text-emerald-900">Pix de {brl(paymentAmount)}</strong>{pixImage ? <Image src={pixImage} alt="QR Code Pix" width={220} height={220} unoptimized /> : null}<p className="text-xs font-bold text-emerald-700">Confirme no banco/app e clique abaixo.</p><Button type="button" variant="outline" onClick={() => void navigator.clipboard.writeText(pixCode)}>Copiar código Pix</Button></div> : null}
-          {!cashOpen && remaining > 0 ? <p className="rounded-lg bg-red-50 p-3 text-sm font-black text-red-800">Abra o caixa antes de registrar pagamentos.</p> : null}
-          <Button variant="amber" size="lg" type="submit" disabled={!cashOpen || remaining <= 0 || paymentAmount <= 0 || submitting || pixLoading}>
+          {!cashOpen && remaining > 0 ? <p className="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-800">Caixa fechado. Se o pagamento falhar, peça ao gerente para abrir o caixa.</p> : null}
+          {payError ? <p className="rounded-lg bg-red-50 p-3 text-sm font-black text-red-800">{payError}</p> : null}
+          <Button variant="amber" size="lg" type="submit" disabled={remaining <= 0 || paymentAmount <= 0 || submitting || pixLoading}>
             {submitting ? "Registrando..." : onlinePix ? (pixLoading ? "Gerando Pix..." : pixCharge ? "Gerar novo Pix" : "Gerar Pix") : willCloseOrder ? (method === "pix" ? "Marcar pago e fechar conta" : "Registrar e fechar conta") : (method === "pix" ? "Marcar como pago" : "Registrar pagamento")}
           </Button>
         </div>

@@ -1425,6 +1425,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
       },
       openCashSession(openingAmount) {
+        if (runtimeConfig.dataMode === "supabase") {
+          const resultId = uid("cash_pending");
+          void (async () => {
+            await supabaseGateway.openCashSession(openingAmount);
+            const workspace = await supabaseGateway.loadWorkspace();
+            setState((current) => mergeWorkspace(current, workspace));
+          })().catch((e) => alert(e instanceof Error ? e.message : "Não foi possível abrir o caixa"));
+          return resultId;
+        }
         const current = state.cashSessions.find(
           (item) => item.restaurantId === restaurant?.id && item.status === "open"
         );
@@ -1467,6 +1476,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return sessionId;
       },
       addCashMovement(type, amount, description) {
+        if (runtimeConfig.dataMode === "supabase") {
+          void (async () => {
+            await supabaseGateway.addCashMovement(type, amount, description);
+            const workspace = await supabaseGateway.loadWorkspace();
+            setState((current) => mergeWorkspace(current, workspace));
+          })().catch((e) => alert(e instanceof Error ? e.message : "Não foi possível registrar movimento"));
+          return;
+        }
         const session = state.cashSessions.find(
           (item) => item.restaurantId === restaurant?.id && item.status === "open"
         );
@@ -1500,6 +1517,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         commit(next, "cash");
       },
       closeCashSession(countedAmount) {
+        if (runtimeConfig.dataMode === "supabase") {
+          void (async () => {
+            await supabaseGateway.closeCashSession(countedAmount);
+            const workspace = await supabaseGateway.loadWorkspace();
+            setState((current) => mergeWorkspace(current, workspace));
+          })().catch((e) => alert(e instanceof Error ? e.message : "Não foi possível fechar o caixa"));
+          return;
+        }
         const session = state.cashSessions.find(
           (item) => item.restaurantId === restaurant?.id && item.status === "open"
         );
