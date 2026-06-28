@@ -223,6 +223,11 @@ export const supabaseGateway = {
     return unwrap(result, "Não foi possível cancelar o lançamento") as UUID;
   },
 
+  async cancelSale(orderId: UUID, reason: string) {
+    const result = await client().rpc("cancel_sale", { p_order_id: orderId, p_reason: reason.trim() });
+    return unwrap(result, "Não foi possível estornar a venda") as UUID;
+  },
+
   async applyOrderServiceFee(orderId: UUID) {
     const result = await client().rpc("apply_order_service_fee", { p_order_id: orderId });
     return unwrap(result, "Não foi possível adicionar a taxa de serviço") as UUID;

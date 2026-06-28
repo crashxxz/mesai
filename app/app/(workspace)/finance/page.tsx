@@ -27,7 +27,7 @@ const expenseCategories = [
 const expensePaymentMethods: PaymentMethod[] = ["pix", "cash", "credit_card", "debit_card"];
 
 export default function FinancePage() {
-  const { state, restaurant, createExpense, cancelFinancialEntry } = useStore();
+  const { state, restaurant, createExpense, cancelFinancialEntry, cancelSale } = useStore();
   const { preset } = useBusinessPreset();
   const [period, setPeriod] = useState<PeriodFilterValue>({ key: "today" });
   const [expense, setExpense] = useState({
@@ -309,7 +309,7 @@ export default function FinancePage() {
             }) : <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm font-bold text-slate-400">Nenhuma mesa fechada ainda.</div>}
           </div>
         </article>
-        <ReasonDialog open={Boolean(cancelEntryId)} title="Cancelar lançamento" label="Motivo obrigatório" confirmLabel="Cancelar lançamento" suggestions={["Lançamento de teste", "Lançado em duplicidade", "Pagamento estornado", "Outro motivo"]} onCancel={() => setCancelEntryId(undefined)} onConfirm={(reason) => { if (cancelEntryId) void cancelFinancialEntry(cancelEntryId, reason); setCancelEntryId(undefined); }} />
+        <ReasonDialog open={Boolean(cancelEntryId)} title="Estornar venda" label="Motivo obrigatório" confirmLabel="Estornar" suggestions={["Lançamento de teste", "Lançado em duplicidade", "Pagamento estornado", "Outro motivo"]} onCancel={() => setCancelEntryId(undefined)} onConfirm={(reason) => { if (cancelEntryId) { const entry = state.financialEntries.find((e) => e.id === cancelEntryId); if (entry?.orderId) { void cancelSale(entry.orderId, reason); } else { void cancelFinancialEntry(cancelEntryId, reason); } } setCancelEntryId(undefined); }} />
       </section>
     </RoleGuard>
   );

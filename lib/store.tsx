@@ -107,6 +107,7 @@ interface StoreContextValue {
   registerPayment: (orderId: UUID, input: RegisterPaymentInput) => Promise<void>;
   createExpense: (input: CreateExpenseInput) => void;
   cancelFinancialEntry: (entryId: UUID, reason: string) => Promise<void>;
+  cancelSale: (orderId: UUID, reason: string) => Promise<void>;
   createCategory: (name: string) => void;
   createProduct: (input: Partial<Product> & Pick<Product, "name" | "categoryId" | "price" | "preparationSector">) => void;
   updateProduct: (productId: UUID, patch: Partial<Product>) => void;
@@ -1117,6 +1118,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (!entry || !entry.paid) return;
         const next: AppState = { ...state, financialEntries: state.financialEntries.map((item) => item.id === entryId ? { ...item, paid: false, cancelReason: reason.trim(), cancelledAt: now, updatedAt: now } : item) };
         commit({ ...next, auditLogs: [...next.auditLogs, createAuditLog(next, "financial_entry_cancelled", "financial_entries", entryId, entry, { reason })] }, "finance");
+      },
+      async cancelSale(orderId, reason) {
+        if (!reason.trim()) return;
+        if (runtimeConfig.dataMode === "supabase") {
+          await supabaseGateway.cancelSale(orderId, reason);
+          const workspace = await supabaseGateway.loadWorkspace();
+          setState((current) => mergeWorkspace(current, workspace));
+          return;
+        }
+        // Local/demo mode: cancel financial entry + payments for this order
+        const now = new Date().toISOString();
+        const next: AppState = {
+          ...state,
+          financialEntries: state.financialEntries.map((item) => item.orderId === orderId && item.type === "income" && item.paid ? { ...item, paid: false, cancelReason: reason.trim(), cancelledAt: now, updatedAt: now } : item),
+          payments: state.payments.map((item) => item.orderId === orderId && (item.paymentStatus ?? "paid") === "paid" ? { ...item, paymentStatus: "cancelled" as const } : item),
+          orders: state.orders.map((item) => item.id === orderId ? { ...item, status: "cancelled" as const, cancelReason: reason.trim(), updatedAt: now } : item)
+        };
+        commit({ ...next, auditLogs: [...next.auditLogs, createAuditLog(next, "sale_cancelled", "orders", orderId, undefined, { reason })] }, "finance");
       },
       createCategory(name) {
         const now = new Date().toISOString();
