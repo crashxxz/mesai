@@ -375,6 +375,7 @@ export interface DashboardMetrics {
   averageTicket: number;
   totalsByMethod: Record<PaymentMethod, number>;
   topProducts: Array<{ name: string; quantity: number; total: number }>;
+  topCategories: Array<{ name: string; quantity: number; total: number }>;
   cancelledOrders: number;
   discounts: number;
   internalConsumption: number;

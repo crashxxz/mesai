@@ -27,7 +27,27 @@ export function normalizeProductVisualCategory(product: ProductVisualInput, cate
 
 export function buildProductImagePrompt(product: ProductVisualInput, categoryName = "") {
   const group = normalizeProductVisualCategory(product, categoryName);
-  return `Foto realista e profissional de ${product.name}, categoria ${group}, centralizada, iluminada, fundo limpo e neutro, enquadramento quadrado, estilo gastronomico comercial, aspecto apetitoso, sem texto, sem marcas, composicao limpa e consistente para cardapio digital.`;
+  const name = product.name ?? "";
+  const desc = product.description ? `, ${product.description}` : "";
+
+  const baseStyle = "fotografia realista de cardápio profissional, fundo limpo e neutro, boa iluminação, foco no produto, sem texto, sem logotipo, sem marca d'água, sem pessoas, sem mãos, proporção quadrada";
+
+  const groupPrompts: Record<ProductVisualCategory, string> = {
+    petiscos: `porção de ${name}${desc}, servido em prato ou tigela simples, estilo petisco de boteco brasileiro, aparência caseira e apetitosa, ${baseStyle}`,
+    pratos: `prato de ${name}${desc}, comida brasileira regional, servido em prato de cerâmica simples, porção generosa, ${baseStyle}`,
+    bebidas: `${name}${desc}, bebida gelada, condensação no copo ou garrafa, ${baseStyle}`,
+    sobremesas: `${name}${desc}, sobremesa brasileira, apresentação simples e apetitosa, ${baseStyle}`,
+    churrasco: `${name}${desc}, carne grelhada suculenta, marcas de grelha, acompanhamento simples se aplicável, ${baseStyle}`,
+    porcoes: `porção de ${name}${desc}, petisco de bar brasileiro, servido em prato ou cumbuca, aspecto crocante e dourado, ${baseStyle}`,
+    drinks: `${name}${desc}, drink preparado em copo adequado, gelo, decoração discreta, ${baseStyle}`,
+    sucos: `copo de ${name}${desc}, suco natural brasileiro, cor vibrante, gelo, fruta fresca como decoração, ${baseStyle}`,
+    refrigerantes: `${name}${desc}, lata ou garrafa genérica gelada sem marca famosa visível, condensação, ${baseStyle}`,
+    cervejas: `${name}${desc}, garrafa ou lata de cerveja genérica gelada sem marca famosa, condensação, copo opcional, ${baseStyle}`,
+    aguas: `${name}${desc}, garrafa de água mineral genérica gelada, transparente, gotas de condensação, ${baseStyle}`,
+    default: `${name}${desc}, item de cardápio brasileiro, apresentação simples e apetitosa, ${baseStyle}`
+  };
+
+  return groupPrompts[group];
 }
 
 /**

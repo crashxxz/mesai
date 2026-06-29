@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { sectorLabel } from "@/lib/services";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { resolveProductImage } from "@/lib/product-image";
-import { saveGeneratedProductImage } from "@/lib/product-image-generation";
+import { buildProductImagePrompt, saveGeneratedProductImage } from "@/lib/product-image-generation";
 import { useStore } from "@/lib/store";
 import { useBusinessPreset } from "@/lib/use-business-preset";
 import type { PreparationSector, Product, StockUnit } from "@/lib/types";
@@ -490,6 +490,9 @@ export default function ProductsPage() {
                       <Button type="button" variant="outline" disabled={generatingImageFor === product.id} onClick={() => void generateSavedProductImage(product, category?.name ?? "")}>
                         <WandSparkles className="h-4 w-4" aria-hidden="true" />
                         {generatingImageFor === product.id ? "Gerando..." : "Gerar imagem"}
+                      </Button>
+                      <Button type="button" variant="ghost" className="text-xs" onClick={() => void navigator.clipboard.writeText(buildProductImagePrompt(product, category?.name ?? ""))}>
+                        Copiar prompt
                       </Button>
                       <input
                         className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm"

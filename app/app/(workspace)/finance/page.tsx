@@ -270,6 +270,33 @@ export default function FinancePage() {
           </article>
         </div>
 
+        <div className="grid gap-4 lg:grid-cols-2">
+          <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
+            <h2 className="mb-3 text-lg font-black text-slate-950">Produtos mais vendidos</h2>
+            <div className="grid gap-2">
+              {metrics.topProducts.length ? metrics.topProducts.map((item, i) => (
+                <div key={item.name} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-amber-100 text-xs font-black text-amber-700">{i + 1}</span>
+                  <div className="min-w-0 flex-1"><div className="truncate font-bold text-slate-900">{item.name}</div><div className="text-xs text-slate-500">{item.quantity} vendidos</div></div>
+                  <strong className="text-slate-900">{brl(item.total)}</strong>
+                </div>
+              )) : <div className="rounded-xl bg-slate-50 p-5 text-center text-sm font-bold text-slate-400">Nenhuma venda no período</div>}
+            </div>
+          </article>
+          <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
+            <h2 className="mb-3 text-lg font-black text-slate-950">Categorias mais vendidas</h2>
+            <div className="grid gap-2">
+              {metrics.topCategories.length ? metrics.topCategories.map((item, i) => (
+                <div key={item.name} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-emerald-100 text-xs font-black text-emerald-700">{i + 1}</span>
+                  <div className="min-w-0 flex-1"><div className="truncate font-bold text-slate-900">{item.name}</div><div className="text-xs text-slate-500">{item.quantity} itens</div></div>
+                  <strong className="text-slate-900">{brl(item.total)}</strong>
+                </div>
+              )) : <div className="rounded-xl bg-slate-50 p-5 text-center text-sm font-bold text-slate-400">Nenhuma venda no período</div>}
+            </div>
+          </article>
+        </div>
+
         <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>

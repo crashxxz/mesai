@@ -154,17 +154,22 @@ export function getDashboardMetrics(
 
   const orderIds = new Set(closedOrders.map((order) => order.id));
   const topMap = new Map<string, { name: string; quantity: number; total: number }>();
+  const categoryMap = new Map<string, { name: string; quantity: number; total: number }>();
 
   for (const item of state.orderItems) {
     if (!orderIds.has(item.orderId) || item.status === "cancelled") continue;
-    const current = topMap.get(item.productId) ?? {
-      name: item.productNameSnapshot,
-      quantity: 0,
-      total: 0
-    };
+    const current = topMap.get(item.productId) ?? { name: item.productNameSnapshot, quantity: 0, total: 0 };
     current.quantity += item.quantity;
     current.total += item.unitPriceSnapshot * item.quantity;
     topMap.set(item.productId, current);
+
+    const product = state.products.find((p) => p.id === item.productId);
+    const category = product ? state.categories.find((c) => c.id === product.categoryId) : undefined;
+    const catName = category?.name ?? "Outros";
+    const catCurrent = categoryMap.get(catName) ?? { name: catName, quantity: 0, total: 0 };
+    catCurrent.quantity += item.quantity;
+    catCurrent.total += item.unitPriceSnapshot * item.quantity;
+    categoryMap.set(catName, catCurrent);
   }
 
   const sales = financialIncome.reduce((sum, entry) => sum + entry.amount, 0);
@@ -185,6 +190,9 @@ export function getDashboardMetrics(
     totalsByMethod,
     topProducts: Array.from(topMap.values())
       .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5),
+    topCategories: Array.from(categoryMap.values())
+      .sort((a, b) => b.total - a.total)
       .slice(0, 5),
     cancelledOrders: orders.filter((order) => order.status === "cancelled").length,
     discounts: orders.reduce((sum, order) => sum + order.discount, 0),
