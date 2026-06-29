@@ -53,9 +53,12 @@ export function getOrderOverallStatus(order: Order, items: OrderItem[]): OrderSt
   const validItems = items.filter((item) => item.status !== "cancelled");
   if (!validItems.length) return "cancelled";
   if (validItems.every((item) => item.status === "delivered")) return "delivered";
-  if (validItems.some((item) => ["pending", "sent", "received"].includes(item.status))) return "sent";
-  if (validItems.some((item) => item.status === "preparing")) return "preparing";
-  if (validItems.some((item) => item.status === "ready")) return "ready";
+  const prepItems = validItems.filter((item) => item.preparationSector !== "none");
+  if (prepItems.some((item) => item.status === "preparing")) return "preparing";
+  if (prepItems.some((item) => item.status === "ready")) return "ready";
+  if (prepItems.some((item) => ["sent", "received"].includes(item.status))) return "sent";
+  // If all pending items are direct (no prep), show as open
+  if (validItems.every((item) => item.status === "pending")) return "open";
   return order.status;
 }
 

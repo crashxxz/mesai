@@ -506,17 +506,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           updatedAt: now
         };
 
-        const stockQuantity = product.hasStockControl ? Math.max(0, (product.stockQuantity ?? 0) - item.quantity) : undefined;
         let next: AppState = {
           ...state,
           orderItems: [...state.orderItems, item],
           orderItemAddons: [...state.orderItemAddons, ...addons],
-          products: product.hasStockControl
-            ? state.products.map((entry) => entry.id === product.id ? { ...entry, stockQuantity, updatedAt: now } : entry)
-            : state.products,
-          stockMovements: product.hasStockControl
-            ? [...(state.stockMovements ?? []), { id: uid("stock"), restaurantId: product.restaurantId, productId: product.id, type: "exit", quantity: item.quantity, reason: "Baixa automática por venda", createdBy: profile?.id, createdAt: now }]
-            : state.stockMovements
         };
         next = withTotals(next, orderId);
         next = {
@@ -858,6 +851,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 ? { ...alert, active: false, resolvedAt: now }
                 : alert
             )
+          };
+        }
+        // Deduct stock for controlled products (idempotent)
+        const orderItemsForStock = next.orderItems.filter((oi) => oi.orderId === orderId && oi.status !== "cancelled");
+        const stockByProduct = new Map<string, number>();
+        for (const oi of orderItemsForStock) stockByProduct.set(oi.productId, (stockByProduct.get(oi.productId) ?? 0) + oi.quantity);
+        for (const [productId, qty] of stockByProduct) {
+          const prod = next.products.find((p) => p.id === productId);
+          if (!prod?.hasStockControl) continue;
+          const alreadyDeducted = (next.stockMovements ?? []).some((m) => m.productId === productId && m.reason === `Venda - Pedido ${orderId}`);
+          if (alreadyDeducted) continue;
+          next = {
+            ...next,
+            products: next.products.map((p) => p.id === productId ? { ...p, stockQuantity: Math.max(0, (p.stockQuantity ?? 0) - qty), updatedAt: now } : p),
+            stockMovements: [...(next.stockMovements ?? []), { id: uid("stock"), restaurantId: order.restaurantId, productId, type: "exit" as const, quantity: qty, reason: `Venda - Pedido ${orderId}`, createdBy: profile?.id, createdAt: now }]
           };
         }
         next = {

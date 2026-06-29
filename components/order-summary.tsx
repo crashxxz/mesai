@@ -40,9 +40,15 @@ export function OrderSummary({
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
         <div>
           <h2 className="text-base font-black text-slate-950">Consumo da mesa</h2>
-          <span className="text-sm font-bold text-slate-500">{items.length} itens</span>
+          <span className="text-sm font-bold text-slate-500">
+            {items.length} itens
+            {pendingPrepItems.length > 0 ? ` · ${pendingPrepItems.length} para preparo` : ""}
+            {pendingDirectItems.length > 0 ? ` · ${pendingDirectItems.length} aguardando entrega` : ""}
+          </span>
         </div>
-        <StatusBadge tone={overallStatus === "closed" || overallStatus === "delivered" ? "green" : overallStatus === "cancelled" ? "red" : "amber"}>{orderStatusLabel(overallStatus)}</StatusBadge>
+        <StatusBadge tone={overallStatus === "closed" || overallStatus === "delivered" ? "green" : overallStatus === "cancelled" ? "red" : "amber"}>
+          {overallStatus === "open" && pendingDirectItems.length > 0 && pendingPrepItems.length === 0 ? "Aguardando entrega" : orderStatusLabel(overallStatus)}
+        </StatusBadge>
       </div>
 
       <div className="max-h-[45vh] overflow-y-auto p-3">
