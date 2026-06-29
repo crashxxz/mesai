@@ -344,12 +344,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
 
         if (!orderItems.length) return undefined;
-        const stockDeductions = new Map<string, number>();
-        for (const item of orderItems) {
-          const product = state.products.find((entry) => entry.id === item.productId);
-          if (product?.hasStockControl) stockDeductions.set(item.productId, (stockDeductions.get(item.productId) ?? 0) + item.quantity);
-        }
-
         let next: AppState = {
           ...state,
           tabs: [
@@ -385,17 +379,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ],
           orderItems: [...state.orderItems, ...orderItems],
           orderItemAddons: [...state.orderItemAddons, ...orderAddons],
-          products: state.products.map((product) => {
-            const quantity = stockDeductions.get(product.id);
-            return quantity ? { ...product, stockQuantity: Math.max(0, (product.stockQuantity ?? 0) - quantity), updatedAt: now } : product;
-          }),
-          stockMovements: [
-            ...(state.stockMovements ?? []),
-            ...[...stockDeductions.entries()].map(([productId, quantity]) => ({
-              id: uid("stock"), restaurantId, productId, type: "exit" as const, quantity,
-              reason: "Baixa automática por venda", createdAt: now
-            }))
-          ],
           tables: state.tables.map((table) =>
             table.id === tableId ? { ...table, status: "occupied", updatedAt: now } : table
           )
