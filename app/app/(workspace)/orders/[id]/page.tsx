@@ -33,7 +33,8 @@ export default function OrderPage() {
   const items = order ? getOrderItems(state, order.id) : [];
   const [cancelItemId, setCancelItemId] = useState<string | undefined>();
   const [cancelOrderOpen, setCancelOrderOpen] = useState(false);
-  const pendingCount = items.filter((item) => item.status === "pending").length;
+  const pendingPrepCount = items.filter((item) => item.status === "pending" && item.preparationSector !== "none").length;
+  const pendingDirectCount = items.filter((item) => item.status === "pending" && item.preparationSector === "none").length;
   const quickDrinks = searchParams.get("quick") === "drinks";
   const drinkCategoryIds = new Set(
     state.categories
@@ -96,8 +97,8 @@ export default function OrderPage() {
                 <div className="text-[10px] font-black uppercase text-slate-500">Itens</div>
               </div>
               <div className="rounded-2xl bg-amber-50 p-3">
-                <div className="text-xl font-black text-amber-800">{pendingCount}</div>
-                <div className="text-[10px] font-black uppercase text-amber-700">Para enviar</div>
+                <div className="text-xl font-black text-amber-800">{pendingPrepCount || pendingDirectCount}</div>
+                <div className="text-[10px] font-black uppercase text-amber-700">{pendingPrepCount > 0 ? "Para preparo" : "Aguardando entrega"}</div>
               </div>
               <div className="rounded-2xl bg-emerald-50 p-3">
                 <div className="text-xl font-black text-emerald-800">{brl(order.total)}</div>
@@ -108,7 +109,7 @@ export default function OrderPage() {
 
           <div className="flex items-center gap-2 text-sm font-black text-slate-500">
             <ShoppingBasket className="h-4 w-4" aria-hidden="true" />
-            Adicione os itens e envie para preparo.
+            {pendingPrepCount > 0 ? "Adicione os itens e envie para preparo." : "Adicione os itens. Bebidas simples você entrega direto."}
           </div>
 
           <ProductGrid
@@ -138,7 +139,7 @@ export default function OrderPage() {
           />
         </aside>
 
-        {pendingCount > 0 ? (
+        {pendingPrepCount > 0 ? (
           <div className="fixed inset-x-0 bottom-20 z-30 px-4 md:hidden">
             <Button
               className="w-full shadow-soft-lg text-base"
@@ -147,7 +148,7 @@ export default function OrderPage() {
               onClick={() => sendItemsToPreparation(order.id)}
             >
               <Send className="h-4 w-4" aria-hidden="true" />
-              {preset.quickActions.sendToPrep} · {pendingCount} {pendingCount === 1 ? "item" : "itens"} · {brl(order.total)}
+              {preset.quickActions.sendToPrep} · {pendingPrepCount} {pendingPrepCount === 1 ? "item" : "itens"} · {brl(order.total)}
             </Button>
           </div>
         ) : null}
