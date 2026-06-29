@@ -537,21 +537,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         let hasPrepItem = false;
         const nextItems = state.orderItems.map((item) => {
           if (item.orderId !== orderId || item.status !== "pending") return item;
-          if (item.preparationSector !== "none") hasPrepItem = true;
+          // Items without prep stay pending (waiter delivers manually)
+          if (item.preparationSector === "none") return item;
+          hasPrepItem = true;
           return {
             ...item,
-            status: item.preparationSector === "none" ? "delivered" : "sent",
+            status: "sent" as const,
             sentAt: now,
-            deliveredAt: item.preparationSector === "none" ? now : item.deliveredAt,
             updatedAt: now
-          } satisfies OrderItem;
+          };
         });
+        if (!hasPrepItem) return; // Nothing to send
         let next: AppState = {
           ...state,
           orderItems: nextItems,
           orders: state.orders.map((order) =>
             order.id === orderId
-              ? { ...order, status: hasPrepItem ? "sent" : "delivered", updatedAt: now }
+              ? { ...order, status: "sent", updatedAt: now }
               : order
           )
         };

@@ -30,8 +30,9 @@ export function OrderSummary({
   onCancelOrder?: () => void;
 }) {
   const { preset } = useBusinessPreset();
-  const hasPending = items.some((item) => item.status === "pending");
-  const pendingCount = items.filter((item) => item.status === "pending").length;
+  const pendingPrepItems = items.filter((item) => item.status === "pending" && item.preparationSector !== "none");
+  const pendingDirectItems = items.filter((item) => item.status === "pending" && item.preparationSector === "none");
+  const hasPendingPrep = pendingPrepItems.length > 0;
   const overallStatus = getOrderOverallStatus(order, items);
 
   return (
@@ -92,13 +93,13 @@ export function OrderSummary({
                                 : "amber"
                         }
                       >
-                        {orderItemStatusLabel(item.status)}
+                        {orderItemStatusLabel(item.status, item.preparationSector)}
                       </StatusBadge>
                     </div>
                   </div>
-                  {(item.status === "ready" || !["cancelled", "delivered", "preparing"].includes(item.status)) ? (
+                  {(item.status === "ready" || (item.status === "pending" && item.preparationSector === "none") || !["cancelled", "delivered", "preparing", "ready"].includes(item.status)) ? (
                     <div className="mt-2 flex gap-1.5">
-                      {item.status === "ready" ? (
+                      {item.status === "ready" || (item.status === "pending" && item.preparationSector === "none") ? (
                         <Button size="sm" variant="outline" className="border-sky-600 bg-sky-600 text-white hover:bg-sky-700" onClick={() => onDeliver(item.id)}>
                           <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
                           Entregar
@@ -160,12 +161,15 @@ export function OrderSummary({
         </div>
       </div>
 
-      {hasPending ? (
+      {hasPendingPrep ? (
         <div className="border-t border-slate-100 px-4 py-3">
           <Button className="w-full text-base" variant="amber" size="lg" onClick={onSend}>
             <Send className="h-4 w-4" aria-hidden="true" />
-            {preset.quickActions.sendToPrep} · {pendingCount} {pendingCount === 1 ? "item" : "itens"}
+            {preset.quickActions.sendToPrep} · {pendingPrepItems.length} {pendingPrepItems.length === 1 ? "item" : "itens"}
           </Button>
+          {pendingDirectItems.length > 0 ? (
+            <p className="mt-2 text-center text-xs font-bold text-slate-500">{pendingDirectItems.length} {pendingDirectItems.length === 1 ? "item aguardando entrega" : "itens aguardando entrega"} (sem preparo)</p>
+          ) : null}
         </div>
       ) : null}
       {items.some((item) => !["cancelled", "delivered"].includes(item.status)) && onCancelOrder ? (

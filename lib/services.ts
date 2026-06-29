@@ -279,7 +279,8 @@ export function orderStatusLabel(status: OrderStatus) {
   return labels[status];
 }
 
-export function orderItemStatusLabel(status: OrderItem["status"]) {
+export function orderItemStatusLabel(status: OrderItem["status"], preparationSector?: string) {
+  if (status === "pending" && preparationSector === "none") return "Aguardando entrega";
   const labels: Record<OrderItem["status"], string> = {
     pending: "Aguardando envio",
     sent: "Enviado",
