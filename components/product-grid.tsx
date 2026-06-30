@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { Martini, Minus, PackageCheck, Plus, Search, Utensils, X, type LucideIcon } from "lucide-react";
+import { Minus, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { sectorLabel } from "@/lib/services";
 import { resolveProductImage } from "@/lib/product-image";
@@ -188,19 +188,23 @@ export function ProductGrid({
         {filteredProducts.length ? (
           filteredProducts.map((product) => {
             const category = categoryById.get(product.categoryId);
-            const SectorIcon = product.preparationSector === "bar" ? Martini : product.preparationSector === "kitchen" ? Utensils : PackageCheck;
             return (
               <button
                 key={product.id}
                 type="button"
-                className="card-lift grid min-h-32 grid-cols-[72px_1fr] gap-3 rounded-2xl border border-slate-100 bg-white p-3 text-left shadow-soft transition hover:border-amber-200 active:scale-[0.97]"
+                className={cn(
+                  "card-lift grid min-h-20 gap-3 rounded-2xl border border-slate-100 bg-white p-3 text-left shadow-soft transition hover:border-amber-200 active:scale-[0.97]",
+                  resolveProductImage(product, category?.name) ? "grid-cols-[72px_1fr]" : ""
+                )}
                 onClick={() => {
                   setSelected(product);
                   setVariationId(undefined);
                   setAddonIds([]);
                 }}
               >
-                <ProductImage url={resolveProductImage(product, category?.name) ?? undefined} name={product.name} icon={SectorIcon} />
+                {resolveProductImage(product, category?.name) ? (
+                  <ProductImage url={resolveProductImage(product, category?.name)!} name={product.name} />
+                ) : null}
                 <span className="flex min-w-0 flex-col">
                   <span className="line-clamp-2 text-base font-black leading-tight text-slate-950">{product.name}</span>
                   <span className="mt-2 self-start rounded-xl bg-emerald-50 px-2.5 py-1 text-sm font-black text-emerald-700">
@@ -335,7 +339,9 @@ export function ProductGrid({
                 />
               </label>
 
-              <ProductImage url={resolveProductImage(selected, categoryById.get(selected.categoryId)?.name) ?? undefined} name={selected.name} icon={selected.preparationSector === "bar" ? Martini : selected.preparationSector === "kitchen" ? Utensils : PackageCheck} />
+              {resolveProductImage(selected, categoryById.get(selected.categoryId)?.name) ? (
+                <ProductImage url={resolveProductImage(selected, categoryById.get(selected.categoryId)?.name)!} name={selected.name} />
+              ) : null}
               {addError ? <p className="text-sm font-bold text-red-600">{addError}</p> : null}
               <Button variant="amber" size="lg" className="text-base" disabled={adding} onClick={() => void addSelected()}>
                 <Plus className="h-5 w-5" aria-hidden="true" />
@@ -349,10 +355,11 @@ export function ProductGrid({
   );
 }
 
-function ProductImage({ url, name, icon: Icon }: { url?: string; name: string; icon: LucideIcon }) {
+function ProductImage({ url, name }: { url: string; name: string }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [url]);
-  return <span className="relative grid h-full min-h-24 overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 text-amber-700">
-    {url && !failed ? <Image src={url} alt={name} fill sizes="72px" className="object-cover" unoptimized onError={() => setFailed(true)} /> : <span className="grid place-items-center"><Icon className="h-8 w-8" aria-hidden="true" /></span>}
+  if (failed) return null;
+  return <span className="relative grid h-full min-h-20 overflow-hidden rounded-2xl bg-slate-100">
+    <Image src={url} alt={name} fill sizes="72px" className="object-cover" unoptimized onError={() => setFailed(true)} />
   </span>;
 }

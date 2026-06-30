@@ -563,6 +563,6 @@ function AdminProductImage({ product, categoryName }: { product: Product; catego
   const url = resolveProductImage(product, categoryName);
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [url]);
-  if (!url || failed) return <span className="grid h-full place-items-center bg-gradient-to-br from-amber-50 to-orange-100 text-amber-600"><PackageCheck className="h-6 w-6" /></span>;
+  if (!url || failed) return <span className="grid h-full place-items-center rounded-2xl bg-slate-100" />;
   return <Image src={url} alt={product.name} fill sizes="64px" className="object-cover" unoptimized onError={() => setFailed(true)} />;
 }
