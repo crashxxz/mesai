@@ -124,7 +124,7 @@ export default function TableDetailPage() {
                     <ReceiptText className="h-4 w-4" aria-hidden="true" />
                     Fechar mesa
                   </Button>
-                  {profile && ["owner", "manager"].includes(profile.role) ? (
+                  {profile && ["owner", "manager"].includes(profile.role) && process.env.NODE_ENV === "development" ? (
                     <Button
                       variant="danger"
                       onClick={() => {

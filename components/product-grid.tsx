@@ -54,7 +54,17 @@ export function ProductGrid({
       return true;
     });
   }, [categories]);
-  const [activeCategory, setActiveCategory] = useState(initialCategoryId);
+  const storageKey = `mesay-category-${typeof window !== "undefined" ? window.location.pathname : ""}`;
+  const [activeCategory, setActiveCategory] = useState(() => {
+    if (typeof window === "undefined") return initialCategoryId;
+    const saved = sessionStorage.getItem(storageKey);
+    return saved ?? initialCategoryId;
+  });
+
+  function selectCategory(id: string) {
+    setActiveCategory(id);
+    if (typeof window !== "undefined") sessionStorage.setItem(storageKey, id);
+  }
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Product | undefined>();
   const [quantity, setQuantity] = useState(1);
@@ -69,8 +79,13 @@ export function ProductGrid({
   );
 
   useEffect(() => {
-    setActiveCategory(initialCategoryId === "all" || uniqueCategories.some((category) => category.id === initialCategoryId) ? initialCategoryId : "all");
-  }, [initialCategoryId, uniqueCategories]);
+    setActiveCategory((current) => {
+      if (current === "all") return current;
+      if (uniqueCategories.some((category) => category.id === current)) return current;
+      if (typeof window !== "undefined") sessionStorage.removeItem(storageKey);
+      return "all";
+    });
+  }, [uniqueCategories, storageKey]);
 
   const filteredProducts = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -144,7 +159,7 @@ export function ProductGrid({
                 ? "bg-slate-950 text-white shadow-sm"
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             )}
-            onClick={() => setActiveCategory("all")}
+            onClick={() => selectCategory("all")}
           >
             Todos
           </button>
@@ -161,7 +176,7 @@ export function ProductGrid({
                     ? "bg-slate-950 text-white shadow-sm"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 )}
-                onClick={() => setActiveCategory(category.id)}
+                onClick={() => selectCategory(category.id)}
               >
                 {category.name}
               </button>
