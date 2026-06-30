@@ -57,7 +57,7 @@ export function normalizeProductVisualCategory(product: ProductVisualInput, cate
 export async function generateProductImage(product: ProductVisualInput, categoryName = "") {
   const candidate = { ...product, imageUrl: undefined, image_url: undefined, generatedImageUrl: undefined, generated_image_url: undefined };
   return {
-    url: resolveProductImage(candidate, categoryName),
+    url: resolveProductImage(candidate, categoryName) ?? undefined,
     prompt: buildProductImagePrompt(product, categoryName),
     type: getProductVisualType(product, categoryName)
   };
@@ -69,6 +69,6 @@ export async function saveGeneratedProductImage(
   save: (url: string) => void | Promise<void>
 ) {
   const generated = await generateProductImage(product, categoryName);
-  await save(generated.url);
+  if (generated.url) await save(generated.url);
   return generated;
 }

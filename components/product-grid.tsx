@@ -200,7 +200,7 @@ export function ProductGrid({
                   setAddonIds([]);
                 }}
               >
-                <ProductImage url={resolveProductImage(product, category?.name)} name={product.name} icon={SectorIcon} />
+                <ProductImage url={resolveProductImage(product, category?.name) ?? undefined} name={product.name} icon={SectorIcon} />
                 <span className="flex min-w-0 flex-col">
                   <span className="line-clamp-2 text-base font-black leading-tight text-slate-950">{product.name}</span>
                   <span className="mt-2 self-start rounded-xl bg-emerald-50 px-2.5 py-1 text-sm font-black text-emerald-700">
@@ -335,7 +335,7 @@ export function ProductGrid({
                 />
               </label>
 
-              <ProductImage url={resolveProductImage(selected, categoryById.get(selected.categoryId)?.name)} name={selected.name} icon={selected.preparationSector === "bar" ? Martini : selected.preparationSector === "kitchen" ? Utensils : PackageCheck} />
+              <ProductImage url={resolveProductImage(selected, categoryById.get(selected.categoryId)?.name) ?? undefined} name={selected.name} icon={selected.preparationSector === "bar" ? Martini : selected.preparationSector === "kitchen" ? Utensils : PackageCheck} />
               {addError ? <p className="text-sm font-bold text-red-600">{addError}</p> : null}
               <Button variant="amber" size="lg" className="text-base" disabled={adding} onClick={() => void addSelected()}>
                 <Plus className="h-5 w-5" aria-hidden="true" />

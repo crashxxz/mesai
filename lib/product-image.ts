@@ -104,27 +104,27 @@ export function getProductVisualType(product: ProductImageCandidate, categoryNam
   return "placeholder";
 }
 
-// Map visual type to the best available image (existing assets or SVG placeholders)
-const typeToImage: Record<ProductVisualType, string> = {
+// Map visual type to the best available REAL image, or null if none is trustworthy
+const typeToImage: Record<ProductVisualType, string | null> = {
   agua: "/menu-images/bebidas/agua.png",
   agua_coco: "/menu-images/bebidas/agua-de-coco.png",
-  suco: "/menu-images/placeholders/suco.svg",
-  refrigerante: "/menu-images/placeholders/refrigerante.svg",
-  cerveja: "/menu-images/placeholders/cerveja.svg",
-  long_neck: "/menu-images/placeholders/cerveja.svg",
-  energetico: "/menu-images/placeholders/energetico.svg",
-  dose: "/menu-images/placeholders/dose.svg",
-  vinho: "/menu-images/placeholders/dose.svg",
-  drink: "/menu-images/placeholders/dose.svg",
+  suco: null,
+  refrigerante: null,
+  cerveja: null,
+  long_neck: null,
+  energetico: null,
+  dose: null,
+  vinho: null,
+  drink: null,
   cafe: "/menu-images/cafe/default-cafe.webp",
-  petisco: "/menu-images/placeholders/petisco.svg",
-  churrasco: "/menu-images/placeholders/churrasco.svg",
-  prato: "/menu-images/placeholders/prato.svg",
+  petisco: null,
+  churrasco: null,
+  prato: null,
   sobremesa: "/menu-images/sobremesas/default-sobremesa.webp",
   pizza: "/menu-images/pizzas/default-pizza.webp",
   hamburger: "/menu-images/hamburgueres/default-burger.webp",
   massa: "/menu-images/massas/default-massa.webp",
-  placeholder: "/menu-images/placeholders/generico.svg"
+  placeholder: null
 };
 
 // Some products have specific real images (better than placeholder)
@@ -150,7 +150,7 @@ function generatedImage(product: ProductImageCandidate) {
 }
 
 /** Resolves the best image for a product. Conservative: prefers placeholder over wrong image. */
-export function resolveProductImage(product: ProductImageCandidate, categoryName = ""): string {
+export function resolveProductImage(product: ProductImageCandidate, categoryName = ""): string | null {
   // 1. Manual image always wins
   const manual = firstManualImage(product);
   if (manual) return manual;
@@ -166,7 +166,7 @@ export function resolveProductImage(product: ProductImageCandidate, categoryName
   );
   if (specific) return specific.path;
 
-  // 4. Placeholder by visual type (never shows wrong category)
+  // 4. Type-based real image (only if we have a trustworthy real photo, otherwise null)
   const type = getProductVisualType(product, categoryName);
   return typeToImage[type];
 }

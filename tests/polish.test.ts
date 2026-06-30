@@ -48,9 +48,9 @@ test("imagem cadastrada é reutilizada no card e no modal", () => {
 
 test("biblioteca local resolve imagens por produto, categoria e fallback", () => {
   assert.equal(resolveProductImage({ name: "Pastelzinho" }), "/menu-images/petiscos/pastelzinho.webp");
-  assert.equal(resolveProductImage({ name: "Cerveja gelada" }), "/menu-images/cervejas/default-cerveja.webp");
+  assert.equal(resolveProductImage({ name: "Cerveja gelada" }), null); // no trustworthy real image
   assert.equal(resolveProductImage({ name: "Item novo" }, "Pizzas"), "/menu-images/pizzas/default-pizza.webp");
-  assert.equal(resolveProductImage({ name: "Item novo" }), "/menu-images/default/default-food.webp");
+  assert.equal(resolveProductImage({ name: "Item novo" }), null); // unknown product, no fake image
   assert.equal(existsSync("public/menu-images/petiscos/pastelzinho.webp"), true);
 });
 
