@@ -358,7 +358,7 @@ export function ProductGrid({
 function ProductImage({ url, name }: { url: string; name: string }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [url]);
-  if (failed) return null;
+  if (!(url && !failed)) return null;
   return <span className="relative grid h-full min-h-20 overflow-hidden rounded-2xl bg-slate-100">
     <Image src={url} alt={name} fill sizes="72px" className="object-cover" unoptimized onError={() => setFailed(true)} />
   </span>;

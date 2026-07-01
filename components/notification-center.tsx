@@ -2,6 +2,7 @@
 
 import { Bell, BellRing, CheckCheck, Volume2, VolumeX, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PushButton } from "@/components/push-button";
 import { effectiveRoles } from "@/lib/permissions";
 import { itemAppearsInPreparationSector } from "@/lib/services";
 import { useStore } from "@/lib/store";
@@ -56,6 +57,7 @@ export function NotificationCenter() {
       </button>
       {open ? <div className="fixed inset-x-3 top-16 z-50 flex max-h-[calc(100dvh-5rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-soft-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[360px]">
         <div className="flex items-center justify-between"><strong>Notificações</strong><div className="flex gap-1"><button title="Som" className="grid h-9 w-9 place-items-center rounded-lg hover:bg-slate-100" onClick={() => { const next = !sound; setSound(next); localStorage.setItem(`${storageKey}-sound`, next ? "1" : "0"); }}>{sound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}</button><button title="Marcar todas como lidas" className="grid h-9 w-9 place-items-center rounded-lg hover:bg-slate-100" onClick={markAllRead}><CheckCheck className="h-4 w-4" /></button></div></div>
+        <div className="mt-2 rounded-xl border border-slate-100 bg-slate-50 p-3"><p className="mb-2 text-xs font-black uppercase text-slate-500">NotificaÃ§Ãµes do dispositivo</p><PushButton /></div>
         <div className="mt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain">{notices.length ? notices.map((notice) => <button key={notice.id} className={`block w-full rounded-xl p-3 text-left text-sm ${read.includes(notice.id) ? "text-slate-500" : "bg-amber-50 font-bold text-slate-900"}`} onClick={() => { const next = [...new Set([...read, notice.id])]; setRead(next); localStorage.setItem(storageKey, JSON.stringify(next)); }}><span>{notice.text}</span><small className="mt-1 block text-xs text-slate-400">{relativeTime(notice.at)}</small></button>) : <p className="p-5 text-center text-sm font-bold text-slate-400">Tudo tranquilo por aqui.</p>}</div>
       </div> : null}
     </div>

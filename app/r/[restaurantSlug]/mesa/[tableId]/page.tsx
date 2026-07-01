@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { runtimeConfig } from "@/lib/runtime-config";
 import { brand } from "@/lib/brand";
 import { resolveProductImage } from "@/lib/product-image";
+import { notifyPublicPushEvent } from "@/lib/push";
 import { orderItemStatusLabel, orderStatusLabel } from "@/lib/services";
 import { useStore } from "@/lib/store";
 import { supabaseGateway } from "@/lib/supabase-gateway";
@@ -96,7 +97,12 @@ export default function PublicQrPage() {
       const nextOrderId = sessionToken
         ? await supabaseGateway.createQrOrder(sessionToken, cart, customerName || undefined)
         : createQrOrder(table.id, customerName || undefined, cart);
-      if (nextOrderId) { setOrderId(nextOrderId); setCart([]); setMessage(preset.qrTexts.orderSent); }
+      if (nextOrderId) {
+        setOrderId(nextOrderId);
+        setCart([]);
+        setMessage(preset.qrTexts.orderSent);
+        if (tableToken) void notifyPublicPushEvent("qr_order", { tableToken, orderId: nextOrderId });
+      }
     } catch (error) { setMessage(error instanceof Error ? error.message : "Não foi possível enviar o pedido"); }
   }
 
@@ -105,6 +111,7 @@ export default function PublicQrPage() {
       if (sessionToken) await supabaseGateway.requestTableService(sessionToken, type);
       else requestTableService(table!.id, type);
       setMessage(type === "waiter_call" ? preset.qrTexts.waiterCalled : preset.qrTexts.billRequested);
+      if (tableToken) void notifyPublicPushEvent(type, { tableToken });
     } catch (error) { setMessage(error instanceof Error ? error.message : "Não foi possível enviar o chamado"); }
   }
 

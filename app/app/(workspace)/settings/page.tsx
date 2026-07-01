@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { RefreshCcw, Table2, UsersRound } from "lucide-react";
 import { RoleGuard } from "@/components/role-guard";
+import { PushButton } from "@/components/push-button";
 import { Button } from "@/components/ui/button";
 import { businessPresetOptions, type BusinessProfile } from "@/lib/business-presets";
 import { useStore } from "@/lib/store";
@@ -173,6 +174,10 @@ export default function SettingsPage() {
                 <option value="system">Automático</option>
               </select>
             </label>
+            <div className="grid gap-1 text-sm font-bold text-slate-700">
+              <span>Notificações push</span>
+              <PushButton />
+            </div>
           </div>
           {settings.pixProvider && settings.pixProvider !== "manual" ? (
             <p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs font-bold text-amber-900">

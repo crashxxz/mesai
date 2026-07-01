@@ -15,6 +15,7 @@ import { createLocalStorageAdapter } from "@/lib/storage-adapter";
 import { supabase } from "@/lib/supabase";
 import { supabaseGateway, type WorkspaceBootstrap } from "@/lib/supabase-gateway";
 import { resolveProductImage } from "@/lib/product-image";
+import { notifyPushEvent } from "@/lib/push";
 import {
   calculateOrderTotals,
   createAuditLog,
@@ -507,6 +508,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           await supabaseGateway.sendOrderItems(orderId);
           const workspace = await supabaseGateway.loadWorkspace();
           setState((current) => mergeWorkspace(current, workspace));
+          void notifyPushEvent("items_sent", { orderId });
           return;
         }
         const now = new Date().toISOString();
@@ -538,12 +540,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           auditLogs: [...next.auditLogs, createAuditLog(next, "items_sent_to_preparation", "orders", orderId)]
         };
         commit(next, "preparation");
+        void notifyPushEvent("items_sent", { orderId });
       },
       async updateOrderItemStatus(itemId, status) {
         if (runtimeConfig.dataMode === "supabase") {
           await supabaseGateway.updatePreparationStatus(itemId, status);
           const workspace = await supabaseGateway.loadWorkspace();
           setState((current) => mergeWorkspace(current, workspace));
+          if (status === "ready") void notifyPushEvent("item_ready", { itemId });
           return;
         }
         const now = new Date().toISOString();
@@ -585,6 +589,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           auditLogs: [...next.auditLogs, createAuditLog(next, "order_item_status_updated", "order_items", itemId, oldItem)]
         };
         commit(next, "preparation");
+        if (status === "ready") void notifyPushEvent("item_ready", { itemId });
       },
       async cancelOrderItem(itemId, reason) {
         if (runtimeConfig.dataMode === "supabase") {
@@ -657,6 +662,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           await supabaseGateway.rejectOrderItem(itemId, reason);
           const workspace = await supabaseGateway.loadWorkspace();
           setState((current) => mergeWorkspace(current, workspace));
+          void notifyPushEvent("item_rejected", { itemId });
           return;
         }
         const oldItem = state.orderItems.find((item) => item.id === itemId);
@@ -669,6 +675,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         next = withTotals(next, oldItem.orderId);
         next = { ...next, auditLogs: [...next.auditLogs, createAuditLog(next, "order_item_rejected", "order_items", itemId, oldItem, { reason })] };
         commit(next, "order_item");
+        void notifyPushEvent("item_rejected", { itemId });
       },
       updateOrderDiscount(orderId, discount) {
         const order = state.orders.find((item) => item.id === orderId);
