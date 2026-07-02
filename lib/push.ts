@@ -43,6 +43,35 @@ export async function getSupabaseAccessToken() {
   return session?.data.session?.access_token;
 }
 
+export async function syncExistingPushSubscription(): Promise<"synced" | "skipped" | "error"> {
+  if (!isPushSupported() || getPushPermission() !== "granted") return "skipped";
+  const subscription = await getExistingSubscription();
+  if (!subscription) return "skipped";
+  const keys = subscription.toJSON().keys;
+  const token = await getSupabaseAccessToken();
+  if (!token || !keys?.p256dh || !keys.auth) return "skipped";
+  const response = await fetch("/api/push/subscribe", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint: subscription.endpoint, keys: { p256dh: keys.p256dh, auth: keys.auth } })
+  }).catch(() => undefined);
+  return response?.ok ? "synced" : "error";
+}
+
+export async function disableCurrentPushSubscription({ unsubscribe = false } = {}) {
+  if (!isPushSupported()) return;
+  const subscription = await getExistingSubscription();
+  const token = await getSupabaseAccessToken();
+  if (subscription && token) {
+    await fetch("/api/push/subscribe", {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: subscription.endpoint })
+    }).catch(() => undefined);
+  }
+  if (unsubscribe) await unsubscribeFromPush();
+}
+
 export async function notifyPushEvent(type: "items_sent" | "item_ready" | "item_rejected", payload: { orderId?: string; itemId?: string }) {
   const token = await getSupabaseAccessToken();
   if (!token) return;

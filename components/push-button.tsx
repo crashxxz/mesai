@@ -3,7 +3,7 @@
 import { Bell, BellOff, BellRing } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { getExistingSubscription, getPushPermission, getSupabaseAccessToken, isPushSupported, subscribeToPush, unsubscribeFromPush } from "@/lib/push";
+import { disableCurrentPushSubscription, getExistingSubscription, getPushPermission, getSupabaseAccessToken, isPushSupported, subscribeToPush } from "@/lib/push";
 
 export function PushButton() {
   const [status, setStatus] = useState<"loading" | "unsupported" | "denied" | "active" | "inactive">("loading");
@@ -50,16 +50,7 @@ export function PushButton() {
 
   async function deactivate() {
     setStatus("loading");
-    const subscription = await getExistingSubscription();
-    const token = await getSupabaseAccessToken();
-    if (subscription && token) {
-      await fetch("/api/push/subscribe", {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ endpoint: subscription.endpoint })
-      }).catch(() => undefined);
-    }
-    await unsubscribeFromPush();
+    await disableCurrentPushSubscription({ unsubscribe: true });
     setStatus("inactive");
     setMessage("Desativadas.");
   }
@@ -80,7 +71,7 @@ export function PushButton() {
     <div className="flex flex-wrap items-center gap-2">
       {status === "active" ? (
         <>
-          <Button variant="outline" size="sm" onClick={deactivate}><BellOff className="h-4 w-4" />Desativar</Button>
+          <Button variant="outline" size="sm" onClick={deactivate}><BellOff className="h-4 w-4" />Desativar este dispositivo</Button>
           <Button variant="outline" size="sm" onClick={() => void sendTest()}><BellRing className="h-4 w-4" />Testar</Button>
           <span className="text-xs font-bold text-emerald-600">Ativadas</span>
         </>
@@ -88,6 +79,9 @@ export function PushButton() {
         <Button variant="amber" size="sm" onClick={() => void activate()}><Bell className="h-4 w-4" />Ativar notificações</Button>
       )}
       {message ? <span className="text-xs font-bold text-slate-500">{message}</span> : null}
+      <p className="basis-full text-xs font-semibold text-slate-500">
+        Para receber e abrir como app no celular, instale o MesaY na Tela de Início e ative as notificações dentro do app instalado.
+      </p>
     </div>
   );
 }

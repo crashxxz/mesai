@@ -12,8 +12,8 @@ export async function POST(request: NextRequest) {
     restaurantId: profile.restaurantId,
     roles: profile.roles,
     title: "Teste MesaY",
-    body: "Notificações push funcionando.",
-    url: "/app/settings",
+    body: "Notificações push funcionando neste dispositivo.",
+    url: "/app/dashboard",
     tag: `test-${profile.userId}`
   });
 

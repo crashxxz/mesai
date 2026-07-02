@@ -12,6 +12,7 @@ create table if not exists public.push_subscriptions (
   enabled boolean not null default true,
   last_error text,
   disabled_at timestamptz,
+  last_seen_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -19,6 +20,7 @@ create table if not exists public.push_subscriptions (
 alter table public.push_subscriptions add column if not exists roles text[] not null default '{}';
 alter table public.push_subscriptions add column if not exists last_error text;
 alter table public.push_subscriptions add column if not exists disabled_at timestamptz;
+alter table public.push_subscriptions add column if not exists last_seen_at timestamptz;
 
 create index if not exists idx_push_subs_restaurant_role on public.push_subscriptions(restaurant_id, role) where enabled;
 create index if not exists idx_push_subs_restaurant_roles on public.push_subscriptions using gin (roles) where enabled;

@@ -1,9 +1,10 @@
 "use client";
 
-import { Bell, BellRing, CheckCheck, Volume2, VolumeX, X } from "lucide-react";
+import { Bell, BellRing, CheckCheck, Trash2, Volume2, VolumeX, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PushButton } from "@/components/push-button";
 import { effectiveRoles } from "@/lib/permissions";
+import { syncExistingPushSubscription } from "@/lib/push";
 import { itemAppearsInPreparationSector } from "@/lib/services";
 import { useStore } from "@/lib/store";
 import type { UserRole } from "@/lib/types";
@@ -14,24 +15,36 @@ export function NotificationCenter() {
   const { state, profile, restaurant } = useStore();
   const [open, setOpen] = useState(false);
   const [read, setRead] = useState<string[]>([]);
+  const [cleared, setCleared] = useState<string[]>([]);
   const [sound, setSound] = useState(false);
   const [toast, setToast] = useState<Notice>();
   const initialized = useRef(false);
   const previousIds = useRef<string[]>([]);
   const roles = useMemo(() => effectiveRoles(profile), [profile]);
-  const notices = useMemo(() => buildNotices(state, restaurant?.id).filter((notice) => notice.roles.some((role) => roles.includes(role))).slice(0, 30), [restaurant?.id, roles, state]);
+  const storageKey = `mesai-notices-${profile?.id ?? "guest"}`;
+  const clearKey = `${storageKey}-cleared`;
+  const allNotices = useMemo(() => buildNotices(state, restaurant?.id).filter((notice) => notice.roles.some((role) => roles.includes(role))).slice(0, 30), [restaurant?.id, roles, state]);
+  const notices = useMemo(() => allNotices.filter((notice) => !cleared.includes(notice.id)), [allNotices, cleared]);
   const noticesRef = useRef(notices);
   noticesRef.current = notices;
   const unread = notices.filter((notice) => !read.includes(notice.id));
-  const storageKey = `mesai-notices-${profile?.id ?? "guest"}`;
 
   useEffect(() => {
     const saved = localStorage.getItem(storageKey);
-    setRead(saved ? JSON.parse(saved) as string[] : noticesRef.current.map((notice) => notice.id));
+    const savedCleared = localStorage.getItem(clearKey);
+    const parsedCleared = savedCleared ? JSON.parse(savedCleared) as string[] : [];
+    setCleared(parsedCleared);
+    const visible = noticesRef.current.filter((notice) => !parsedCleared.includes(notice.id));
+    setRead(saved ? JSON.parse(saved) as string[] : visible.map((notice) => notice.id));
     setSound(localStorage.getItem(`${storageKey}-sound`) === "1");
-    previousIds.current = noticesRef.current.map((notice) => notice.id);
+    previousIds.current = visible.map((notice) => notice.id);
     initialized.current = true;
-  }, [storageKey]);
+  }, [clearKey, storageKey]);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    void syncExistingPushSubscription();
+  }, [profile?.id]);
 
   useEffect(() => {
     if (!initialized.current) return;
@@ -46,7 +59,18 @@ export function NotificationCenter() {
 
   function markAllRead() {
     const ids = notices.map((notice) => notice.id);
-    setRead(ids); localStorage.setItem(storageKey, JSON.stringify(ids));
+    setRead(ids);
+    localStorage.setItem(storageKey, JSON.stringify(ids));
+  }
+
+  function clearVisibleNotifications() {
+    const visibleIds = notices.map((notice) => notice.id);
+    const ids = [...new Set([...cleared, ...visibleIds])];
+    const nextRead = [...new Set([...read, ...visibleIds])];
+    setCleared(ids);
+    setRead(nextRead);
+    localStorage.setItem(clearKey, JSON.stringify(ids));
+    localStorage.setItem(storageKey, JSON.stringify(nextRead));
   }
 
   return <>
@@ -56,8 +80,8 @@ export function NotificationCenter() {
         {unread.length ? <span className="absolute right-1 top-1 min-w-5 rounded-full bg-red-600 px-1 text-center text-[10px] font-black text-white">{Math.min(unread.length, 99)}</span> : null}
       </button>
       {open ? <div className="fixed inset-x-3 top-16 z-50 flex max-h-[calc(100dvh-5rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-soft-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[360px]">
-        <div className="flex items-center justify-between"><strong>Notificações</strong><div className="flex gap-1"><button title="Som" className="grid h-9 w-9 place-items-center rounded-lg hover:bg-slate-100" onClick={() => { const next = !sound; setSound(next); localStorage.setItem(`${storageKey}-sound`, next ? "1" : "0"); }}>{sound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}</button><button title="Marcar todas como lidas" className="grid h-9 w-9 place-items-center rounded-lg hover:bg-slate-100" onClick={markAllRead}><CheckCheck className="h-4 w-4" /></button></div></div>
-        <div className="mt-2 rounded-xl border border-slate-100 bg-slate-50 p-3"><p className="mb-2 text-xs font-black uppercase text-slate-500">NotificaÃ§Ãµes do dispositivo</p><PushButton /></div>
+        <div className="flex items-center justify-between"><strong>Notificações</strong><div className="flex gap-1"><button title="Som" className="grid h-9 w-9 place-items-center rounded-lg hover:bg-slate-100" onClick={() => { const next = !sound; setSound(next); localStorage.setItem(`${storageKey}-sound`, next ? "1" : "0"); }}>{sound ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}</button><button title="Marcar todas como lidas" className="grid h-9 w-9 place-items-center rounded-lg hover:bg-slate-100" onClick={markAllRead}><CheckCheck className="h-4 w-4" /></button><button title="Limpar notificações" className="grid h-9 w-9 place-items-center rounded-lg hover:bg-slate-100" onClick={clearVisibleNotifications}><Trash2 className="h-4 w-4" /></button></div></div>
+        <div className="mt-2 rounded-xl border border-slate-100 bg-slate-50 p-3"><p className="mb-2 text-xs font-black uppercase text-slate-500">Notificações do dispositivo</p><PushButton /></div>
         <div className="mt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain">{notices.length ? notices.map((notice) => <button key={notice.id} className={`block w-full rounded-xl p-3 text-left text-sm ${read.includes(notice.id) ? "text-slate-500" : "bg-amber-50 font-bold text-slate-900"}`} onClick={() => { const next = [...new Set([...read, notice.id])]; setRead(next); localStorage.setItem(storageKey, JSON.stringify(next)); }}><span>{notice.text}</span><small className="mt-1 block text-xs text-slate-400">{relativeTime(notice.at)}</small></button>) : <p className="p-5 text-center text-sm font-bold text-slate-400">Tudo tranquilo por aqui.</p>}</div>
       </div> : null}
     </div>

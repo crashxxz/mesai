@@ -15,7 +15,7 @@ import { createLocalStorageAdapter } from "@/lib/storage-adapter";
 import { supabase } from "@/lib/supabase";
 import { supabaseGateway, type WorkspaceBootstrap } from "@/lib/supabase-gateway";
 import { resolveProductImage } from "@/lib/product-image";
-import { notifyPushEvent } from "@/lib/push";
+import { disableCurrentPushSubscription, notifyPushEvent } from "@/lib/push";
 import {
   calculateOrderTotals,
   createAuditLog,
@@ -285,6 +285,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return nextProfile;
       },
       logout() {
+        if (runtimeConfig.dataMode === "supabase") void disableCurrentPushSubscription({ unsubscribe: false }).catch(() => undefined);
         if (runtimeConfig.dataMode === "supabase") void supabaseGateway.signOut().catch(() => undefined);
         commit({ ...state, currentProfileId: undefined }, "auth");
       },

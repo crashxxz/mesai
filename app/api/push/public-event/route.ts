@@ -26,15 +26,16 @@ export async function POST(request: NextRequest) {
   const restaurantId = String(restaurant?.id ?? "");
   const tableId = String(table?.id ?? "");
   const tableLabel = table?.name ? String(table.name) : table?.number ? `Mesa ${table.number}` : "Mesa";
+  const tableUrl = tableId ? `/app/tables/${tableId}` : "/app/tables";
   if (!restaurantId || !tableId) return NextResponse.json({ error: "QR inválido" }, { status: 401 });
 
   if (body.type === "waiter_call" || body.type === "bill_request") {
     const result = await sendPushToRoles(supabase, {
       restaurantId,
       roles: body.type === "bill_request" ? ["owner", "manager", "waiter", "cashier"] : ["owner", "manager", "waiter"],
-      title: body.type === "bill_request" ? "Cliente pediu conta" : "Cliente chamou atendimento",
-      body: `${tableLabel} solicitou ${body.type === "bill_request" ? "fechamento" : "atendimento"}.`,
-      url: "/app/tables",
+      title: body.type === "bill_request" ? "Pedido de conta" : "Atendimento solicitado",
+      body: body.type === "bill_request" ? `${tableLabel} pediu a conta.` : `${tableLabel} chamou o atendimento.`,
+      url: tableUrl,
       tag: `${body.type}-${tableId}`
     });
     return NextResponse.json(result);
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   const { data: items } = await supabase
     .from("order_items")
-    .select("preparation_sector,status")
+    .select("product_name_snapshot,quantity,preparation_sector,status")
     .eq("order_id", body.orderId)
     .eq("restaurant_id", restaurantId);
 
@@ -61,21 +62,33 @@ export async function POST(request: NextRequest) {
   const staff = await sendPushToRoles(supabase, {
     restaurantId,
     roles: ["owner", "manager", "waiter"],
-    title: "Novo pedido pelo QR",
-    body: `${tableLabel}: pedido recebido pelo cliente.`,
-    url: "/app/tables",
+    title: "Novo pedido",
+    body: `${tableLabel} enviou ${itemCount(items ?? [])}: ${summarizeItems(items ?? [])}.`,
+    url: tableUrl,
     tag: `qr-order-${body.orderId}`
   });
   let sent = staff.sent;
   let expired = staff.expired;
   let configured = staff.configured;
   if (prepRoles.includes("kitchen")) {
-    const result = await sendPushToRoles(supabase, { restaurantId, roles: ["kitchen"], title: "Pedido QR na cozinha", body: `${tableLabel}: novo item para preparo.`, url: "/app/kitchen", tag: `qr-order-kitchen-${body.orderId}` });
+    const result = await sendPushToRoles(supabase, { restaurantId, roles: ["kitchen"], title: "Pedido QR na cozinha", body: `${tableLabel}: ${summarizeItems(items ?? [])} para preparo.`, url: "/app/kitchen", tag: `qr-order-kitchen-${body.orderId}` });
     sent += result.sent; expired += result.expired; configured = configured && result.configured;
   }
   if (prepRoles.includes("bar")) {
-    const result = await sendPushToRoles(supabase, { restaurantId, roles: ["bar"], title: "Pedido QR no bar", body: `${tableLabel}: nova bebida para preparo.`, url: "/app/bar", tag: `qr-order-bar-${body.orderId}` });
+    const result = await sendPushToRoles(supabase, { restaurantId, roles: ["bar"], title: "Pedido QR no bar", body: `${tableLabel}: ${summarizeItems(items ?? [])} para o bar.`, url: "/app/bar", tag: `qr-order-bar-${body.orderId}` });
     sent += result.sent; expired += result.expired; configured = configured && result.configured;
   }
   return NextResponse.json({ sent, expired, configured });
+}
+
+function summarizeItems(items: Array<Record<string, unknown>>) {
+  if (!items.length) return "item";
+  const names = items.slice(0, 2).map((item) => String(item.product_name_snapshot ?? "item"));
+  const extra = items.length > 2 ? ` +${items.length - 2} itens` : "";
+  return `${names.join(", ")}${extra}`;
+}
+
+function itemCount(items: Array<Record<string, unknown>>) {
+  const count = items.reduce((sum, item) => sum + Number(item.quantity ?? 1), 0);
+  return count === 1 ? "1 item" : `${count} itens`;
 }

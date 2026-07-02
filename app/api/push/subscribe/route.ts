@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Dados incompletos" }, { status: 400 });
   }
 
+  const now = new Date().toISOString();
   const { error } = await supabase.from("push_subscriptions").upsert({
     user_id: profile.userId,
     restaurant_id: profile.restaurantId,
@@ -30,7 +31,8 @@ export async function POST(request: NextRequest) {
     enabled: true,
     disabled_at: null,
     last_error: null,
-    updated_at: new Date().toISOString()
+    last_seen_at: now,
+    updated_at: now
   }, { onConflict: "endpoint" });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -50,12 +50,25 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || "/app/tables";
+  const targetUrl = safeAppUrl(event.notification.data?.url);
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      const existing = clients.find((c) => c.url.includes(url) && "focus" in c);
-      if (existing) return existing.focus();
-      return self.clients.openWindow(url);
+      const existing = clients.find((client) => new URL(client.url).origin === self.location.origin && "focus" in client);
+      if (existing) {
+        if ("navigate" in existing) return existing.navigate(targetUrl).then((client) => client?.focus());
+        return existing.focus();
+      }
+      return self.clients.openWindow(targetUrl);
     })
   );
 });
+
+function safeAppUrl(value) {
+  try {
+    const url = new URL(value || "/app/tables", self.location.origin);
+    if (url.origin !== self.location.origin) return `${self.location.origin}/app/tables`;
+    return url.href;
+  } catch {
+    return `${self.location.origin}/app/tables`;
+  }
+}
