@@ -46,11 +46,11 @@ export function TableCard({
   const overallStatus = order ? getOrderOverallStatus(order, orderItems.filter((item) => item.orderId === order.id)) : undefined;
 
   return (
-    <article className={cn("card-lift rounded-2xl border-2 p-4 shadow-soft", meta.accent)}>
-      <div className="mb-3 flex items-start justify-between gap-3">
+    <article className={cn("card-lift rounded-2xl border-2 p-3 shadow-soft sm:p-4", meta.accent)}>
+      <div className="mb-2 flex items-start justify-between gap-3 sm:mb-3">
         <div>
           <p className="text-xs font-black uppercase text-slate-400">Mesa</p>
-          <h2 className="text-5xl font-black leading-none tracking-normal text-slate-950">{table.number}</h2>
+          <h2 className="text-4xl font-black leading-none tracking-normal text-slate-950 sm:text-5xl">{table.number}</h2>
           <p className="mt-1 text-sm font-bold text-slate-500">{table.name ?? `Mesa ${table.number}`}</p>
         </div>
         <div className="grid justify-items-end gap-1.5">
@@ -77,13 +77,13 @@ export function TableCard({
         </div>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-3 sm:mb-4">
         {!order ? (
-          <div className="rounded-2xl bg-white/80 px-3 py-4 text-sm font-black text-emerald-800">
+          <div className="rounded-xl bg-white/80 px-3 py-2.5 text-sm font-black text-emerald-800 sm:rounded-2xl sm:py-4">
             Mesa pronta para atender
           </div>
         ) : itemCount === 0 ? (
-          <div className="rounded-2xl bg-amber-100 px-3 py-4 text-sm font-black text-amber-900">
+          <div className="rounded-xl bg-amber-100 px-3 py-2.5 text-sm font-black text-amber-900 sm:rounded-2xl sm:py-4">
             Mesa aberta, sem consumo ainda
             <span className="mt-1 flex items-center gap-1 text-xs font-bold text-amber-800">
               <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
@@ -92,18 +92,18 @@ export function TableCard({
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2">
-            <div className="rounded-2xl bg-white/80 p-3">
+            <div className="rounded-xl bg-white/80 p-2.5 sm:rounded-2xl sm:p-3">
               <span className="text-xs font-black text-slate-400">Total</span>
-              <div className="text-xl font-black text-slate-950">{brl(order.total)}</div>
+              <div className="text-lg font-black text-slate-950 sm:text-xl">{brl(order.total)}</div>
             </div>
-            <div className="rounded-2xl bg-white/80 p-3">
+            <div className="rounded-xl bg-white/80 p-2.5 sm:rounded-2xl sm:p-3">
               <span className="text-xs font-black text-slate-400">Tempo</span>
-              <div className="flex items-center gap-1 text-xl font-black text-slate-950">
+              <div className="flex items-center gap-1 text-lg font-black text-slate-950 sm:text-xl">
                 <Clock3 className="h-4 w-4 text-slate-400" aria-hidden="true" />
                 {elapsed} min
               </div>
             </div>
-            <div className="col-span-2 rounded-2xl bg-slate-950 px-3 py-2 text-sm font-black text-white">
+            <div className="col-span-2 rounded-xl bg-slate-950 px-3 py-2 text-sm font-black text-white sm:rounded-2xl">
               {itemCount} {itemCount === 1 ? "item na comanda" : "itens na comanda"}
             </div>
           </div>
@@ -112,40 +112,40 @@ export function TableCard({
 
       <div className="grid grid-cols-2 gap-2">
         {hasBillRequest && order ? (
-          <Button asChild variant="green" className="rounded-xl">
+          <Button asChild variant="green" size="sm" className="rounded-xl sm:min-h-11 sm:text-sm">
             <Link href={`/app/checkout/${order.id}`} onClick={() => onResolveAlert?.("bill_request")}>
               <WalletCards className="h-4 w-4" aria-hidden="true" />
               {preset.quickActions.closeAccount}
             </Link>
           </Button>
         ) : readyCount && order ? (
-          <Button asChild variant="outline" className="rounded-xl border-sky-600 bg-sky-600 text-white hover:bg-sky-700">
+          <Button asChild variant="outline" size="sm" className="rounded-xl border-sky-600 bg-sky-600 text-white hover:bg-sky-700 sm:min-h-11 sm:text-sm">
             <Link href={`/app/tables/${table.id}`}>
               <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
               Entregar
             </Link>
           </Button>
         ) : hasWaiterCall ? (
-          <Button asChild variant="danger" className="rounded-xl">
+          <Button asChild variant="danger" size="sm" className="rounded-xl sm:min-h-11 sm:text-sm">
             <Link href={`/app/tables/${table.id}`} onClick={() => onResolveAlert?.("waiter_call")}>
               <BellRing className="h-4 w-4" aria-hidden="true" />
               Atender
             </Link>
           </Button>
         ) : order ? (
-          <Button asChild variant="green" className="rounded-xl">
+          <Button asChild variant="green" size="sm" className="rounded-xl sm:min-h-11 sm:text-sm">
             <Link href={`/app/checkout/${order.id}`}>
               <WalletCards className="h-4 w-4" aria-hidden="true" />
               Fechar conta
             </Link>
           </Button>
         ) : (
-          <Button variant="green" className="rounded-xl" onClick={onOpen}>
+          <Button variant="green" size="sm" className="rounded-xl sm:min-h-11 sm:text-sm" onClick={onOpen}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             {preset.quickActions.openTable}
           </Button>
         )}
-        <Button asChild variant="outline" className="rounded-xl">
+        <Button asChild variant="outline" size="sm" className="rounded-xl sm:min-h-11 sm:text-sm">
           <Link href={`/app/tables/${table.id}`}>
             <Eye className="h-4 w-4" aria-hidden="true" />
             Ver mesa

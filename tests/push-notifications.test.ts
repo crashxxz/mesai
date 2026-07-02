@@ -42,7 +42,10 @@ test("ativação push fica no sino, sincroniza troca de usuário e permite limpa
   assert.match(notificationCenter, /import \{ PushButton \}/);
   assert.match(notificationCenter, /<PushButton \/>/);
   assert.match(notificationCenter, /syncExistingPushSubscription/);
-  assert.match(notificationCenter, /Limpar notificações/);
+  assert.match(notificationCenter, /Limpar todas/);
+  assert.match(notificationCenter, /clearNotification/);
+  assert.match(notificationCenter, /Remover notificação/);
+  assert.match(notificationCenter, /slice\(0, 12\)/);
   assert.match(push, /syncExistingPushSubscription/);
   assert.match(push, /disableCurrentPushSubscription/);
   assert.match(subscribe, /role: profile\.role/);

@@ -102,7 +102,8 @@ test("lançamento rápido de bebida mantém a mesa certa", () => {
   const tablesPage = readFileSync("app/app/(workspace)/tables/page.tsx", "utf8");
   const orderPage = readFileSync("app/app/(workspace)/orders/[id]/page.tsx", "utf8");
   assert.match(tablesPage, /quick=drinks/);
-  assert.match(tablesPage, /occupiedTables\.length !== 1/);
+  assert.match(tablesPage, /Escolha a mesa para a cerveja/);
+  assert.match(tablesPage, /requestFastOrder\(true\)/);
   assert.match(orderPage, /quickDrinks/);
   assert.match(orderPage, /drinkCategoryIds/);
 });
@@ -126,4 +127,5 @@ test("login de produção inicia vazio e aceita apelido", () => {
   const login = readFileSync("app/app/(auth)/login/page.tsx", "utf8");
   assert.match(login, /Email ou login/);
   assert.match(login, /resolve-login/);
+  assert.match(login, /Entrando\.\.\./);
 });

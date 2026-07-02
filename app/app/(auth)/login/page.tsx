@@ -65,6 +65,18 @@ export default function LoginPage() {
     }
   }
 
+  if (!hydrated || profile) {
+    return (
+      <main className="login-bg grid min-h-screen place-items-center px-4 py-8">
+        <div className="grid justify-items-center gap-4 text-center">
+          <BrandMark className="h-[72px] w-[72px] drop-shadow-[0_12px_24px_rgba(17,24,39,0.16)]" />
+          <BrandName className="text-4xl" />
+          <p className="text-sm font-bold text-slate-500">Entrando...</p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="login-bg grid min-h-screen place-items-center px-4 py-8">
       <div className="w-full max-w-sm">

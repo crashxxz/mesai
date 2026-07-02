@@ -1,5 +1,5 @@
-const cacheName = "mesay-v7";
-const coreAssets = ["/", "/app/login", "/manifest.webmanifest", "/favicon.png?v=7", "/icon-192.png?v=7", "/icon-512.png?v=7", "/apple-touch-icon.png?v=7"];
+const cacheName = "mesay-v8";
+const coreAssets = ["/", "/app/login", "/manifest.webmanifest", "/favicon.png?v=8", "/icon-192.png?v=8", "/icon-512.png?v=8", "/apple-touch-icon.png?v=8"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(cacheName).then((cache) => cache.addAll(coreAssets)));
@@ -35,8 +35,8 @@ self.addEventListener("push", (event) => {
     const data = event.data.json();
     const options = {
       body: data.body || "",
-      icon: "/icon-192.png?v=7",
-      badge: "/icon-192.png?v=7",
+      icon: "/icon-192.png?v=8",
+      badge: "/icon-192.png?v=8",
       tag: data.tag || "mesay-notification",
       data: { url: data.url || "/app/tables" },
       vibrate: [200, 100, 200]
